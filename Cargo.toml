@@ -1,39 +1,8 @@
 [package]
-name        = "zkt"
-version     = "0.0.3"
-description = "A note-taking tool based on the famous Zettelkasten method"
-authors     = ["Liam <liam@scalzulli.com>"]
-license     = "CC0-1.0"
-homepage    = "https://github.com/terror/zk"
-repository  = "https://github.com/terror/zk"
-edition     = "2018"
-categories  = ["command-line-utilities"]
-keywords    = ["command-line", "productivity", "note-taking", "utility"]
-resolver    = "2"
+name = "zett"
+version = "0.1.0"
+edition = "2021"
 
-[[bin]]
-name = "zk"
-path = "src/main.rs"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono      = "0.4.19"
-colored     = "2.0.0"
-dirs        = "4.0.0"
-indoc       = "1.0.3"
-matter      = "0.1.0-alpha4"
-serde_yaml  = "0.8.23"
-shellexpand = "2.1.0"
-skim        = "0.9.4"
-snafu       = "0.6.10"
-structopt   = "0.3.25"
-toml        = "0.5.8"
-walkdir     = "2.3.2"
-xdg         = "2.4.0"
-
-[dependencies.serde]
-version  = "1.0.132"
-features = ["derive"]
-
-[dev-dependencies]
-pretty_assertions = "1.0.0"
-tempfile          = "3.2.0"

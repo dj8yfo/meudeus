@@ -6,10 +6,12 @@ mod commands;
 mod database;
 mod dir;
 mod note;
+mod skim;
 pub(crate) use dir::Directory;
 
 pub(crate) use database::Sqlite;
-#[tokio::main(flavor = "current_thread")]
+
+#[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("zett")
         .arg(clap::arg!(-d --"notes-dir" <NOTE_NAME>).value_parser(clap::value_parser!(PathBuf)))
@@ -24,7 +26,8 @@ async fn main() {
                 )
                 .arg(clap::arg!(--"tag")),
         )
-        .subcommand(clap::command!("init_db"));
+        .subcommand(clap::command!("init_db"))
+        .subcommand(clap::command!("open"));
     let matches = cmd.get_matches();
 
     let result = body(&matches).await;
@@ -49,6 +52,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
             };
             match subcommand {
                 "create" => commands::create::exec(dir, matches, db).await,
+                "open" => commands::open::exec(dir, db).await,
                 _ => unreachable!("clap should ensure we don't get here"),
             }
         }

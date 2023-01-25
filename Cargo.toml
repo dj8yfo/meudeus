@@ -11,13 +11,17 @@ clap = {version = "4.1.1", features=["cargo"]}
 colored = "2.0.0"
 chrono      = "0.4.19"
 
+sql-builder = "3"
 sqlx = { version = "0.6", features = [
   "runtime-tokio-rustls",
   "chrono",
   "sqlite",
 ] }
 
+skim = "0.10.2"
 async-trait = "0.1.58"
 log = "0.4.17"
 tokio = { version = "1", features = ["full"] }
 rand = "0.8.5"
+async-std = "1.12.0"
+

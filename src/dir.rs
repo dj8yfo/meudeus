@@ -1,8 +1,5 @@
 use colored::Colorize;
-use std::{
-    fs,
-    path::PathBuf,
-};
+use std::{fs, path::PathBuf};
 
 #[derive(Debug)]
 pub(crate) struct Directory {

@@ -2,11 +2,12 @@ use std::{fs, path::Path, str::FromStr, sync::Arc};
 
 use async_std::sync::Mutex;
 use async_trait::async_trait;
-use sql_builder::{SqlBuilder, SqlName};
+use sql_builder::{SqlBuilder, SqlName, quote};
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteRow},
-    Result, Row, SqlitePool,
+    Result, Row, SqlitePool, Error
 };
+
 
 use crate::note::Note;
 
@@ -65,6 +66,23 @@ impl Sqlite {
 
         Ok(())
     }
+
+    async fn insert_link(
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+        from: &str,
+        to: &str,
+    ) -> Result<()> {
+        sqlx::query(
+            "insert into linkx(_from, _to)
+                values(?1, ?2)",
+        )
+        .bind(from)
+        .bind(to)
+        .execute(tx)
+        .await?;
+
+        Ok(())
+    }
     fn query_note(row: SqliteRow) -> Note {
         let file_path: Option<String> = row.get("filename");
         Note::new(row.get("name"), file_path.map(|c| c.into()))
@@ -97,5 +115,62 @@ impl Database for Sqlite {
             .await?;
 
         Ok(res)
+    }
+
+    async fn find_links_from(&self, from: &str) -> Result<Vec<Note>>{
+        log::debug!("listing notes, linked by current");
+
+        let sql = SqlBuilder::select_from(name!("linkx"; "l"))
+            .field(name!("l", "_to"; "name"))
+            .field(name!("n", "filename"; "filename"))
+            .left()
+            .join(name!("notes"; "n"))
+            .on("l._to = n.name")
+            .and_where_eq("l._from", quote(from))
+            .order_asc("n.filename")
+            .sql().map_err(|err| Error::Protocol(format!("{:?}", err)))?;
+        log::debug!("sql: {}", sql);
+
+        let res = sqlx::query(&sql)
+            .map(Self::query_note)
+            .fetch_all(&self.pool)
+            .await?;
+
+
+        Ok(res)
+        
+    }
+
+async fn find_links_to(&self, to: &str) -> Result<Vec<Note>>{
+        log::debug!("listing notes, linked by current");
+
+        let sql = SqlBuilder::select_from(name!("linkx"; "l"))
+            .field(name!("l", "_from"; "name"))
+            .field(name!("n", "filename"; "filename"))
+            .left()
+            .join(name!("notes"; "n"))
+            .on("l._from = n.name")
+            .and_where_eq("l._to", quote(to))
+            .order_asc("n.filename")
+            .sql().map_err(|err| Error::Protocol(format!("{:?}", err)))?;
+        log::debug!("sql: {}", sql);
+
+        let res = sqlx::query(&sql)
+            .map(Self::query_note)
+            .fetch_all(&self.pool)
+            .await?;
+
+
+        Ok(res)
+        
+    }
+    async fn insert_link(&mut self, from: &str, to: &str) -> Result<()> {
+        log::debug!("saving link {} -> {} ", from, to);
+
+        let mut tx = self.pool.begin().await?;
+        Self::insert_link(&mut tx, from, to).await?;
+        tx.commit().await?;
+
+        Ok(())
     }
 }

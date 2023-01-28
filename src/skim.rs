@@ -49,11 +49,7 @@ impl Search {
         let _jh = std::thread::spawn(move || {
             for mut note in items {
                 let tx_clone = tx.clone();
-                let tokio_handle = handle.clone();
-                note.set_resources(AsyncQeuryResources {
-                    handle: tokio_handle,
-                    db: db.clone(),
-                });
+                note.set_resources(AsyncQeuryResources { db: db.clone() });
 
                 handle.spawn(async move {
                     let result = tx_clone.send(Arc::new(note));

@@ -1,26 +1,23 @@
-use clap::ArgMatches;
-
 use crate::{
     database::{Database, SqliteAsyncHandle},
     note::Note,
+    print::print_two_tokens,
     Directory,
 };
 
 pub(crate) async fn exec(
+    title: &String,
     dir: Directory,
-    matches: &ArgMatches,
     db: SqliteAsyncHandle,
+
+    is_tag: bool,
 ) -> Result<String, anyhow::Error> {
     dir.check()?;
-    let title = matches
-        .get_one::<String>("title")
-        .ok_or(anyhow::anyhow!("empty title"))?;
-    let is_tag = matches.get_flag("tag");
     let note = Note::init(title.clone(), dir, is_tag);
 
     db.lock().await.save(&note).await?;
     note.persist()?;
 
-    Ok(format!("note created \"{:?}\"", note))
+    Ok(print_two_tokens("note created", &format!("{:?}", note)))
     // Err(anyhow::anyhow!("baby futter"))
 }

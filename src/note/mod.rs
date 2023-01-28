@@ -7,7 +7,6 @@ mod skim_item;
 
 #[derive(Clone, Debug)]
 pub struct AsyncQeuryResources {
-    pub handle: tokio::runtime::Handle,
     pub db: SqliteAsyncHandle,
 }
 #[derive(Clone, Debug)]
@@ -73,6 +72,13 @@ impl Note {
             Self::Tag { resources, .. } => {
                 *resources = Some(to_set);
             }
+        }
+    }
+
+    pub fn resources(&self) -> Option<&AsyncQeuryResources> {
+        match self {
+            Self::MdFile { resources, .. } => resources.as_ref(),
+            Self::Tag { resources, .. } => resources.as_ref(),
         }
     }
 }

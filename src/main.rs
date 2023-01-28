@@ -1,4 +1,8 @@
+#[macro_use]
+extern crate sql_builder;
+
 use clap::ArgMatches;
+
 use colored::Colorize;
 use std::{path::PathBuf, process::exit};
 
@@ -6,6 +10,7 @@ mod commands;
 mod database;
 mod dir;
 mod note;
+mod print;
 mod skim;
 pub(crate) use dir::Directory;
 
@@ -18,21 +23,27 @@ async fn main() {
         .bin_name("zett")
         .subcommand_required(true)
         .subcommand(
-            clap::command!("create")
-                .arg(
-                    clap::arg!(-t --"title" <NOTE_NAME>)
-                        .value_parser(clap::value_parser!(String))
-                        .required(true),
-                )
-                .arg(clap::arg!(--"tag")),
+            clap::command!("n").arg(
+                clap::arg!([title])
+                    .value_parser(clap::value_parser!(String))
+                    .required(true),
+            ),
         )
-        .subcommand(clap::command!("init_db"))
-        .subcommand(clap::command!("open"));
+        .subcommand(
+            clap::command!("t").arg(
+                clap::arg!([title])
+                    .value_parser(clap::value_parser!(String))
+                    .required(true),
+            ),
+        )
+        .subcommand(clap::command!("i"))
+        .subcommand(clap::command!("o"))
+        .subcommand(clap::command!("l"));
     let matches = cmd.get_matches();
 
     let result = body(&matches).await;
     match result {
-        Ok(print) => println!("{}", print.green()),
+        Ok(print) => println!("{}", print),
         Err(err) => {
             println!("{}", format!("{:?}", err).red());
             exit(121)
@@ -44,15 +55,23 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
     let dir = dir::Directory::new(matches.get_one::<PathBuf>("notes-dir"));
     let db_dir = dir.path.join(".sqlite");
     let result = match matches.subcommand() {
-        Some(("init_db", _matches)) => commands::init_db::exec(db_dir).await,
+        Some(("i", _matches)) => commands::init_db::exec(db_dir).await,
         Some((subcommand, matches)) => {
             let db = match Sqlite::new(false, db_dir).await {
                 Ok(db) => db,
                 Err(err) => return Err(err.into()),
             };
             match subcommand {
-                "create" => commands::create::exec(dir, matches, db).await,
-                "open" => commands::open::exec(dir, db).await,
+                cmd @ "n" | cmd @ "t" => {
+                    let is_tag = cmd == "t";
+                    let title = matches
+                        .get_one::<String>("title")
+                        .ok_or(anyhow::anyhow!("empty title"))?;
+
+                    commands::create::exec(title, dir, db, is_tag).await
+                }
+                "o" => commands::open::exec(dir, db).await,
+                "l" => commands::link::exec(dir, db).await,
                 _ => unreachable!("clap should ensure we don't get here"),
             }
         }

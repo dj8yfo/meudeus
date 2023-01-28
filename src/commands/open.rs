@@ -5,6 +5,7 @@ use colored::Colorize;
 use crate::{
     database::{Database, SqliteAsyncHandle},
     dir::Directory,
+    print::print_two_tokens,
     skim::Search,
 };
 
@@ -29,9 +30,6 @@ pub(crate) async fn exec(dir: Directory, db: SqliteAsyncHandle) -> Result<String
         // for tags only list links
     }
 
-    println!(
-        "{}",
-        format!("{} {}", "viewed".cyan(), note.name()).magenta()
-    );
-    Ok("success".to_owned())
+    println!("{}", print_two_tokens("viewed", &note.name()));
+    Ok("success".cyan().to_string())
 }

@@ -5,7 +5,7 @@ use crate::{
     dir::Directory,
     note::Note,
     print::print_two_tokens,
-    skim::Search,
+    skim::open::Iteration,
 };
 
 pub(crate) async fn exec(dir: Directory, db: SqliteAsyncHandle) -> Result<String, anyhow::Error> {
@@ -16,13 +16,9 @@ pub(crate) async fn exec(dir: Directory, db: SqliteAsyncHandle) -> Result<String
     let multi = false;
     let (mut from, mut to): (Option<Note>, Option<Note>) = (None, None);
     for target in [&mut from, &mut to] {
-        let mut selections: Vec<_> = Search::new(list.clone(), db.clone(), multi)
-            .run()?
-            .into_iter()
-            .take(1)
-            .collect();
+        let note = Iteration::new(list.clone(), db.clone(), multi).run()?;
 
-        *target = Some(selections.remove(0));
+        *target = Some(note);
     }
 
     let (from_key, to_key) = (from.as_ref().unwrap(), to.as_ref().unwrap());

@@ -5,7 +5,7 @@ use comfy_table::{Cell, Color, ContentArrangement, Table};
 use std::process::Command;
 use std::{borrow::Cow, path::PathBuf};
 
-use skim::{ItemPreview, PreviewContext, SkimItem};
+use skim::{ItemPreview, PreviewContext, SkimItem, AnsiString, DisplayContext};
 
 use crate::print::print_two_tokens;
 use sqlx::Error;
@@ -17,9 +17,25 @@ impl SkimItem for super::Note {
     fn text(&self) -> Cow<str> {
         Cow::Owned(self.name())
     }
+    fn display<'a>(&'a self, _context: DisplayContext<'a>) -> AnsiString<'a> {
+        let input = if self.file_path().is_none() {
+            if self.name() == "METATAG" || self.name() == "root" {
+                
+                self.name().red().to_string()
+            } else {
+                
+                self.name().cyan().to_string()
+            }
+        } else {
+            self.name().yellow().to_string()
+
+        };
+
+        let ansistring = AnsiString::parse(&input);
+        ansistring
+    }
 
     fn preview(&self, _context: PreviewContext) -> ItemPreview {
-
         let (sender_1, receiver_1) = channel();
         let other_me = self.clone();
         tokio::runtime::Handle::current().spawn(async move {
@@ -37,7 +53,7 @@ impl SkimItem for super::Note {
         let result_from = receiver_1.recv();
         let result_to = receiver_2.recv();
         let links_to = map_recv_result(result_from, "Links to:".to_string());
-        let linked_by= map_recv_result(result_to, "Linked by:".to_string());
+        let linked_by = map_recv_result(result_to, "Linked by:".to_string());
         let mut string = String::new();
         let title = if self.file_path().is_some() {
             print_two_tokens("it's a note:", &self.name())
@@ -94,7 +110,7 @@ fn map_db_result(received: R) -> String {
                     let color = if is_tag {
                         Color::Cyan
                     } else {
-                        Color::DarkMagenta
+                        Color::DarkYellow
                     };
                     let type_column = if is_tag { "tag" } else { "note" };
                     table.add_row(vec![

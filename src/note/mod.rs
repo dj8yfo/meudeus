@@ -4,6 +4,8 @@ use std::{fs::File, io, path::PathBuf};
 use crate::{database::SqliteAsyncHandle, dir::Directory};
 mod random;
 mod skim_item;
+use crate::database::Database;
+use sqlx::Result as SqlxResult;
 
 #[derive(Clone, Debug)]
 pub struct AsyncQeuryResources {
@@ -75,10 +77,40 @@ impl Note {
         }
     }
 
-    pub fn resources(&self) -> Option<&AsyncQeuryResources> {
+    fn resources(&self) -> Option<&AsyncQeuryResources> {
         match self {
             Self::MdFile { resources, .. } => resources.as_ref(),
             Self::Tag { resources, .. } => resources.as_ref(),
+        }
+    }
+
+    pub async fn fetch_forward_links(&self) -> Option<SqlxResult<Vec<Note>>> {
+        if let Some(resources) = self.resources() {
+            Some(
+                resources
+                    .db
+                    .lock()
+                    .await
+                    .find_links_from(&self.name())
+                    .await,
+            )
+        } else {
+            None
+        }
+    }
+
+    pub async fn fetch_backlinks(&self) -> Option<SqlxResult<Vec<Note>>> {
+        if let Some(resources) = self.resources() {
+            Some(
+                resources
+                    .db
+                    .lock()
+                    .await
+                    .find_links_to(&self.name())
+                    .await,
+            )
+        } else {
+            None
         }
     }
 }

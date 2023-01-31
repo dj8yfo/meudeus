@@ -7,7 +7,6 @@ use std::{borrow::Cow, path::PathBuf};
 
 use skim::{ItemPreview, PreviewContext, SkimItem};
 
-use crate::database::Database;
 use crate::print::print_two_tokens;
 use sqlx::Error;
 use std::sync::mpsc::{channel, RecvError};
@@ -20,18 +19,25 @@ impl SkimItem for super::Note {
     }
 
     fn preview(&self, _context: PreviewContext) -> ItemPreview {
-        let resources = self.resources().unwrap().clone();
-        let name = self.name().clone();
 
-        let (sender, receiver) = channel();
+        let (sender_1, receiver_1) = channel();
+        let other_me = self.clone();
         tokio::runtime::Handle::current().spawn(async move {
-            let result_from = resources.db.lock().await.find_links_from(&name).await;
-            let result_to = resources.db.lock().await.find_links_to(&name).await;
+            let result_from = other_me.fetch_forward_links().await.unwrap();
 
-            sender.send((result_to, result_from)).unwrap()
+            sender_1.send(result_from).unwrap()
         });
-        let query_result = receiver.recv();
-        let links = map_recv_result(query_result);
+        let (sender_2, receiver_2) = channel();
+        let despicable_me = self.clone();
+        tokio::runtime::Handle::current().spawn(async move {
+            let result_to = despicable_me.fetch_backlinks().await.unwrap();
+
+            sender_2.send(result_to).unwrap()
+        });
+        let result_from = receiver_1.recv();
+        let result_to = receiver_2.recv();
+        let links_to = map_recv_result(result_from, "Links to:".to_string());
+        let linked_by= map_recv_result(result_to, "Linked by:".to_string());
         let mut string = String::new();
         let title = if self.file_path().is_some() {
             print_two_tokens("it's a note:", &self.name())
@@ -39,10 +45,9 @@ impl SkimItem for super::Note {
             print_two_tokens("it's a tag:", &self.name())
         };
         string.push_str(&title);
-        string.push_str(&"\n");
-        string.push_str(&"\n");
-        string.push_str(&links);
-        string.push_str(&"\n");
+        string.push_str(&"\n\n");
+        string.push_str(&linked_by);
+        string.push_str(&links_to);
         let body = fetch_content(self.file_path());
         if body.is_some() {
             string.push_str(&body.unwrap());
@@ -53,25 +58,21 @@ impl SkimItem for super::Note {
 
 type R = Result<Vec<Note>, Error>;
 
-fn map_recv_result(query_result: Result<(R, R), RecvError>) -> String {
+fn map_recv_result(query_result: Result<R, RecvError>, tag: String) -> String {
     let received = match query_result {
         Ok(received) => received,
 
         Err(err) => return format!("received err {:?}", err).red().to_string(),
     };
 
-    let links_to = map_db_result(received.0);
-    let links_from = map_db_result(received.1);
+    let links_to = map_db_result(received);
 
     let mut string = String::new();
     if !links_to.is_empty() {
-        string.push_str("Linked by:\n");
+        string.push_str(&tag);
+        string.push_str(&"\n");
         string.push_str(&links_to);
         string.push_str(&"\n");
-    }
-    if !links_from.is_empty() {
-        string.push_str("Links to:\n");
-        string.push_str(&links_from);
     }
     string
 }

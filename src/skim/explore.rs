@@ -1,5 +1,3 @@
-
-
 use colored::Colorize;
 use std::sync::Arc;
 
@@ -17,26 +15,40 @@ use crate::{
 pub(crate) struct Iteration {
     db: SqliteAsyncHandle,
     items: Option<Vec<Note>>,
-    multi: bool,
+}
+
+pub enum Action {
+    Open(Note),
+    Noop,
+}
+
+pub struct Out {
+    pub action: Action,
+    pub next_items: Vec<Note>,
 }
 
 impl Iteration {
-    pub(crate) fn new(items: Vec<Note>, db: SqliteAsyncHandle, multi: bool) -> Self {
+    pub(crate) fn new(items: Vec<Note>, db: SqliteAsyncHandle) -> Self {
         Self {
             items: Some(items),
             db,
-            multi,
         }
     }
 
-    pub(crate) fn run(mut self) -> anyhow::Result<Note> {
+    pub(crate) async fn run(mut self) -> anyhow::Result<Out> {
         let items = self.items.take().unwrap();
 
         let options = SkimOptionsBuilder::default()
             .height(Some("100%"))
             .preview(Some(""))
-            .multi(self.multi)
-            .bind(vec!["ctrl-c:abort", "Enter:accept", "ESC:abort"])
+            .multi(false)
+            .bind(vec![
+                "ctrl-c:abort",
+                "Enter:accept",
+                "ESC:abort",
+                "ctrl-h:accept",
+                "ctrl-l:accept",
+            ])
             .build()?;
 
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
@@ -44,8 +56,9 @@ impl Iteration {
         let handle = Handle::current();
 
         let db = self.db;
+        let cloned = items.clone();
         let _jh = std::thread::spawn(move || {
-            for mut note in items {
+            for mut note in cloned {
                 let tx_clone = tx.clone();
                 note.set_resources(AsyncQeuryResources { db: db.clone() });
 
@@ -74,7 +87,10 @@ impl Iteration {
             match out.final_key {
                 Key::Enter => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(item.clone());
+                        return Ok(Out {
+                            action: Action::Open(item.clone()),
+                            next_items: items,
+                        });
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
@@ -82,7 +98,39 @@ impl Iteration {
                 Key::Ctrl('c') | Key::ESC => {
                     return Err(anyhow::anyhow!("user chose to abort infinite cycle"))
                 }
-                _ => {
+
+                Key::Ctrl('h') => {
+                    if let Some(item) = selected_items.first() {
+                        let mut next = item.fetch_backlinks().await.unwrap()?;
+                        if next.is_empty() {
+                            next = items;
+                        }
+                        return Ok(Out {
+                            action: Action::Noop,
+                            next_items: next,
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                    
+                }
+
+                Key::Ctrl('l') => {
+                    if let Some(item) = selected_items.first() {
+                        let mut next = item.fetch_forward_links().await.unwrap()?;
+                        if next.is_empty() {
+                            next = items;
+                        }
+                        return Ok(Out {
+                            action: Action::Noop,
+                            next_items: next,
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                    
+                }
+                                _ => {
                     unreachable!();
                 }
             };

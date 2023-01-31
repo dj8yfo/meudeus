@@ -38,6 +38,7 @@ async fn main() {
         )
         .subcommand(clap::command!("i"))
         .subcommand(clap::command!("o"))
+        .subcommand(clap::command!("e"))
         .subcommand(clap::command!("l"));
     let matches = cmd.get_matches();
 
@@ -71,6 +72,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                     commands::create::exec(title, dir, db, is_tag).await
                 }
                 "o" => commands::open::exec(dir, db).await,
+                "e" => commands::explore::exec(dir, db).await,
                 "l" => commands::link::exec(dir, db).await,
                 _ => unreachable!("clap should ensure we don't get here"),
             }

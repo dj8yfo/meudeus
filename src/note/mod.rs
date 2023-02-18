@@ -1,9 +1,14 @@
+use std::hash::{Hash, Hasher};
 use std::io::Write;
+use std::process::Command;
 use std::{fs::File, io, path::PathBuf};
 
+use crate::Open;
 use crate::{database::SqliteAsyncHandle, dir::Directory};
 mod random;
 mod skim_item;
+mod reachable;
+mod parse_link;
 use crate::database::Database;
 use sqlx::Result as SqlxResult;
 
@@ -23,6 +28,36 @@ pub enum Note {
         resources: Option<AsyncQeuryResources>,
     },
 }
+
+
+impl Hash for Note {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.name().hash(state);
+    }
+}
+
+impl PartialEq for Note {
+    fn eq(&self, other: &Self) -> bool {
+        self.name() == other.name()
+    }
+}
+
+impl Open for Note {
+    fn open(&self) -> io::Result<std::process::ExitStatus> {
+
+        if let Some(file_path) = self.file_path() {
+            Command::new("helix-22.12-x86_64.AppImage")
+                .arg(file_path.as_os_str())
+                .status()
+        } else {
+            Err(io::Error::new(io::ErrorKind::NotFound, ""))
+        }
+    }
+    
+}
+
+impl Eq for Note {}
+
 impl Note {
     pub(crate) fn new(name: String, file_path: Option<PathBuf>) -> Self {
         match file_path {

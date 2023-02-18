@@ -1,34 +1,24 @@
-
-
-use colored::Colorize;
 use std::sync::Arc;
 
-use skim::{
-    prelude::{unbounded, Key, SkimOptionsBuilder},
-    Skim, SkimItemReceiver, SkimItemSender,
-};
+use colored::Colorize;
+use skim::{prelude::{SkimOptionsBuilder, unbounded, Key}, SkimItemSender, SkimItemReceiver, Skim};
 
-use crate::{
-    database::SqliteAsyncHandle,
-    note::{AsyncQeuryResources, Note},
-};
+use crate::link::Link;
+
 
 pub(crate) struct Iteration {
-    db: SqliteAsyncHandle,
-    items: Option<Vec<Note>>,
+    items: Option<Vec<Link>>,
     multi: bool,
 }
-
 impl Iteration {
-    pub(crate) fn new(items: Vec<Note>, db: SqliteAsyncHandle, multi: bool) -> Self {
+    pub(crate) fn new(items: Vec<Link>, multi: bool) -> Self {
         Self {
             items: Some(items),
-            db,
             multi,
         }
     }
 
-    pub(crate) fn run(mut self) -> anyhow::Result<Note> {
+    pub(crate) fn run(mut self) -> anyhow::Result<Link> {
         let items = self.items.take().unwrap();
 
         let options = SkimOptionsBuilder::default()
@@ -41,11 +31,9 @@ impl Iteration {
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
 
-        let db = self.db;
         let _jh = std::thread::spawn(move || {
-            for mut note in items {
-                note.set_resources(AsyncQeuryResources { db: db.clone() });
-                let result = tx.send(Arc::new(note));
+            for link in items {
+                let result = tx.send(Arc::new(link));
                 if result.is_err() {
                     println!("{}", format!("{:?}", result).red());
                 }
@@ -59,11 +47,11 @@ impl Iteration {
                 .map(|selected_item| {
                     (**selected_item)
                         .as_any()
-                        .downcast_ref::<Note>()
+                        .downcast_ref::<Link>()
                         .unwrap()
                         .to_owned()
                 })
-                .collect::<Vec<Note>>();
+                .collect::<Vec<Link>>();
 
             match out.final_key {
                 Key::Enter => {

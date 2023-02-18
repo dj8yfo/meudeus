@@ -5,7 +5,6 @@ use skim::{
     prelude::{unbounded, Key, SkimOptionsBuilder},
     Skim, SkimItemReceiver, SkimItemSender,
 };
-use tokio::runtime::Handle;
 
 use crate::{
     database::SqliteAsyncHandle,
@@ -53,21 +52,17 @@ impl Iteration {
 
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
-        let handle = Handle::current();
 
         let db = self.db;
         let cloned = items.clone();
         let _jh = std::thread::spawn(move || {
             for mut note in cloned {
-                let tx_clone = tx.clone();
                 note.set_resources(AsyncQeuryResources { db: db.clone() });
 
-                handle.spawn(async move {
-                    let result = tx_clone.send(Arc::new(note));
-                    if result.is_err() {
-                        println!("{}", format!("{:?}", result).red());
-                    }
-                });
+                let result = tx.send(Arc::new(note));
+                if result.is_err() {
+                    println!("{}", format!("{:?}", result).red());
+                }
             }
         });
 

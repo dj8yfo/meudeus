@@ -1,26 +1,36 @@
 #[macro_use]
 extern crate sql_builder;
 
+#[macro_use]
+extern crate lazy_static;
+
 use clap::ArgMatches;
 
 use colored::Colorize;
-use std::{path::PathBuf, process::exit};
+use std::{path::PathBuf, process::{exit, ExitStatus}, io};
 
 mod commands;
 mod database;
 mod dir;
 mod note;
+mod link;
 mod print;
 mod skim;
+mod external_commands;
 pub(crate) use dir::Directory;
 
 pub(crate) use database::Sqlite;
 
+trait Open {
+    fn open(&self) -> io::Result<ExitStatus>;
+    
+}
+
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
-    let cmd = clap::Command::new("zett")
+    let cmd = clap::Command::new("mds")
         .arg(clap::arg!(-d --"notes-dir" <NOTE_NAME>).value_parser(clap::value_parser!(PathBuf)))
-        .bin_name("zett")
+        .bin_name("mds")
         .subcommand_required(true)
         .subcommand(
             clap::command!("n").arg(
@@ -39,7 +49,8 @@ async fn main() {
         .subcommand(clap::command!("i"))
         .subcommand(clap::command!("o"))
         .subcommand(clap::command!("e"))
-        .subcommand(clap::command!("l"));
+        .subcommand(clap::command!("l"))
+        .subcommand(clap::command!("s"));
     let matches = cmd.get_matches();
 
     let result = body(&matches).await;
@@ -74,6 +85,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                 "o" => commands::open::exec(dir, db).await,
                 "e" => commands::explore::exec(dir, db).await,
                 "l" => commands::link::exec(dir, db).await,
+                "s" => commands::surf::exec(dir, db).await,
                 _ => unreachable!("clap should ensure we don't get here"),
             }
         }

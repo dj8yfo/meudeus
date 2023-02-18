@@ -2,11 +2,11 @@ use colored::Colorize;
 
 use comfy_table::presets::UTF8_FULL;
 use comfy_table::{Cell, Color, ContentArrangement, Table};
-use std::process::Command;
-use std::{borrow::Cow, path::PathBuf};
+use std::borrow::Cow;
 
 use skim::{ItemPreview, PreviewContext, SkimItem, AnsiString, DisplayContext};
 
+use crate::external_commands::fetch_content;
 use crate::print::print_two_tokens;
 use sqlx::Error;
 use std::sync::mpsc::{channel, RecvError};
@@ -124,23 +124,5 @@ fn map_db_result(received: R) -> String {
             }
         }
         Err(err) => return format!("db err {:?}", err).red().to_string(),
-    }
-}
-
-fn fetch_content(file_path: Option<&PathBuf>) -> Option<String> {
-    if let Some(file_path) = file_path {
-        match Command::new("bat")
-            .arg("--color=always")
-            .arg(file_path.as_os_str())
-            .output()
-        {
-            Ok(output) => match String::from_utf8(output.stdout) {
-                Ok(string) => Some(string),
-                Err(err) => Some(format!("{:?}", err).red().to_string()),
-            },
-            Err(err) => Some(format!("{:?}", err).red().to_string()),
-        }
-    } else {
-        None
     }
 }

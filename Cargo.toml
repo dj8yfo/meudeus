@@ -26,3 +26,6 @@ rand = "0.8.5"
 async-std = "1.12.0"
 comfy-table = "6.1.4"
 
+regex = "1.7.1"
+lazy_static = "1.4.0"
+duct = "0.13"

@@ -7,6 +7,7 @@ use skim::{
 };
 
 use crate::{
+    config::ExternalCommands,
     database::SqliteAsyncHandle,
     note::{AsyncQeuryResources, Note},
 };
@@ -14,6 +15,7 @@ use crate::{
 pub(crate) struct Iteration {
     db: SqliteAsyncHandle,
     items: Option<Vec<Note>>,
+    external_commands: ExternalCommands,
 }
 
 pub enum Action {
@@ -27,10 +29,15 @@ pub struct Out {
 }
 
 impl Iteration {
-    pub(crate) fn new(items: Vec<Note>, db: SqliteAsyncHandle) -> Self {
+    pub(crate) fn new(
+        items: Vec<Note>,
+        db: SqliteAsyncHandle,
+        external_commands: ExternalCommands,
+    ) -> Self {
         Self {
             items: Some(items),
             db,
+            external_commands,
         }
     }
 
@@ -52,12 +59,14 @@ impl Iteration {
 
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
-
         let db = self.db;
         let cloned = items.clone();
         let _jh = std::thread::spawn(move || {
             for mut note in cloned {
-                note.set_resources(AsyncQeuryResources { db: db.clone() });
+                note.set_resources(AsyncQeuryResources {
+                    db: db.clone(),
+                    file_preview_cmd: self.external_commands.preview.file_cmd.clone(),
+                });
 
                 let result = tx.send(Arc::new(note));
                 if result.is_err() {
@@ -91,7 +100,9 @@ impl Iteration {
                     }
                 }
                 Key::Ctrl('c') | Key::ESC => {
-                    return Err(anyhow::anyhow!("user chose to abort infinite cycle"))
+                    return Err(anyhow::anyhow!(
+                        "user chose to abort current iteration of explore cycle"
+                    ))
                 }
 
                 Key::Ctrl('h') => {
@@ -107,7 +118,6 @@ impl Iteration {
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
-                    
                 }
 
                 Key::Ctrl('l') => {
@@ -123,9 +133,8 @@ impl Iteration {
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
-                    
                 }
-                                _ => {
+                _ => {
                     unreachable!();
                 }
             };

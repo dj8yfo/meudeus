@@ -1,56 +1,74 @@
 #[macro_use]
 extern crate sql_builder;
 
-#[macro_use]
-extern crate lazy_static;
-
 use clap::ArgMatches;
 
 use colored::Colorize;
-use std::{path::PathBuf, process::{exit, ExitStatus}, io};
+use std::{
+    env, io,
+    path::PathBuf,
+    process::{exit, ExitStatus},
+};
+use config::Open as OpenCfg;
 
 mod commands;
+mod config;
 mod database;
-mod dir;
-mod note;
+mod external_commands;
 mod link;
+mod note;
 mod print;
 mod skim;
-mod external_commands;
-pub(crate) use dir::Directory;
 
 pub(crate) use database::Sqlite;
 
 trait Open {
-    fn open(&self) -> io::Result<ExitStatus>;
-    
+    fn open(&self, cfg: OpenCfg) -> io::Result<Option<ExitStatus>>;
 }
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .arg(clap::arg!(-d --"notes-dir" <NOTE_NAME>).value_parser(clap::value_parser!(PathBuf)))
+        .version("v0.1.0")
         .bin_name("mds")
         .subcommand_required(true)
+        .subcommand(clap::command!("debug-cfg").about("print `Debug` representtion of `config`"))
         .subcommand(
-            clap::command!("n").arg(
-                clap::arg!([title])
+            clap::command!("init")
+                .about("`initialize` .sqlite database in notes dir, specified by config"),
+        )
+        .subcommand(
+            clap::command!("n").about("create a `note`").arg(
+                clap::arg!([title] "note title (unique name among notes and tags)")
                     .value_parser(clap::value_parser!(String))
                     .required(true),
             ),
         )
         .subcommand(
-            clap::command!("t").arg(
-                clap::arg!([title])
-                    .value_parser(clap::value_parser!(String))
-                    .required(true),
-            ),
+            clap::command!("t")
+                .about("create a `tag` (note without file body)")
+                .arg(
+                    clap::arg!([title] "tag title (unique name among notes and tags)")
+                        .value_parser(clap::value_parser!(String))
+                        .required(true),
+                ),
         )
-        .subcommand(clap::command!("i"))
-        .subcommand(clap::command!("o"))
-        .subcommand(clap::command!("e"))
-        .subcommand(clap::command!("l"))
-        .subcommand(clap::command!("s"));
+        .subcommand(
+            clap::command!("l").about("`link` 2 notes A -> B, selected twice in skim interface"),
+        )
+        .subcommand(
+            clap::command!("o").about("start an infinite skim selection loop to `open` notes"),
+        )
+        .subcommand(
+            clap::command!("e")
+                .about("`explore` notes/tags by <c-h> (backlinks) , <c-l> (links forward)"),
+        )
+        .subcommand(clap::command!("s").about(
+            "`surf` (fuzzy find) through all `[markdown reference](links)`, 
+            found in all notes, 
+            reachable by forward links from note/tag S, 
+            selected interactively by skim",
+        ));
     let matches = cmd.get_matches();
 
     let result = body(&matches).await;
@@ -64,10 +82,22 @@ async fn main() {
 }
 
 async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
-    let dir = dir::Directory::new(matches.get_one::<PathBuf>("notes-dir"));
-    let db_dir = dir.path.join(".sqlite");
+    let config = config::Config::parse()?;
+
+    if let Err(err) = env::set_current_dir(&config.work_dir) {
+        println!(
+            "{}",
+            format!("couldn't change work dir to {:?}", &config.work_dir)
+                .red()
+                .to_string()
+        );
+        return Err(err)?;
+    }
+
+    let db_dir = PathBuf::from("./.sqlite");
     let result = match matches.subcommand() {
-        Some(("i", _matches)) => commands::init_db::exec(db_dir).await,
+        Some(("init", _matches)) => commands::init_db::exec(db_dir).await,
+        Some(("debug-cfg", _matches)) => commands::debug_cfg::exec(config),
         Some((subcommand, matches)) => {
             let db = match Sqlite::new(false, db_dir).await {
                 Ok(db) => db,
@@ -80,12 +110,14 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         .get_one::<String>("title")
                         .ok_or(anyhow::anyhow!("empty title"))?;
 
-                    commands::create::exec(title, dir, db, is_tag).await
+                    commands::create::exec(title, db, is_tag).await
                 }
-                "o" => commands::open::exec(dir, db).await,
-                "e" => commands::explore::exec(dir, db).await,
-                "l" => commands::link::exec(dir, db).await,
-                "s" => commands::surf::exec(dir, db).await,
+                "o" => commands::open::exec(db, config.external_commands).await,
+                "e" => commands::explore::exec(db, config.external_commands).await,
+                "l" => commands::link::exec(db, config.external_commands).await,
+                "s" => {
+                    commands::surf::exec(db, config.surf_parsing, config.external_commands).await
+                }
                 _ => unreachable!("clap should ensure we don't get here"),
             }
         }

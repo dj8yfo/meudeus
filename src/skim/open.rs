@@ -1,5 +1,3 @@
-
-
 use colored::Colorize;
 use std::sync::Arc;
 
@@ -9,6 +7,7 @@ use skim::{
 };
 
 use crate::{
+    config::ExternalCommands,
     database::SqliteAsyncHandle,
     note::{AsyncQeuryResources, Note},
 };
@@ -17,14 +16,21 @@ pub(crate) struct Iteration {
     db: SqliteAsyncHandle,
     items: Option<Vec<Note>>,
     multi: bool,
+    external_commands: ExternalCommands,
 }
 
 impl Iteration {
-    pub(crate) fn new(items: Vec<Note>, db: SqliteAsyncHandle, multi: bool) -> Self {
+    pub(crate) fn new(
+        items: Vec<Note>,
+        db: SqliteAsyncHandle,
+        multi: bool,
+        external_commands: ExternalCommands,
+    ) -> Self {
         Self {
             items: Some(items),
             db,
             multi,
+            external_commands,
         }
     }
 
@@ -40,11 +46,13 @@ impl Iteration {
 
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
-
         let db = self.db;
         let _jh = std::thread::spawn(move || {
             for mut note in items {
-                note.set_resources(AsyncQeuryResources { db: db.clone() });
+                note.set_resources(AsyncQeuryResources {
+                    db: db.clone(),
+                    file_preview_cmd: self.external_commands.preview.file_cmd.clone(),
+                });
                 let result = tx.send(Arc::new(note));
                 if result.is_err() {
                     println!("{}", format!("{:?}", result).red());
@@ -74,7 +82,9 @@ impl Iteration {
                     }
                 }
                 Key::Ctrl('c') | Key::ESC => {
-                    return Err(anyhow::anyhow!("user chose to abort infinite cycle"))
+                    return Err(anyhow::anyhow!(
+                        "user chose to abort current iteration of open cycle"
+                    ))
                 }
                 _ => {
                     unreachable!();

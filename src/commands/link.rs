@@ -1,22 +1,24 @@
 use colored::Colorize;
 
 use crate::{
+    config::ExternalCommands,
     database::{Database, SqliteAsyncHandle},
-    dir::Directory,
     note::Note,
     print::print_two_tokens,
     skim::open::Iteration,
 };
 
-pub(crate) async fn exec(dir: Directory, db: SqliteAsyncHandle) -> Result<String, anyhow::Error> {
-    dir.check()?;
-
+pub(crate) async fn exec(
+    db: SqliteAsyncHandle,
+    external_commands: ExternalCommands,
+) -> Result<String, anyhow::Error> {
     let list = db.lock().await.list().await?;
 
     let multi = false;
     let (mut from, mut to): (Option<Note>, Option<Note>) = (None, None);
     for target in [&mut from, &mut to] {
-        let note = Iteration::new(list.clone(), db.clone(), multi).run()?;
+        let note =
+            Iteration::new(list.clone(), db.clone(), multi, external_commands.clone()).run()?;
 
         *target = Some(note);
     }

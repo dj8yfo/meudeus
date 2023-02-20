@@ -1,10 +1,12 @@
 use std::sync::Arc;
 
 use colored::Colorize;
-use skim::{prelude::{SkimOptionsBuilder, unbounded, Key}, SkimItemSender, SkimItemReceiver, Skim};
+use skim::{
+    prelude::{unbounded, Key, SkimOptionsBuilder},
+    Skim, SkimItemReceiver, SkimItemSender,
+};
 
 use crate::link::Link;
-
 
 pub(crate) struct Iteration {
     items: Option<Vec<Link>>,
@@ -29,7 +31,6 @@ impl Iteration {
             .build()?;
 
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
-
 
         let _jh = std::thread::spawn(move || {
             for link in items {
@@ -62,7 +63,9 @@ impl Iteration {
                     }
                 }
                 Key::Ctrl('c') | Key::ESC => {
-                    return Err(anyhow::anyhow!("user chose to abort infinite cycle"))
+                    return Err(anyhow::anyhow!(
+                        "user chose to abort current iteration of surf cycle"
+                    ))
                 }
                 _ => {
                     unreachable!();

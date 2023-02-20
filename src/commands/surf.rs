@@ -1,30 +1,34 @@
-use colored::Colorize;
 use crate::{
+    config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
-    dir::Directory,
     print::print_two_tokens,
     skim::open::Iteration,
-    skim::surf::Iteration as SurfIteration, Open,
+    skim::surf::Iteration as SurfIteration,
+    Open,
 };
+use colored::Colorize;
 
-pub(crate) async fn exec(dir: Directory, db: SqliteAsyncHandle) -> Result<String, anyhow::Error> {
-    dir.check()?;
-
+pub(crate) async fn exec(
+    db: SqliteAsyncHandle,
+    surf: SurfParsing,
+    external_commands: ExternalCommands,
+) -> Result<String, anyhow::Error> {
     let list = db.lock().await.list().await?;
 
     let multi = false;
-    let note = Iteration::new(list, db.clone(), multi).run()?;
+    let note = Iteration::new(list, db.clone(), multi, external_commands.clone()).run()?;
 
     let all_vec = note.reachable_notes(db.clone()).await?;
-    let links: std::io::Result<Vec<_>> = all_vec.into_iter().map(|v| v.parse()).collect();
+    let links: std::io::Result<Vec<_>> = all_vec
+        .into_iter()
+        .map(|v| v.parse(&surf, &external_commands))
+        .collect();
     let links: Vec<_> = links?.into_iter().flat_map(|v| v).collect();
 
-
     let link = SurfIteration::new(links, false).run()?;
-    link.open()?;
+    link.open(external_commands.open)?;
 
-
-    println!("{}", print_two_tokens("opened", &format!("{}", link)));
+    println!("{}", link);
     println!("{}", print_two_tokens("surfed", &note.name()));
 
     Ok("success".cyan().to_string())

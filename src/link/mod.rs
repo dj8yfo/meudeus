@@ -1,16 +1,20 @@
-use std::{fmt::Display, io, path::PathBuf, process::Command};
+use std::{fmt::Display, io, path::PathBuf};
 
-use regex::Regex;
 use duct::cmd;
+use regex::Regex;
 
-use crate::{print::print_two_tokens, Open};
+use crate::{
+    config::{cmd_template::CmdTemplate, ExternalCommands, Open as OpenCfg},
+    print::print_two_tokens,
+    Open,
+};
 mod skim_item;
 
 #[derive(Clone, Debug)]
 pub enum Destination {
     URL(String),
-    File(PathBuf),
-    Dir(PathBuf),
+    File { file: PathBuf, preview: CmdTemplate },
+    Dir { dir: PathBuf, preview: CmdTemplate },
     Broken(PathBuf),
 }
 
@@ -18,32 +22,36 @@ impl Display for Destination {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::URL(url) => write!(f, "{}", url),
-            Self::File(file) => write!(f, "{}", file.display()),
-            Self::Dir(dir) => write!(f, "{}", dir.display()),
+            Self::File { file, .. } => write!(f, "{}", file.display()),
+            Self::Dir { dir, .. } => write!(f, "{}", dir.display()),
             Self::Broken(broken) => write!(f, "{}", broken.display()),
         }
     }
 }
 
 impl Open for Link {
-    fn open(&self) -> io::Result<std::process::ExitStatus> {
+    fn open(&self, mut cfg: OpenCfg) -> io::Result<Option<std::process::ExitStatus>> {
         match &self.link {
-            Destination::URL(url) => Command::new("firefox").arg(url).status(),
+            Destination::URL(url) => {
+                cfg.url_cmd.replace_matching_element("$URL", url);
+                Ok(Some(
+                    cmd(cfg.url_cmd.command, cfg.url_cmd.args).run()?.status,
+                ))
+            }
 
-            Destination::File(file) => Command::new("helix-22.12-x86_64.AppImage")
-                .arg(file)
-                .status(),
-            Destination::Dir(dir) => {
-
-                let args = vec![
-                    "action",
-                    "new-pane",
-                    "--cwd",
-                    dir.to_str().unwrap_or("bad utf path"),
-                    "--",
-                    "broot",
-                ];
-                Ok(cmd("zellij", args).run()?.status)
+            Destination::File { file, .. } => {
+                cfg.file_cmd
+                    .replace_matching_element("$FILE", file.to_str().unwrap_or("bad utf path"));
+                Ok(Some(
+                    cmd(cfg.file_cmd.command, cfg.file_cmd.args).run()?.status,
+                ))
+            }
+            Destination::Dir { dir, .. } => {
+                cfg.dir_cmd
+                    .replace_matching_element("$DIR", dir.to_str().unwrap_or("bad utf path"));
+                Ok(Some(
+                    cmd(cfg.dir_cmd.command, cfg.dir_cmd.args).run()?.status,
+                ))
             }
             Destination::Broken(broken) => {
                 println!(
@@ -72,13 +80,10 @@ impl Display for Link {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,
-            "{}:: {} :{}",
+            "{} -> [{}] {}",
             self.parent_name, self.description, self.link
         )
     }
-}
-lazy_static! {
-    static ref URL: Regex = Regex::new(r#"^https?://\S+"#).unwrap();
 }
 
 impl Link {
@@ -87,8 +92,10 @@ impl Link {
         link: String,
         parent_note: PathBuf,
         parent_name: String,
+        url: &Regex,
+        external_commands: &ExternalCommands,
     ) -> Self {
-        if URL.is_match(&link) {
+        if url.is_match(&link) {
             Self {
                 parent_name,
                 description,
@@ -103,13 +110,19 @@ impl Link {
                 Self {
                     parent_name,
                     description,
-                    link: Destination::File(link),
+                    link: Destination::File {
+                        file: link,
+                        preview: external_commands.preview.file_cmd.clone(),
+                    },
                 }
             } else if link.is_dir() {
                 Self {
                     parent_name,
                     description,
-                    link: Destination::Dir(link),
+                    link: Destination::Dir {
+                        dir: link,
+                        preview: external_commands.preview.dir_cmd.clone(),
+                    },
                 }
             } else {
                 Self {

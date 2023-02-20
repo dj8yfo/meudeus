@@ -1,0 +1,28 @@
+world {
+
+	external-commands {
+		preview {
+			dir "exa" "-l" "--all" "--color=always" "--group-directories-first" "--git" "$DIR"
+
+			file "bat" "--color=always" "$FILE"
+		}
+
+		open {
+			file "hx" "$FILE"
+
+			dir "zellij" "action" "new-pane" "--cwd" "$DIR" "--" "broot"
+
+			url "firefox" "$URL"
+		}
+		
+	}
+
+	surf-parsing {
+		markdown-reference-link-regex  r#"\[(?P<description>[^\]]+)\]\((?P<url>[^\)]+)\)"#	
+
+		url-regex  r#"^https?://\S+"#		
+	}
+
+	notes-work-dir "/home/user/notes"
+
+}

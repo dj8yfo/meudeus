@@ -2,13 +2,12 @@ use std::collections::HashSet;
 
 use sqlx::Result as SqlxResult;
 
-use crate::database::{SqliteAsyncHandle, Database};
+use crate::database::{Database, SqliteAsyncHandle};
 
 use super::Note;
 
 impl super::Note {
     pub async fn reachable_notes(&self, db: SqliteAsyncHandle) -> SqlxResult<Vec<Self>> {
-
         let mut reachable_all: HashSet<Note> = HashSet::new();
         let mut current_layer: HashSet<Note> = HashSet::new();
         current_layer.insert(self.clone());
@@ -31,7 +30,5 @@ impl super::Note {
         }
         let all_vec: Vec<_> = reachable_all.into_iter().collect();
         Ok(all_vec)
-        
-    } 
-    
+    }
 }

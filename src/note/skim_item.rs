@@ -4,7 +4,7 @@ use comfy_table::presets::UTF8_FULL;
 use comfy_table::{Cell, Color, ContentArrangement, Table};
 use std::borrow::Cow;
 
-use skim::{ItemPreview, PreviewContext, SkimItem, AnsiString, DisplayContext};
+use skim::{AnsiString, DisplayContext, ItemPreview, PreviewContext, SkimItem};
 
 use crate::external_commands::fetch_content;
 use crate::print::print_two_tokens;
@@ -20,15 +20,12 @@ impl SkimItem for super::Note {
     fn display<'a>(&'a self, _context: DisplayContext<'a>) -> AnsiString<'a> {
         let input = if self.file_path().is_none() {
             if self.name() == "METATAG" || self.name() == "root" {
-                
                 self.name().red().to_string()
             } else {
-                
                 self.name().cyan().to_string()
             }
         } else {
             self.name().yellow().to_string()
-
         };
 
         let ansistring = AnsiString::parse(&input);
@@ -64,9 +61,11 @@ impl SkimItem for super::Note {
         string.push_str(&"\n\n");
         string.push_str(&linked_by);
         string.push_str(&links_to);
-        let body = fetch_content(self.file_path());
-        if body.is_some() {
-            string.push_str(&body.unwrap());
+        if let Some(resources) = self.resources() {
+            let body = fetch_content(resources.file_preview_cmd.clone(), self.file_path());
+            if body.is_some() {
+                string.push_str(&body.unwrap());
+            }
         }
         ItemPreview::AnsiText(string)
     }

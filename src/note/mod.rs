@@ -1,20 +1,22 @@
 use std::hash::{Hash, Hasher};
 use std::io::Write;
-use std::process::Command;
 use std::{fs::File, io, path::PathBuf};
 
+use crate::config::{cmd_template::CmdTemplate, Open as OpenCfg};
+use crate::database::SqliteAsyncHandle;
 use crate::Open;
-use crate::{database::SqliteAsyncHandle, dir::Directory};
-mod random;
-mod skim_item;
-mod reachable;
 mod parse_link;
+mod random;
+mod reachable;
+mod skim_item;
 use crate::database::Database;
+use duct::cmd;
 use sqlx::Result as SqlxResult;
 
 #[derive(Clone, Debug)]
 pub struct AsyncQeuryResources {
     pub db: SqliteAsyncHandle,
+    pub file_preview_cmd: CmdTemplate,
 }
 #[derive(Clone, Debug)]
 pub enum Note {
@@ -29,7 +31,6 @@ pub enum Note {
     },
 }
 
-
 impl Hash for Note {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.name().hash(state);
@@ -43,17 +44,15 @@ impl PartialEq for Note {
 }
 
 impl Open for Note {
-    fn open(&self) -> io::Result<std::process::ExitStatus> {
-
+    fn open(&self, mut cfg: OpenCfg) -> io::Result<Option<std::process::ExitStatus>> {
         if let Some(file_path) = self.file_path() {
-            Command::new("helix-22.12-x86_64.AppImage")
-                .arg(file_path.as_os_str())
-                .status()
+            cfg.file_cmd
+                .replace_matching_element("$FILE", file_path.to_str().unwrap_or("bad utf path"));
+             Ok(Some(cmd(cfg.file_cmd.command, cfg.file_cmd.args).run()?.status)) 
         } else {
-            Err(io::Error::new(io::ErrorKind::NotFound, ""))
+            Ok(None)
         }
     }
-    
 }
 
 impl Eq for Note {}
@@ -72,12 +71,12 @@ impl Note {
             },
         }
     }
-    pub(crate) fn init(name: String, dir: Directory, is_tag: bool) -> Self {
+    pub(crate) fn init(name: String, is_tag: bool) -> Self {
         let time_str = chrono::Utc::now().naive_utc().timestamp().to_string();
         let suffix = random::rand_suffix();
         let fname = format!("{}_{}.md", time_str, suffix);
 
-        let file_path = (!is_tag).then_some(dir.path.join(fname));
+        let file_path = (!is_tag).then_some(PathBuf::from("./").join(fname));
         Self::new(name, file_path)
     }
 
@@ -136,14 +135,7 @@ impl Note {
 
     pub async fn fetch_backlinks(&self) -> Option<SqlxResult<Vec<Note>>> {
         if let Some(resources) = self.resources() {
-            Some(
-                resources
-                    .db
-                    .lock()
-                    .await
-                    .find_links_to(&self.name())
-                    .await,
-            )
+            Some(resources.db.lock().await.find_links_to(&self.name()).await)
         } else {
             None
         }

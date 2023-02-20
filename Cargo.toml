@@ -1,8 +1,16 @@
 [package]
 name = "mds"
-version = "0.1.0"
+version = "0.1.1"
+author = ["dj8yf0μl"]
+description = "A skim-based `*.md` explore and surf note-taking tool"
+repository = "https://github.com/dj8yfo/mds"
+homepage = "https://youtu.be/z4DFN72QVSw"
+keywords = ["note-taking", "cli", "cli-glue", "skim"]
+readme = "README.md"
+
 edition = "2021"
 
+license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -27,5 +35,7 @@ async-std = "1.12.0"
 comfy-table = "6.1.4"
 
 regex = "1.7.1"
-lazy_static = "1.4.0"
 duct = "0.13"
+
+xdg = "2.4.1"
+kdl = "4.6.0"

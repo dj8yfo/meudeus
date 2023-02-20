@@ -1,38 +1,31 @@
 
-use std::process::Command;
-
 use crate::{
+    config::ExternalCommands,
     database::{Database, SqliteAsyncHandle},
-    dir::Directory,
     print::print_two_tokens,
-    skim::explore::{Iteration, Action},
+    skim::explore::{Action, Iteration}, Open,
 };
 
-pub(crate) async fn exec(dir: Directory, db: SqliteAsyncHandle) -> Result<String, anyhow::Error> {
-    dir.check()?;
+pub(crate) async fn exec(
+    db: SqliteAsyncHandle,
+    external_commands: ExternalCommands,
+) -> Result<String, anyhow::Error> {
     let mut list = db.lock().await.list().await?;
 
     loop {
-
-        let out = Iteration::new(list.clone(), db.clone()).run().await?;
+        let out = Iteration::new(list.clone(), db.clone(), external_commands.clone())
+            .run()
+            .await?;
 
         match out.action {
-            Action::Noop => {},
+            Action::Noop => {}
             Action::Open(note) => {
-                if let Some(file_path) = note.file_path() {
-                    Command::new("helix-22.12-x86_64.AppImage")
-                        .arg(file_path.as_os_str())
-                        .status()?;
-                } else {
-                    // for tags only list links
 
-                }
+                note.open(external_commands.open.clone())?;
 
                 println!("{}", print_two_tokens("viewed", &note.name()));
-                
             }
         }
         list = out.next_items;
-
     }
 }

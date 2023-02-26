@@ -29,7 +29,7 @@ trait Open {
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .version("v0.1.0")
+        .version("v0.2.0")
         .bin_name("mds")
         .subcommand_required(true)
         .subcommand(clap::command!("debug-cfg").about("print `Debug` representtion of `config`"))
@@ -68,7 +68,11 @@ async fn main() {
             found in all notes, 
             reachable by forward links from note/tag S, 
             selected interactively by skim",
-        ));
+        ))
+        .subcommand(
+            clap::command!("unlink").about("`unlink` 2 notes A -> B, selected twice in skim interface"),
+        )
+    ;
     let matches = cmd.get_matches();
 
     let result = body(&matches).await;
@@ -118,6 +122,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                 "s" => {
                     commands::surf::exec(db, config.surf_parsing, config.external_commands).await
                 }
+                "unlink" => commands::unlink::exec(db, config.external_commands).await,
                 _ => unreachable!("clap should ensure we don't get here"),
             }
         }

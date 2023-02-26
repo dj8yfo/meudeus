@@ -82,6 +82,24 @@ impl Sqlite {
 
         Ok(())
     }
+
+    async fn remove_link(
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+        from: &str,
+        to: &str,
+    ) -> Result<()> {
+        sqlx::query(
+            "delete from linkx
+            where _from = ?1 and _to = ?2",
+        )
+        .bind(from)
+        .bind(to)
+        .execute(tx)
+        .await?;
+
+        Ok(())
+    }
+
     fn query_note(row: SqliteRow) -> Note {
         let file_path: Option<String> = row.get("filename");
         Note::new(row.get("name"), file_path.map(|c| c.into()))
@@ -166,6 +184,16 @@ impl Database for Sqlite {
 
         let mut tx = self.pool.begin().await?;
         Self::insert_link(&mut tx, from, to).await?;
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    async fn remove_link(&mut self, from: &str, to: &str) -> Result<()> {
+        log::debug!("removing link {} -> {} ", from, to);
+
+        let mut tx = self.pool.begin().await?;
+        Self::remove_link(&mut tx, from, to).await?;
         tx.commit().await?;
 
         Ok(())

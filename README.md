@@ -47,6 +47,7 @@ wget -O - https://raw.githubusercontent.com/dj8yfo/mds/master/install_dependenci
                                found in all notes, 
                                reachable by forward links from note/tag S, 
                                selected interactively by skim
+    unlink     `unlink` 2 notes A -> B, selected twice in skim interface
     help       Print this message or the help of the given subcommand(s)
 
   Options:

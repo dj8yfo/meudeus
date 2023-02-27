@@ -48,7 +48,9 @@ impl Open for Note {
         if let Some(file_path) = self.file_path() {
             cfg.file_cmd
                 .replace_matching_element("$FILE", file_path.to_str().unwrap_or("bad utf path"));
-             Ok(Some(cmd(cfg.file_cmd.command, cfg.file_cmd.args).run()?.status)) 
+            Ok(Some(
+                cmd(cfg.file_cmd.command, cfg.file_cmd.args).run()?.status,
+            ))
         } else {
             Ok(None)
         }

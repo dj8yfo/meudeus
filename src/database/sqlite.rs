@@ -100,6 +100,18 @@ impl Sqlite {
         Ok(())
     }
 
+    async fn remove_note(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>, note: &Note) -> Result<()> {
+        sqlx::query(
+            "delete from notes
+            where name = ?1",
+        )
+        .bind(note.name().as_str())
+        .execute(tx)
+        .await?;
+
+        Ok(())
+    }
+
     fn query_note(row: SqliteRow) -> Note {
         let file_path: Option<String> = row.get("filename");
         Note::new(row.get("name"), file_path.map(|c| c.into()))
@@ -144,7 +156,7 @@ impl Database for Sqlite {
             .join(name!("notes"; "n"))
             .on("l._to = n.name")
             .and_where_eq("l._from", quote(from))
-            .order_asc("n.filename")
+            .order_desc("l._to")
             .sql()
             .map_err(|err| Error::Protocol(format!("{:?}", err)))?;
         log::debug!("sql: {}", sql);
@@ -167,7 +179,7 @@ impl Database for Sqlite {
             .join(name!("notes"; "n"))
             .on("l._from = n.name")
             .and_where_eq("l._to", quote(to))
-            .order_asc("n.filename")
+            .order_desc("l._from")
             .sql()
             .map_err(|err| Error::Protocol(format!("{:?}", err)))?;
         log::debug!("sql: {}", sql);
@@ -194,6 +206,16 @@ impl Database for Sqlite {
 
         let mut tx = self.pool.begin().await?;
         Self::remove_link(&mut tx, from, to).await?;
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    async fn remove_note(&mut self, note: &Note) -> Result<()> {
+        log::debug!("removing note {:?}", note);
+
+        let mut tx = self.pool.begin().await?;
+        Self::remove_note(&mut tx, note).await?;
         tx.commit().await?;
 
         Ok(())

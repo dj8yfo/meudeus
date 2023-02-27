@@ -1,4 +1,3 @@
-
 use colored::Colorize;
 
 use crate::{
@@ -15,12 +14,10 @@ pub(crate) async fn exec(
     let list = db.lock().await.list().await?;
 
     let multi = false;
-    let from =
-        Iteration::new(list, db.clone(), multi, external_commands.clone()).run()?;
+    let from = Iteration::new(list, db.clone(), multi, external_commands.clone()).run()?;
 
     let forward_links = db.lock().await.find_links_from(&from.name()).await?;
-    let to =
-        Iteration::new(forward_links, db.clone(), multi, external_commands.clone()).run()?;
+    let to = Iteration::new(forward_links, db.clone(), multi, external_commands.clone()).run()?;
 
     db.lock()
         .await

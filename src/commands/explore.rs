@@ -1,9 +1,9 @@
-
 use crate::{
     config::ExternalCommands,
     database::{Database, SqliteAsyncHandle},
     print::print_two_tokens,
-    skim::explore::{Action, Iteration}, Open,
+    skim::explore::{Action, Iteration},
+    Open,
 };
 
 pub(crate) async fn exec(
@@ -20,7 +20,6 @@ pub(crate) async fn exec(
         match out.action {
             Action::Noop => {}
             Action::Open(note) => {
-
                 note.open(external_commands.open.clone())?;
 
                 println!("{}", print_two_tokens("viewed", &note.name()));

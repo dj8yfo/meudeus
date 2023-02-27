@@ -36,7 +36,7 @@ pub struct Preview {
 }
 
 #[derive(Debug, Clone)]
-pub struct Open{
+pub struct Open {
     pub file_cmd: CmdTemplate,
     pub url_cmd: CmdTemplate,
     pub dir_cmd: CmdTemplate,
@@ -59,7 +59,6 @@ impl TryFrom<&KdlNode> for Open {
             .get_args("file");
 
         let file = file.try_into()?;
-
 
         let dir = value
             .children()

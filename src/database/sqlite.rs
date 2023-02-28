@@ -112,6 +112,20 @@ impl Sqlite {
         Ok(())
     }
 
+    async fn rename_note(
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+        note: &Note,
+        new_name: &str,
+    ) -> Result<()> {
+        sqlx::query("update notes set name = ?2 where name = ?1")
+            .bind(note.name().as_str())
+            .bind(new_name)
+            .execute(tx)
+            .await?;
+
+        Ok(())
+    }
+
     fn query_note(row: SqliteRow) -> Note {
         let file_path: Option<String> = row.get("filename");
         Note::new(row.get("name"), file_path.map(|c| c.into()))
@@ -216,6 +230,16 @@ impl Database for Sqlite {
 
         let mut tx = self.pool.begin().await?;
         Self::remove_note(&mut tx, note).await?;
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    async fn rename_note(&mut self, note: &Note, new_name: &str) -> Result<()> {
+        log::debug!("renaming note {:?} -> {}", note, new_name);
+
+        let mut tx = self.pool.begin().await?;
+        Self::rename_note(&mut tx, note, &new_name).await?;
         tx.commit().await?;
 
         Ok(())

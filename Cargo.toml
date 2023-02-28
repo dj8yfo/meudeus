@@ -1,6 +1,6 @@
 [package]
 name = "mds"
-version = "0.3.1"
+version = "0.4.0"
 author = ["dj8yf0μl"]
 description = "A skim-based `*.md` explore and surf note-taking tool"
 repository = "https://github.com/dj8yfo/mds"
@@ -39,3 +39,4 @@ duct = "0.13"
 
 xdg = "2.4.1"
 kdl = "4.6.0"
+inquire = "0.5.3"

@@ -4,12 +4,12 @@ extern crate sql_builder;
 use clap::ArgMatches;
 
 use colored::Colorize;
+use config::Open as OpenCfg;
 use std::{
     env, io,
     path::PathBuf,
     process::{exit, ExitStatus},
 };
-use config::Open as OpenCfg;
 
 mod commands;
 mod config;
@@ -29,7 +29,7 @@ trait Open {
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .version("v0.3.1")
+        .version("v0.4.0")
         .bin_name("mds")
         .subcommand_required(true)
         .subcommand(clap::command!("debug-cfg").about("print `Debug` representtion of `config`"))
@@ -70,12 +70,11 @@ async fn main() {
             selected interactively by skim",
         ))
         .subcommand(
-            clap::command!("unlink").about("`unlink` 2 notes A -> B, selected twice in skim interface"),
+            clap::command!("unlink")
+                .about("`unlink` 2 notes A -> B, selected twice in skim interface"),
         )
-        .subcommand(
-            clap::command!("remove").about("`remove` note R, selected in skim interface"),
-        )
-    ;
+        .subcommand(clap::command!("remove").about("`remove` note R, selected in skim interface"))
+        .subcommand(clap::command!("rename").about("`rename` note R, selected in skim interface"));
     let matches = cmd.get_matches();
 
     let result = body(&matches).await;
@@ -127,6 +126,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                 }
                 "unlink" => commands::unlink::exec(db, config.external_commands).await,
                 "remove" => commands::remove::exec(db, config.external_commands).await,
+                "rename" => commands::rename::exec(db, config.external_commands).await,
                 _ => unreachable!("clap should ensure we don't get here"),
             }
         }

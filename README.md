@@ -50,6 +50,7 @@ wget -O - https://raw.githubusercontent.com/dj8yfo/mds/master/install_dependenci
                                selected interactively by skim
     unlink     `unlink` 2 notes A -> B, selected twice in skim interface
     remove     `remove` note R, selected in skim interface
+    rename     `rename` note R, selected in skim interface
     help       Print this message or the help of the given subcommand(s)
 
   Options:

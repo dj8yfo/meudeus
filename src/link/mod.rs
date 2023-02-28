@@ -13,9 +13,20 @@ mod skim_item;
 #[derive(Clone, Debug)]
 pub enum Destination {
     URL(String),
-    File { file: PathBuf, preview: CmdTemplate },
-    Dir { dir: PathBuf, preview: CmdTemplate },
+    File {
+        file: PathBuf,
+        preview: CmdTemplate,
+    },
+    Dir {
+        dir: PathBuf,
+        preview: CmdTemplate,
+    },
     Broken(PathBuf),
+    CodeBlock {
+        code_block: String,
+        syntax_label: String,
+        open: CmdTemplate,
+    },
 }
 
 impl Display for Destination {
@@ -25,6 +36,15 @@ impl Display for Destination {
             Self::File { file, .. } => write!(f, "{}", file.display()),
             Self::Dir { dir, .. } => write!(f, "{}", dir.display()),
             Self::Broken(broken) => write!(f, "{}", broken.display()),
+            Self::CodeBlock {
+                code_block,
+                syntax_label,
+                ..
+            } => write!(
+                f,
+                "\n{}",
+                skim_item::highlight_code_block(code_block.clone(), syntax_label)
+            ),
         }
     }
 }
@@ -66,6 +86,15 @@ impl Open for Link {
                     "not possible for broken path",
                 ))
             }
+            Destination::CodeBlock { code_block, .. } => Ok(Some(
+                cmd(
+                    cfg.pipe_text_snippet_cmd.command,
+                    cfg.pipe_text_snippet_cmd.args,
+                )
+                .stdin_bytes(code_block.clone())
+                .run()?
+                .status,
+            )),
         }
     }
 }
@@ -87,6 +116,23 @@ impl Display for Link {
 }
 
 impl Link {
+    pub fn new_code_block(
+        parent_name: String,
+        description: String,
+        code_block: String,
+        syntax_label: String,
+        external_commands: &ExternalCommands,
+    ) -> Self {
+        Self {
+            parent_name,
+            description,
+            link: Destination::CodeBlock {
+                code_block,
+                syntax_label,
+                open: external_commands.open.file_cmd.clone(),
+            },
+        }
+    }
     pub fn new(
         description: String,
         link: String,

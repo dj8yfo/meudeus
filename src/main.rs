@@ -4,12 +4,12 @@ extern crate sql_builder;
 use clap::ArgMatches;
 
 use colored::Colorize;
-use config::Open as OpenCfg;
 use std::{
     env, io,
     path::PathBuf,
     process::{exit, ExitStatus},
 };
+use config::Open as OpenCfg;
 
 mod commands;
 mod config;
@@ -29,7 +29,7 @@ trait Open {
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .version("v0.4.0")
+        .version("v0.5.0")
         .bin_name("mds")
         .subcommand_required(true)
         .subcommand(clap::command!("debug-cfg").about("print `Debug` representtion of `config`"))
@@ -57,24 +57,28 @@ async fn main() {
             clap::command!("l").about("`link` 2 notes A -> B, selected twice in skim interface"),
         )
         .subcommand(
-            clap::command!("o").about("start an infinite skim selection loop to `open` notes"),
+            clap::command!("o").about("start an infinite skim selection loop to `open` notes/tags"),
         )
         .subcommand(
             clap::command!("e")
-                .about("`explore` notes/tags by <c-h> (backlinks) , <c-l> (links forward)"),
+                .about("`explore` notes by <c-h> (backlinks) , <c-l> (links forward)"),
         )
         .subcommand(clap::command!("s").about(
-            "`surf` (fuzzy find) through all `[markdown reference](links)`, 
-            found in all notes, 
-            reachable by forward links from note/tag S, 
-            selected interactively by skim",
+        "`surf` (fuzzy find) through all `[markdown reference](links)` 
+        and ```code_block(s)```, found in all notes, 
+        reachable by forward links from note/tag S, 
+        selected interactively by skim",
         ))
         .subcommand(
-            clap::command!("unlink")
-                .about("`unlink` 2 notes A -> B, selected twice in skim interface"),
+            clap::command!("unlink").about("`unlink` 2 notes A -> B, selected twice in skim interface"),
         )
-        .subcommand(clap::command!("remove").about("`remove` note R, selected in skim interface"))
-        .subcommand(clap::command!("rename").about("`rename` note R, selected in skim interface"));
+        .subcommand(
+            clap::command!("remove").about("`remove` note R, selected in skim interface"),
+        )
+        .subcommand(
+            clap::command!("rename").about("`rename` note R, selected in skim interface"),
+        )
+    ;
     let matches = cmd.get_matches();
 
     let result = body(&matches).await;

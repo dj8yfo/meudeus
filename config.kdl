@@ -13,6 +13,8 @@ world {
 			dir "zellij" "action" "new-pane" "--cwd" "$DIR" "--" "broot"
 
 			url "firefox" "$URL"
+
+			pipe-$SNIPPET_TEXT-into "wl-copy"
 		}
 		
 	}

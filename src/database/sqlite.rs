@@ -160,6 +160,22 @@ impl Database for Sqlite {
         Ok(res)
     }
 
+    async fn get(&self, name: &str) -> Result<Note> {
+        log::debug!("listing notes");
+
+        let mut query = SqlBuilder::select_from(SqlName::new("notes").alias("n").baquoted());
+        query.field("*").and_where_eq("name", &quote(name));
+
+        let query = query.sql().expect("bug in list query. please report");
+
+        let res = sqlx::query(&query)
+            .map(Self::query_note)
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(res)
+    }
+
     async fn find_links_from(&self, from: &str) -> Result<Vec<Note>> {
         log::debug!("listing notes, linked by current");
 

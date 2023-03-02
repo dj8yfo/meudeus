@@ -10,6 +10,7 @@ pub use sqlite::{Sqlite, SqliteAsyncHandle};
 pub trait Database: Send + Sync {
     async fn save(&mut self, note: &Note) -> Result<()>;
     async fn list(&self) -> Result<Vec<Note>>;
+    async fn get(&self, name: &str) -> Result<Note>;
     async fn remove_note(&mut self, note: &Note) -> Result<()>;
     async fn rename_note(&mut self, note: &Note, new_name: &str) -> Result<()>;
     async fn insert_link(&mut self, from: &str, to: &str) -> Result<()>;

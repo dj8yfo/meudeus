@@ -4,7 +4,7 @@ use crate::{
     config::ExternalCommands,
     database::{Database, SqliteAsyncHandle},
     note::Note,
-    print::print_two_tokens,
+    print::format_two_tokens,
     skim::open::Iteration,
 };
 
@@ -28,9 +28,9 @@ pub(crate) async fn exec(
         .await
         .insert_link(&from_key.name(), &to_key.name())
         .await?;
-    println!(
+    eprintln!(
         "{}",
-        print_two_tokens(
+        format_two_tokens(
             "linked: ",
             &format!("\"{}\" -> \"{}\"", from.unwrap().name(), to.unwrap().name())
         )

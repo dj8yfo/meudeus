@@ -37,7 +37,7 @@ wget -O - https://raw.githubusercontent.com/dj8yfo/mds/master/install_dependenci
   ```
 
   ```
-  Usage: mds <COMMAND>
+  Usage: mds [OPTIONS] <COMMAND>
 
   Commands:
     debug-cfg  print `Debug` representtion of `config`
@@ -54,11 +54,14 @@ wget -O - https://raw.githubusercontent.com/dj8yfo/mds/master/install_dependenci
     unlink     `unlink` 2 notes A -> B, selected twice in skim interface
     remove     `remove` note R, selected in skim interface
     rename     `rename` note R, selected in skim interface
+    p          `print` tree of nodes reachable 
+                           by forward links from note P, selected either 
+                           non-interactively or in skim interface
+    select     `select` note S, i.e. print it's name to stdout
     help       Print this message or the help of the given subcommand(s)
 
   Options:
+    -c, --color    whether color output should be forced
     -h, --help     Print help
     -V, --version  Print version
-
-
   ```

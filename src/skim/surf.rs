@@ -36,7 +36,7 @@ impl Iteration {
             for link in items {
                 let result = tx.send(Arc::new(link));
                 if result.is_err() {
-                    println!("{}", format!("{:?}", result).red());
+                    eprintln!("{}", format!("{:?}", result).red());
                 }
             }
         });

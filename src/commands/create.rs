@@ -1,7 +1,7 @@
 use crate::{
     database::{Database, SqliteAsyncHandle},
     note::Note,
-    print::print_two_tokens,
+    print::format_two_tokens,
 };
 
 pub(crate) async fn exec(
@@ -15,6 +15,6 @@ pub(crate) async fn exec(
     db.lock().await.save(&note).await?;
     note.persist()?;
 
-    Ok(print_two_tokens("note created", &format!("{:?}", note)))
+    Ok(format_two_tokens("note created", &format!("{:?}", note)))
     // Err(anyhow::anyhow!("baby futter"))
 }

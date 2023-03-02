@@ -1,7 +1,7 @@
 use crate::{
     config::ExternalCommands,
     database::{Database, SqliteAsyncHandle},
-    print::print_two_tokens,
+    print::format_two_tokens,
     skim::open::Iteration,
 };
 use colored::Colorize;
@@ -22,9 +22,9 @@ pub(crate) async fn exec(
 
     db.lock().await.rename_note(&note, &new_name).await?;
 
-    println!(
+    eprintln!(
         "{}",
-        print_two_tokens("renamed", &format!("{} -> {}", note.name(), new_name))
+        format_two_tokens("renamed", &format!("{} -> {}", note.name(), new_name))
     );
     Ok("success".cyan().to_string())
 }

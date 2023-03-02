@@ -49,9 +49,11 @@ impl SkimItem for super::Link {
                     .to_string(),
             )),
 
-            super::Destination::CodeBlock { code_block, syntax_label, .. } => {
-                ItemPreview::AnsiText(highlight_code_block(code_block.clone(), syntax_label))
-            }
+            super::Destination::CodeBlock {
+                code_block,
+                syntax_label,
+                ..
+            } => ItemPreview::AnsiText(highlight_code_block(code_block.clone(), syntax_label)),
         }
     }
 }

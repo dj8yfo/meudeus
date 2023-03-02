@@ -7,7 +7,7 @@ use std::borrow::Cow;
 use skim::{AnsiString, DisplayContext, ItemPreview, PreviewContext, SkimItem};
 
 use crate::external_commands::fetch_content;
-use crate::print::print_two_tokens;
+use crate::print::format_two_tokens;
 use sqlx::Error;
 use std::sync::mpsc::{channel, RecvError};
 
@@ -18,16 +18,8 @@ impl SkimItem for super::Note {
         Cow::Owned(self.name())
     }
     fn display<'a>(&'a self, _context: DisplayContext<'a>) -> AnsiString<'a> {
-        let input = if self.file_path().is_none() {
-            if self.name() == "METATAG" || self.name() == "root" {
-                self.name().red().to_string()
-            } else {
-                self.name().cyan().to_string()
-            }
-        } else {
-            self.name().yellow().to_string()
-        };
 
+        let input = format!("{}", self);
         let ansistring = AnsiString::parse(&input);
         ansistring
     }
@@ -53,9 +45,9 @@ impl SkimItem for super::Note {
         let linked_by = map_recv_result(result_to, "Linked by:".to_string());
         let mut string = String::new();
         let title = if self.file_path().is_some() {
-            print_two_tokens("it's a note:", &self.name())
+            format_two_tokens("it's a note:", &self.name())
         } else {
-            print_two_tokens("it's a tag:", &self.name())
+            format_two_tokens("it's a tag:", &self.name())
         };
         string.push_str(&title);
         string.push_str(&"\n\n");

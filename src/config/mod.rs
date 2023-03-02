@@ -3,7 +3,7 @@ use std::{fs, path::PathBuf};
 use kdl::{KdlDocument, KdlNode};
 use regex::Regex;
 
-use crate::print::print_two_tokens;
+use crate::print::format_two_tokens;
 use anyhow::anyhow;
 
 use self::cmd_template::CmdTemplate;
@@ -192,13 +192,13 @@ impl Config {
         let xdg_dirs = xdg::BaseDirectories::with_prefix(PROGRAM_NAME)?;
 
         let config_path = xdg_dirs.get_config_file("config.kdl");
-        print_two_tokens(
+        format_two_tokens(
             "expected config path: ",
             config_path.to_str().unwrap_or("bad utf8"),
         );
-        println!(
-            "{}",
-            print_two_tokens(
+        eprintln!(
+            "{} \n",
+            format_two_tokens(
                 "expected config path: ",
                 config_path.to_str().unwrap_or("bad utf8")
             )

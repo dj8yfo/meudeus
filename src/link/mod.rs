@@ -5,7 +5,7 @@ use regex::Regex;
 
 use crate::{
     config::{cmd_template::CmdTemplate, ExternalCommands, Open as OpenCfg},
-    print::print_two_tokens,
+    print::format_two_tokens,
     Open,
 };
 mod skim_item;
@@ -74,9 +74,9 @@ impl Open for Link {
                 ))
             }
             Destination::Broken(broken) => {
-                println!(
+                eprintln!(
                     "{}",
-                    print_two_tokens(
+                    format_two_tokens(
                         "cannot open broken: ",
                         broken.to_str().unwrap_or("bad utf8")
                     )

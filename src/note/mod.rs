@@ -1,3 +1,5 @@
+use colored::Colorize;
+use std::fmt::Display;
 use std::hash::{Hash, Hasher};
 use std::io::Write;
 use std::{fs::File, io, path::PathBuf};
@@ -40,6 +42,20 @@ impl Hash for Note {
 impl PartialEq for Note {
     fn eq(&self, other: &Self) -> bool {
         self.name() == other.name()
+    }
+}
+
+impl Display for Note {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.file_path().is_none() {
+            if self.name() == "METATAG" || self.name() == "root" {
+                write!(f, "{}", self.name().red().to_string())
+            } else {
+                write!(f, "{}", self.name().cyan().to_string())
+            }
+        } else {
+            write!(f, "{}", self.name().yellow().to_string())
+        }
     }
 }
 

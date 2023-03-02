@@ -70,7 +70,7 @@ impl Iteration {
 
                 let result = tx.send(Arc::new(note));
                 if result.is_err() {
-                    println!("{}", format!("{:?}", result).red());
+                    eprintln!("{}", format!("{:?}", result).red());
                 }
             }
         });

@@ -3,7 +3,7 @@ use colored::Colorize;
 use crate::{
     config::ExternalCommands,
     database::{Database, SqliteAsyncHandle},
-    print::print_two_tokens,
+    print::format_two_tokens,
     skim::open::Iteration,
 };
 
@@ -23,9 +23,9 @@ pub(crate) async fn exec(
         .await
         .remove_link(&from.name(), &to.name())
         .await?;
-    println!(
+    eprintln!(
         "{}",
-        print_two_tokens(
+        format_two_tokens(
             "unlinked: ",
             &format!("\"{}\" -> \"{}\"", from.name(), to.name())
         )

@@ -1,7 +1,7 @@
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
-    print::print_two_tokens,
+    print::format_two_tokens,
     skim::open::Iteration,
     skim::surf::Iteration as SurfIteration,
     Open,
@@ -28,8 +28,8 @@ pub(crate) async fn exec(
     let link = SurfIteration::new(links, false).run()?;
     link.open(external_commands.open)?;
 
-    println!("{}", link);
-    println!("{}", print_two_tokens("surfed", &note.name()));
+    eprintln!("{}", link);
+    eprintln!("{}", format_two_tokens("surfed", &note.name()));
 
     Ok("success".cyan().to_string())
 }

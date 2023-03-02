@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -e
+
+NOTE="$(mds -c select)"
+watch -c -x mds -c p -n "$NOTE"

@@ -3,7 +3,7 @@ use std::fs;
 use crate::{
     config::ExternalCommands,
     database::{Database, SqliteAsyncHandle},
-    print::print_two_tokens,
+    print::format_two_tokens,
     skim::open::Iteration,
 };
 use colored::Colorize;
@@ -22,9 +22,9 @@ pub(crate) async fn exec(
     if let Some(file_path) = note.file_path() {
         fs::remove_file(file_path)?;
     }
-    println!(
+    eprintln!(
         "{}",
-        print_two_tokens(
+        format_two_tokens(
             "removed ",
             &format!("{}, {:?}", note.name(), note.file_path())
         )

@@ -29,7 +29,7 @@ trait Open {
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .version("v0.5.0")
+        .version("v0.5.1")
         .bin_name("mds")
         .subcommand_required(true)
         .subcommand(clap::command!("debug-cfg").about("print `Debug` representtion of `config`"))

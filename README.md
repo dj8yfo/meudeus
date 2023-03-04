@@ -31,7 +31,7 @@ wget -O - https://raw.githubusercontent.com/dj8yfo/mds/master/install_dependenci
   mds init  
   ```
 
-6. Enjoy:
+6. Enjoy ([fast gif tutorial is here](./tutorial.gif)):
   ```
   mds -h
   ```
@@ -57,7 +57,7 @@ wget -O - https://raw.githubusercontent.com/dj8yfo/mds/master/install_dependenci
     p          `print` tree of nodes reachable 
                            by forward links from note P, selected either 
                            non-interactively or in skim interface
-    select     `select` note S, i.e. print it's name to stdout
+    select     `select` note S, i.e. print its name to stdout
     help       Print this message or the help of the given subcommand(s)
 
   Options:
@@ -65,3 +65,4 @@ wget -O - https://raw.githubusercontent.com/dj8yfo/mds/master/install_dependenci
     -h, --help     Print help
     -V, --version  Print version
   ```
+

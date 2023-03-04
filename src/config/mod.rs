@@ -192,10 +192,6 @@ impl Config {
         let xdg_dirs = xdg::BaseDirectories::with_prefix(PROGRAM_NAME)?;
 
         let config_path = xdg_dirs.get_config_file("config.kdl");
-        format_two_tokens(
-            "expected config path: ",
-            config_path.to_str().unwrap_or("bad utf8"),
-        );
         eprintln!(
             "{} \n",
             format_two_tokens(

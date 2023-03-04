@@ -1,12 +1,14 @@
 [package]
 name = "mds"
-version = "0.6.1"
+version = "0.6.2"
 author = ["dj8yf0μl"]
 description = "A skim-based `*.md` explore and surf note-taking tool"
 repository = "https://github.com/dj8yfo/mds"
 homepage = "https://youtu.be/z4DFN72QVSw"
 keywords = ["note-taking", "cli", "cli-glue", "skim", "markdown"]
 readme = "README.md"
+
+exclude = ["tutorial.gif"]
 
 edition = "2021"
 

@@ -32,6 +32,10 @@ wget -O - https://raw.githubusercontent.com/dj8yfo/mds/master/install_dependenci
   ```
 
 6. Enjoy ([fast gif tutorial is here](./tutorial.gif)):
+
+  Both `explore` and `surf` are equipped with `<Ctrl-h>` and `<Ctrl-l>` keybindings to follow 
+  backlinks and forward links respectively.
+
   ```
   mds -h
   ```

@@ -2,7 +2,7 @@ use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     print::format_two_tokens,
-    skim::open::Iteration,
+    skim::explore::{Action, Iteration},
     skim::surf::Iteration as SurfIteration,
     Open,
 };
@@ -13,10 +13,21 @@ pub(crate) async fn exec(
     surf: SurfParsing,
     external_commands: ExternalCommands,
 ) -> Result<String, anyhow::Error> {
-    let list = db.lock().await.list().await?;
+    let mut list = db.lock().await.list().await?;
 
-    let multi = false;
-    let note = Iteration::new(list, db.clone(), multi, external_commands.clone()).run()?;
+    let note = loop {
+        let out = Iteration::new(list.clone(), db.clone(), external_commands.clone())
+            .run()
+            .await?;
+
+        match out.action {
+            Action::Noop => {}
+            Action::Open(note) => {
+                break note;
+            }
+        }
+        list = out.next_items;
+    };
 
     let all_vec = note.reachable_notes(db.clone()).await?;
     let links: std::io::Result<Vec<_>> = all_vec

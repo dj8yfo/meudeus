@@ -18,7 +18,7 @@ pub struct Config {
     pub external_commands: ExternalCommands,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SurfParsing {
     pub url_regex: Regex,
     pub markdown_reference_link_regex: Regex,

@@ -1,7 +1,7 @@
 use colored::Colorize;
 
 use crate::{
-    config::ExternalCommands,
+    config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     note::Note,
     print::format_two_tokens,
@@ -11,14 +11,21 @@ use crate::{
 pub(crate) async fn exec(
     db: SqliteAsyncHandle,
     external_commands: ExternalCommands,
+    surf_parsing: SurfParsing,
 ) -> Result<String, anyhow::Error> {
     let list = db.lock().await.list().await?;
 
     let multi = false;
     let (mut from, mut to): (Option<Note>, Option<Note>) = (None, None);
     for target in [&mut from, &mut to] {
-        let note =
-            Iteration::new(list.clone(), db.clone(), multi, external_commands.clone()).run()?;
+        let note = Iteration::new(
+            list.clone(),
+            db.clone(),
+            multi,
+            external_commands.clone(),
+            surf_parsing.clone(),
+        )
+        .run()?;
 
         *target = Some(note);
     }

@@ -15,17 +15,7 @@ impl SkimItem for super::Link {
         Cow::Owned(format!("{}", self))
     }
     fn display<'a>(&'a self, _context: DisplayContext<'a>) -> AnsiString<'a> {
-        let parent_name = self.parent_name.yellow().to_string();
-        let description = match self.link {
-            super::Destination::URL(..) => self.description.green().to_string(),
-            super::Destination::File { .. } => self.description.cyan().to_string(),
-            super::Destination::Dir { .. } => self.description.magenta().to_string(),
-            super::Destination::Broken(..) => self.description.red().to_string(),
-            super::Destination::CodeBlock { .. } => self.description.blue().to_string(),
-        };
-
-        let input = format!("{} -> [{}]", parent_name, description);
-
+        let input = self.skim_display();
         let ansistring = AnsiString::parse(&input);
         ansistring
     }

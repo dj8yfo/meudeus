@@ -1,6 +1,7 @@
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
+    note::PreviewType,
     print::format_two_tokens,
     skim::explore::{Action, Iteration},
     skim::surf::Iteration as SurfIteration,
@@ -15,15 +16,25 @@ pub(crate) async fn exec(
 ) -> Result<String, anyhow::Error> {
     let mut list = db.lock().await.list().await?;
 
+    let mut preview_type = PreviewType::Details;
     let note = loop {
-        let out = Iteration::new(list.clone(), db.clone(), external_commands.clone())
-            .run()
-            .await?;
+        let out = Iteration::new(
+            list.clone(),
+            db.clone(),
+            external_commands.clone(),
+            surf.clone(),
+            preview_type,
+        )
+        .run()
+        .await?;
 
         match out.action {
             Action::Noop => {}
             Action::Open(note) => {
                 break note;
+            }
+            Action::TogglePreview => {
+                preview_type = preview_type.toggle();
             }
         }
         list = out.next_items;

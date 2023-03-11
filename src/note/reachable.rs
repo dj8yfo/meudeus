@@ -2,7 +2,11 @@ use std::{collections::HashSet, fmt::Display};
 
 use sqlx::Result as SqlxResult;
 
-use crate::database::{Database, SqliteAsyncHandle};
+use crate::{
+    config::{ExternalCommands, SurfParsing},
+    database::{Database, SqliteAsyncHandle},
+    link::Link,
+};
 use colored::Colorize;
 
 use super::Note;
@@ -13,6 +17,7 @@ use async_recursion::async_recursion;
 #[derive(Clone)]
 pub enum NoteTerm {
     Note(Note),
+    Link(Link),
     Cycle(String),
 }
 
@@ -21,6 +26,10 @@ impl Display for NoteTerm {
         match self {
             Self::Note(note) => {
                 write!(f, "{}", note)
+            }
+
+            Self::Link(link) => {
+                write!(f, "{}", link.skim_display())
             }
             Self::Cycle(cycle) => {
                 write!(f, "⟳ {}", cycle.truecolor(150, 75, 0).to_string())
@@ -58,6 +67,8 @@ impl super::Note {
     pub async fn construct_term_tree(
         &self,
         mut all_reachable: HashSet<Note>,
+        external_commands: ExternalCommands,
+        surf_parsing: SurfParsing,
         db: SqliteAsyncHandle,
     ) -> SqlxResult<(Tree<NoteTerm>, HashSet<Note>)> {
         let mut tree = Tree::new(NoteTerm::Note(self.clone()));
@@ -69,11 +80,21 @@ impl super::Note {
             if all_reachable.contains(&next) {
                 tree.push(Tree::new(NoteTerm::Cycle(next.name())));
             } else {
-                let (next_tree, roundtrip_reachable) =
-                    next.construct_term_tree(all_reachable, db.clone()).await?;
+                let (next_tree, roundtrip_reachable) = next
+                    .construct_term_tree(
+                        all_reachable,
+                        external_commands.clone(),
+                        surf_parsing.clone(),
+                        db.clone(),
+                    )
+                    .await?;
                 all_reachable = roundtrip_reachable;
                 tree.push(next_tree);
             }
+        }
+        let links = self.parse(&surf_parsing, &external_commands)?;
+        for link in links {
+            tree.push(NoteTerm::Link(link));
         }
 
         Ok((tree, all_reachable))

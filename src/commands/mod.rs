@@ -9,7 +9,6 @@ pub mod link;
 pub mod unlink;
 
 pub mod explore;
-pub mod open;
 pub mod surf;
 
 pub mod print;

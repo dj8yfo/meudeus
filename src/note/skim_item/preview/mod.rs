@@ -1,0 +1,2 @@
+mod details;
+mod structure;

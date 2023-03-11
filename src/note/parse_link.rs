@@ -62,7 +62,11 @@ impl super::Note {
                         String::from_utf8(block.info.clone()).unwrap_or("bad_utf".to_string());
                     let code_block =
                         String::from_utf8(block.literal.clone()).unwrap_or("bad_utf".to_string());
-                    let description = format!("snippet[{}]", counter);
+                    let description = if let Some(line) = code_block.lines().next() {
+                        line.to_string()
+                    } else {
+                        format!("snippet[{}]", counter)
+                    };
                     result.push(Link::new_code_block(
                         self.name(),
                         description,

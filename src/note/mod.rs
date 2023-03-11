@@ -4,7 +4,8 @@ use std::hash::{Hash, Hasher};
 use std::io::Write;
 use std::{fs::File, io, path::PathBuf};
 
-use crate::config::{cmd_template::CmdTemplate, Open as OpenCfg};
+use crate::config::Open as OpenCfg;
+use crate::config::{ExternalCommands, SurfParsing};
 use crate::database::SqliteAsyncHandle;
 use crate::Open;
 mod parse_link;
@@ -15,11 +16,29 @@ use crate::database::Database;
 use duct::cmd;
 use sqlx::Result as SqlxResult;
 
+#[derive(Clone, Debug, Copy)]
+pub enum PreviewType {
+    Details,
+    Structure,
+}
+
+impl PreviewType {
+    pub fn toggle(&self) -> Self {
+        match self {
+            Self::Details => Self::Structure,
+            Self::Structure => Self::Details,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct AsyncQeuryResources {
     pub db: SqliteAsyncHandle,
-    pub file_preview_cmd: CmdTemplate,
+    pub external_commands: ExternalCommands,
+    pub surf_parsing: SurfParsing,
+    pub preview_type: PreviewType,
 }
+
 #[derive(Clone, Debug)]
 pub enum Note {
     MdFile {

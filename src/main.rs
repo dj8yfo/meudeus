@@ -29,17 +29,17 @@ trait Open {
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .version("v0.7.0")
+        .version("v0.8.0")
         .bin_name("mds")
         .arg(clap::arg!(-c --color  "whether color output should be forced"))
         .subcommand_required(true)
-        .subcommand(clap::command!("debug-cfg").about("print `Debug` representtion of `config`"))
+        .subcommand(clap::command!("debug-cfg").about("print Debug representtion of config"))
         .subcommand(
             clap::command!("init")
                 .about("`initialize` .sqlite database in notes dir, specified by config"),
         )
         .subcommand(
-            clap::command!("n").about("create a `note`").arg(
+            clap::command!("n").about("create a note").arg(
                 clap::arg!([title] "note title (unique name among notes and tags)")
                     .value_parser(clap::value_parser!(String))
                     .required(true),
@@ -47,7 +47,7 @@ async fn main() {
         )
         .subcommand(
             clap::command!("t")
-                .about("create a `tag` (note without file body)")
+                .about("create a tag (note without file body)")
                 .arg(
                     clap::arg!([title] "tag title (unique name among notes and tags)")
                         .value_parser(clap::value_parser!(String))
@@ -55,31 +55,26 @@ async fn main() {
                 ),
         )
         .subcommand(
-            clap::command!("l").about("`link` 2 notes A -> B, selected twice in skim interface"),
+            clap::command!("l").about("link 2 notes A -> B, selected twice in skim interface"),
         )
         .subcommand(
-            clap::command!("o").about("start an infinite skim selection loop to `open` notes/tags"),
-        )
-        .subcommand(
-            clap::command!("e")
-                .about("`explore` notes by <c-h> (backlinks) , <c-l> (links forward)"),
+            clap::command!("e").about("explore notes by <c-h> (backlinks) , <c-l> (links forward)"),
         )
         .subcommand(clap::command!("s").about(
-            "`surf` (fuzzy find) through all `[markdown reference](links)` 
+            "surf (fuzzy find) through all [markdown reference](links) 
         and ```code_block(s)```, found in all notes, 
         reachable by forward links from note/tag S, 
         selected interactively by skim",
         ))
         .subcommand(
-            clap::command!("unlink")
-                .about("`unlink` 2 notes A -> B, selected twice in skim interface"),
+            clap::command!("ul").about("unlink 2 notes A -> B, selected twice in skim interface"),
         )
-        .subcommand(clap::command!("remove").about("`remove` note R, selected in skim interface"))
-        .subcommand(clap::command!("rename").about("`rename` note R, selected in skim interface"))
+        .subcommand(clap::command!("remove").about("remove note R, selected in skim interface"))
+        .subcommand(clap::command!("rename").about("rename note R, selected in skim interface"))
         .subcommand(
             clap::command!("p")
                 .about(
-                    "`print` tree of nodes reachable 
+                    "print tree of nodes reachable 
         by forward links from note P, selected either 
         non-interactively or in skim interface",
                 )
@@ -89,8 +84,9 @@ async fn main() {
                         .required(false),
                 ),
         )
-        .subcommand(clap::command!("select").about("`select` note S, i.e. print it's name to stdout"))
-    ;
+        .subcommand(
+            clap::command!("select").about("select note S, i.e. print it's name to stdout"),
+        );
 
     let matches = cmd.get_matches();
     if matches.get_flag("color") {
@@ -138,20 +134,32 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
 
                     commands::create::exec(title, db, is_tag).await
                 }
-                "o" => commands::open::exec(db, config.external_commands).await,
-                "e" => commands::explore::exec(db, config.external_commands).await,
-                "l" => commands::link::exec(db, config.external_commands).await,
+                "e" => {
+                    commands::explore::exec(db, config.external_commands, config.surf_parsing).await
+                }
+                "l" => {
+                    commands::link::exec(db, config.external_commands, config.surf_parsing).await
+                }
                 "s" => {
                     commands::surf::exec(db, config.surf_parsing, config.external_commands).await
                 }
-                "unlink" => commands::unlink::exec(db, config.external_commands).await,
-                "remove" => commands::remove::exec(db, config.external_commands).await,
-                "rename" => commands::rename::exec(db, config.external_commands).await,
+                "ul" => {
+                    commands::unlink::exec(db, config.external_commands, config.surf_parsing).await
+                }
+                "remove" => {
+                    commands::remove::exec(db, config.external_commands, config.surf_parsing).await
+                }
+                "rename" => {
+                    commands::rename::exec(db, config.external_commands, config.surf_parsing).await
+                }
                 "p" => {
                     let name = matches.get_one::<String>("name").cloned();
-                    commands::print::exec(db, config.external_commands, name).await
+                    commands::print::exec(db, config.external_commands, config.surf_parsing, name)
+                        .await
                 }
-                "select" => commands::select::exec(db, config.external_commands).await,
+                "select" => {
+                    commands::select::exec(db, config.external_commands, config.surf_parsing).await
+                }
                 _ => unreachable!("clap should ensure we don't get here"),
             }
         }

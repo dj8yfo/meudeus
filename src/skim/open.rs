@@ -7,9 +7,9 @@ use skim::{
 };
 
 use crate::{
-    config::ExternalCommands,
+    config::{ExternalCommands, SurfParsing},
     database::SqliteAsyncHandle,
-    note::{AsyncQeuryResources, Note},
+    note::{AsyncQeuryResources, Note, PreviewType},
 };
 
 pub(crate) struct Iteration {
@@ -17,6 +17,7 @@ pub(crate) struct Iteration {
     items: Option<Vec<Note>>,
     multi: bool,
     external_commands: ExternalCommands,
+    surf_parsing: SurfParsing,
 }
 
 impl Iteration {
@@ -25,12 +26,14 @@ impl Iteration {
         db: SqliteAsyncHandle,
         multi: bool,
         external_commands: ExternalCommands,
+        surf_parsing: SurfParsing,
     ) -> Self {
         Self {
             items: Some(items),
             db,
             multi,
             external_commands,
+            surf_parsing,
         }
     }
 
@@ -51,7 +54,9 @@ impl Iteration {
             for mut note in items {
                 note.set_resources(AsyncQeuryResources {
                     db: db.clone(),
-                    file_preview_cmd: self.external_commands.preview.file_cmd.clone(),
+                    external_commands: self.external_commands.clone(),
+                    surf_parsing: self.surf_parsing.clone(),
+                    preview_type: PreviewType::Details,
                 });
                 let result = tx.send(Arc::new(note));
                 if result.is_err() {

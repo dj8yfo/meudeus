@@ -1,5 +1,6 @@
 use std::{fmt::Display, io, path::PathBuf};
 
+use colored::Colorize;
 use duct::cmd;
 use regex::Regex;
 
@@ -116,6 +117,19 @@ impl Display for Link {
 }
 
 impl Link {
+    pub fn skim_display(&self) -> String {
+        let parent_name = self.parent_name.truecolor(242, 242, 223).to_string();
+        let description = match self.link {
+            Destination::URL(..) => self.description.green().to_string(),
+            Destination::File { .. } => self.description.cyan().to_string(),
+            Destination::Dir { .. } => self.description.magenta().to_string(),
+            Destination::Broken(..) => self.description.red().to_string(),
+            Destination::CodeBlock { .. } => self.description.blue().to_string(),
+        };
+
+        let input = format!("{} -> [{}]", parent_name, description);
+        input
+    }
     pub fn new_code_block(
         parent_name: String,
         description: String,

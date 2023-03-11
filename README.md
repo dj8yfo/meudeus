@@ -1,12 +1,12 @@
 ![crates.io](https://img.shields.io/crates/v/mds.svg)
 
-# Get focused
+# Concentrate by means of relaxation
 
-![Alt](./logo.gif "Getting focused in your own special way")
+![Alt](./logo.gif "Concentrate by means of relaxation")
 
 # Flow
 
-1. Install the beast itself.
+1. Install the binary itself.
 
 ```
 cargo install --locked mds 
@@ -36,6 +36,9 @@ wget -O - https://raw.githubusercontent.com/dj8yfo/mds/master/install_dependenci
   Both `explore` and `surf` are equipped with `<Ctrl-h>` and `<Ctrl-l>` keybindings to follow 
   backlinks and forward links respectively.
 
+  Both `explore` and `surf` are equipped with `<Ctrl-t>` keyding to toggle between details and structural
+  preview of current note or note subgraph respectively. This renders `p/print` command somewhat redundant.
+
   ```
   mds -h
   ```
@@ -44,24 +47,23 @@ wget -O - https://raw.githubusercontent.com/dj8yfo/mds/master/install_dependenci
   Usage: mds [OPTIONS] <COMMAND>
 
   Commands:
-    debug-cfg  print `Debug` representtion of `config`
+    debug-cfg  print Debug representtion of config
     init       `initialize` .sqlite database in notes dir, specified by config
-    n          create a `note`
-    t          create a `tag` (note without file body)
-    l          `link` 2 notes A -> B, selected twice in skim interface
-    o          start an infinite skim selection loop to `open` notes/tags
-    e          `explore` notes by <c-h> (backlinks) , <c-l> (links forward)
-    s          `surf` (fuzzy find) through all `[markdown reference](links)` 
+    n          create a note
+    t          create a tag (note without file body)
+    l          link 2 notes A -> B, selected twice in skim interface
+    e          explore notes by <c-h> (backlinks) , <c-l> (links forward)
+    s          surf (fuzzy find) through all [markdown reference](links) 
                            and ```code_block(s)```, found in all notes, 
                            reachable by forward links from note/tag S, 
                            selected interactively by skim
-    unlink     `unlink` 2 notes A -> B, selected twice in skim interface
-    remove     `remove` note R, selected in skim interface
-    rename     `rename` note R, selected in skim interface
-    p          `print` tree of nodes reachable 
+    ul         unlink 2 notes A -> B, selected twice in skim interface
+    remove     remove note R, selected in skim interface
+    rename     rename note R, selected in skim interface
+    p          print tree of nodes reachable 
                            by forward links from note P, selected either 
                            non-interactively or in skim interface
-    select     `select` note S, i.e. print its name to stdout
+    select     select note S, i.e. print it's name to stdout
     help       Print this message or the help of the given subcommand(s)
 
   Options:

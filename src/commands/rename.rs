@@ -1,5 +1,5 @@
 use crate::{
-    config::ExternalCommands,
+    config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     print::format_two_tokens,
     skim::open::Iteration,
@@ -10,11 +10,19 @@ use inquire::Text;
 pub(crate) async fn exec(
     db: SqliteAsyncHandle,
     external_commands: ExternalCommands,
+    surf_parsing: SurfParsing,
 ) -> Result<String, anyhow::Error> {
     let list = db.lock().await.list().await?;
 
     let multi = false;
-    let note = Iteration::new(list, db.clone(), multi, external_commands.clone()).run()?;
+    let note = Iteration::new(
+        list,
+        db.clone(),
+        multi,
+        external_commands.clone(),
+        surf_parsing,
+    )
+    .run()?;
 
     let new_name = Text::new("Enter new note's name:")
         .with_initial_value(&note.name())

@@ -7,20 +7,23 @@ use skim::{
 };
 
 use crate::{
-    config::ExternalCommands,
+    config::{ExternalCommands, SurfParsing},
     database::SqliteAsyncHandle,
-    note::{AsyncQeuryResources, Note},
+    note::{AsyncQeuryResources, Note, PreviewType},
 };
 
 pub(crate) struct Iteration {
     db: SqliteAsyncHandle,
     items: Option<Vec<Note>>,
     external_commands: ExternalCommands,
+    surf_parsing: SurfParsing,
+    preview_type: PreviewType,
 }
 
 pub enum Action {
     Open(Note),
     Noop,
+    TogglePreview,
 }
 
 pub struct Out {
@@ -33,11 +36,15 @@ impl Iteration {
         items: Vec<Note>,
         db: SqliteAsyncHandle,
         external_commands: ExternalCommands,
+        surf_parsing: SurfParsing,
+        preview_type: PreviewType,
     ) -> Self {
         Self {
             items: Some(items),
             db,
             external_commands,
+            surf_parsing,
+            preview_type,
         }
     }
 
@@ -54,6 +61,7 @@ impl Iteration {
                 "ESC:abort",
                 "ctrl-h:accept",
                 "ctrl-l:accept",
+                "ctrl-t:accept",
             ])
             .build()?;
 
@@ -65,7 +73,9 @@ impl Iteration {
             for mut note in cloned {
                 note.set_resources(AsyncQeuryResources {
                     db: db.clone(),
-                    file_preview_cmd: self.external_commands.preview.file_cmd.clone(),
+                    external_commands: self.external_commands.clone(),
+                    surf_parsing: self.surf_parsing.clone(),
+                    preview_type: self.preview_type,
                 });
 
                 let result = tx.send(Arc::new(note));
@@ -133,6 +143,13 @@ impl Iteration {
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
+                }
+
+                Key::Ctrl('t') => {
+                    return Ok(Out {
+                        action: Action::TogglePreview,
+                        next_items: items,
+                    });
                 }
                 _ => {
                     unreachable!();

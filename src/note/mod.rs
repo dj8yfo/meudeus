@@ -31,6 +31,12 @@ impl PreviewType {
     }
 }
 
+impl Default for PreviewType {
+    fn default() -> Self {
+        Self::Structure
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct AsyncQeuryResources {
     pub db: SqliteAsyncHandle,

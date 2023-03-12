@@ -14,7 +14,7 @@ pub(crate) async fn exec(
 ) -> Result<String, anyhow::Error> {
     let mut list = db.lock().await.list().await?;
 
-    let mut preview_type = PreviewType::Details;
+    let mut preview_type = PreviewType::default();
     loop {
         let out = Iteration::new(
             list.clone(),

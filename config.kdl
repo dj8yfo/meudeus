@@ -23,6 +23,8 @@ world {
 		markdown-reference-link-regex  r#"\[(?P<description>[^\]]+)\]\((?P<url>[^\)]+)\)"#	
 
 		url-regex  r#"^https?://\S+"#		
+
+		task-item-regex r#"(?P<whitespace>(  )*)- \[(?P<checkmark>[x ])\]\s+(?P<task_text>.+)"#
 	}
 
 	notes-work-dir "/home/user/notes"

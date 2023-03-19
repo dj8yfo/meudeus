@@ -8,10 +8,11 @@ use crate::config::Open as OpenCfg;
 use crate::config::{ExternalCommands, SurfParsing};
 use crate::database::SqliteAsyncHandle;
 use crate::Open;
-mod parse_link;
+mod links_term_tree;
 mod random;
 mod reachable;
 mod skim_item;
+mod task_items_term_tree;
 use crate::database::Database;
 use duct::cmd;
 use sqlx::Result as SqlxResult;
@@ -19,21 +20,23 @@ use sqlx::Result as SqlxResult;
 #[derive(Clone, Debug, Copy)]
 pub enum PreviewType {
     Details,
-    Structure,
+    LinkStructure,
+    TaskStructure,
 }
 
 impl PreviewType {
     pub fn toggle(&self) -> Self {
         match self {
-            Self::Details => Self::Structure,
-            Self::Structure => Self::Details,
+            Self::Details => Self::LinkStructure,
+            Self::LinkStructure => Self::TaskStructure,
+            Self::TaskStructure => Self::Details,
         }
     }
 }
 
 impl Default for PreviewType {
     fn default() -> Self {
-        Self::Structure
+        Self::LinkStructure
     }
 }
 

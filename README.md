@@ -2,7 +2,7 @@
 
 # Concentrate by means of relaxation
 
-![Alt](./logo.gif "Concentrate by means of relaxation")
+![Alt](./logo.jpeg "Concentrate by means of relaxation")
 
 # Flow
 

@@ -6,9 +6,11 @@ use regex::Regex;
 
 use crate::{
     config::{cmd_template::CmdTemplate, ExternalCommands, Open as OpenCfg},
+    highlight::highlight_code_block,
     print::format_two_tokens,
     Open,
 };
+mod parse;
 mod skim_item;
 
 #[derive(Clone, Debug)]
@@ -41,11 +43,7 @@ impl Display for Destination {
                 code_block,
                 syntax_label,
                 ..
-            } => write!(
-                f,
-                "\n{}",
-                skim_item::highlight_code_block(code_block.clone(), syntax_label)
-            ),
+            } => write!(f, "\n{}", highlight_code_block(code_block, syntax_label)),
         }
     }
 }

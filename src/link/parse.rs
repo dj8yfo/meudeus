@@ -2,8 +2,10 @@ use std::{fs, path::PathBuf};
 
 use crate::{
     config::{ExternalCommands, SurfParsing},
-    link::Link,
+    note::Note,
 };
+
+use super::Link;
 
 use comrak::nodes::{AstNode, NodeValue};
 use comrak::{parse_document, Arena, ComrakOptions};
@@ -18,9 +20,9 @@ where
     }
 }
 
-impl super::Note {
+impl Link {
     fn reference_link_parse(
-        &self,
+        note: &Note,
         result: &mut Vec<Link>,
         surf: &SurfParsing,
         external_commands: &ExternalCommands,
@@ -35,7 +37,7 @@ impl super::Note {
                 link["description"].to_string(),
                 link["url"].to_string(),
                 file_path.clone(),
-                self.name(),
+                note.name(),
                 &surf.url_regex,
                 external_commands,
             ));
@@ -43,7 +45,7 @@ impl super::Note {
     }
 
     fn ast_parse_code_blocks(
-        &self,
+        note: &Note,
         result: &mut Vec<Link>,
         external_commands: &ExternalCommands,
         file_content: &str,
@@ -68,7 +70,7 @@ impl super::Note {
                         format!("snippet[{}]", counter)
                     };
                     result.push(Link::new_code_block(
-                        self.name(),
+                        note.name(),
                         description,
                         code_block,
                         syntax_label,
@@ -81,22 +83,23 @@ impl super::Note {
         );
     }
     pub fn parse(
-        &self,
+        note: &Note,
         surf: &SurfParsing,
         external_commands: &ExternalCommands,
     ) -> std::io::Result<Vec<Link>> {
-        if let Some(file_path) = self.file_path() {
+        if let Some(file_path) = note.file_path() {
             let mut result = vec![];
             let file_content = fs::read_to_string(file_path)?;
 
-            self.reference_link_parse(
+            Self::reference_link_parse(
+                note,
                 &mut result,
                 surf,
                 external_commands,
                 file_path,
                 &file_content,
             );
-            self.ast_parse_code_blocks(&mut result, external_commands, &file_content);
+            Self::ast_parse_code_blocks(note, &mut result, external_commands, &file_content);
 
             Ok(result.into_iter().rev().collect())
         } else {

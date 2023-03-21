@@ -22,6 +22,7 @@ pub struct Config {
 pub struct SurfParsing {
     pub url_regex: Regex,
     pub markdown_reference_link_regex: Regex,
+    pub task_item_regex: Regex,
 }
 
 #[derive(Debug, Clone)]
@@ -157,12 +158,26 @@ impl TryFrom<&KdlNode> for SurfParsing {
             .ok_or(anyhow!("should be string"))?
             .to_string();
 
+        let task_item_regex = value
+            .children()
+            .ok_or(anyhow!("`surf-parsing` should have children"))?
+            .get("task-item-regex")
+            .ok_or(anyhow!("no `task-item-regex` in config"))?
+            .get(0)
+            .ok_or(anyhow!("arg not found"))?
+            .value()
+            .as_string()
+            .ok_or(anyhow!("should be string"))?
+            .to_string();
+
         let url_regex = Regex::new(&url_regex)?;
         let markdown_reference_link_regex = Regex::new(&markdown_reference_link_regex)?;
+        let task_item_regex = Regex::new(&task_item_regex)?;
 
         Ok(Self {
             url_regex,
             markdown_reference_link_regex,
+            task_item_regex,
         })
     }
 }

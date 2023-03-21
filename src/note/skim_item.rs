@@ -20,7 +20,8 @@ impl SkimItem for super::Note {
         match self.resources() {
             Some(resources) => match resources.preview_type {
                 PreviewType::Details => self.details(),
-                PreviewType::Structure => self.structure(),
+                PreviewType::LinkStructure => self.link_structure(),
+                PreviewType::TaskStructure => self.task_structure(),
             },
             None => ItemPreview::Text("<empty>".to_string()),
         }

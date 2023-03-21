@@ -1,6 +1,7 @@
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
+    link::Link,
     note::PreviewType,
     print::format_two_tokens,
     skim::explore::{Action, Iteration},
@@ -43,7 +44,7 @@ pub(crate) async fn exec(
     let all_vec = note.reachable_notes(db.clone()).await?;
     let links: std::io::Result<Vec<_>> = all_vec
         .into_iter()
-        .map(|v| v.parse(&surf, &external_commands))
+        .map(|v| Link::parse(&v, &surf, &external_commands))
         .collect();
     let links: Vec<_> = links?.into_iter().flat_map(|v| v).collect();
 

@@ -26,6 +26,7 @@ impl Iteration {
         let options = SkimOptionsBuilder::default()
             .height(Some("100%"))
             .preview(Some(""))
+            .preview_window(Some("right:65%"))
             .multi(self.multi)
             .bind(vec!["ctrl-c:abort", "Enter:accept", "ESC:abort"])
             .build()?;

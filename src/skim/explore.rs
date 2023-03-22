@@ -53,6 +53,7 @@ impl Iteration {
 
         let options = SkimOptionsBuilder::default()
             .height(Some("100%"))
+            .preview_window(Some("right:65%"))
             .preview(Some(""))
             .multi(false)
             .bind(vec![

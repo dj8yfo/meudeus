@@ -4,6 +4,9 @@ use colored::Colorize;
 use regex::Regex;
 
 use crate::{config::SurfParsing, highlight::highlight_code_block, note::Note};
+mod skim_item;
+
+pub use skim_item::TaskTreeWrapper;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TaskItem {
@@ -58,19 +61,60 @@ impl TaskItem {
 }
 
 impl TaskItem {
-    pub fn skim_display(&self) -> String {
+    pub fn skim_display(&self, indented: bool) -> String {
+        let indent = if indented {
+            let mut string = String::new();
+            for _i in 0..self.nested_level {
+                string.push_str("  ");
+            }
+            string
+        } else {
+            "".to_string()
+        };
         let symbol = if self.completed {
             "✓".green().to_string()
         } else {
             " ".to_string()
         };
         let input = format!(
-            "[{}] {} {}",
+            "{}[{}] {} {}",
+            indent,
             symbol,
             highlight_code_block(&self.title, "markdown"),
             " ".black().to_string()
         );
         input
+    }
+
+    pub fn skim_display_mono(&self, indented: bool) -> String {
+        let indent = if indented {
+            let mut string = String::new();
+            for _i in 0..self.nested_level {
+                string.push_str("  ");
+            }
+            string
+        } else {
+            "".to_string()
+        };
+        let symbol = if self.completed {
+            "✓".to_string()
+        } else {
+            " ".to_string()
+        };
+        let input = format!("{}[{}] {} {}", indent, symbol, self.title, " ".to_string());
+        input
+    }
+
+    pub fn toggle(mut self) -> std::io::Result<()> {
+        let prev = format!("{}", self.skim_display(false));
+        self.completed = !self.completed;
+        let next = format!("{}", self.skim_display(false));
+        println!("{} -> {}", prev, next);
+
+        let mut file_content = fs::read_to_string(&self.file_name)?;
+        let target = if self.completed { "x" } else { " " };
+        file_content.replace_range(self.checkmark_offsets_in_string, target);
+        fs::write(&self.file_name, file_content)
     }
 }
 
@@ -82,7 +126,7 @@ mod tests {
 
     use super::TaskItem;
 
-    static test_str: &str = r#"
+    static TEST_STR: &str = r#"
 - [x] move `construct_term_tree` to a separate module on note.rs  <Tue Mar 21 08:18:59 PM EET 2023>
 - [ ] create `TaskItem` struct  <Tue Mar 21 08:18:59 PM EET 2023>
   - [x] test parsing of this snippet <Tue Mar 21 09:47:55 PM EET 2023>
@@ -98,7 +142,7 @@ mod tests {
         let regex =
             Regex::new(r#"(?P<whitespace>(  )*)- \[(?P<checkmark>[x ])\]\s+(?P<task_text>.+)"#)
                 .unwrap();
-        let list = TaskItem::parse_string(&PathBuf::from("./tmp.rs"), test_str, &regex);
+        let list = TaskItem::parse_string(&PathBuf::from("./tmp.rs"), TEST_STR, &regex);
         assert_eq!(8, list.len());
         assert_eq!(
             &list[4],

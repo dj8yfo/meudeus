@@ -27,7 +27,7 @@ impl Display for NoteTaskItemTerm {
             }
 
             Self::Task(task) => {
-                write!(f, "{}", task.skim_display())
+                write!(f, "{}", task.skim_display(false))
             }
             Self::Cycle(cycle) => {
                 write!(f, "⟳ {}", cycle.truecolor(150, 75, 0).to_string())
@@ -37,15 +37,17 @@ impl Display for NoteTaskItemTerm {
 }
 
 impl NoteTaskItemTerm {
-    pub fn parse(input: &[TaskItem]) -> Vec<Tree<Self>> {
+    pub fn parse(input: &[TaskItem], group_by_top_level: bool) -> Vec<Tree<Self>> {
         let mut result = vec![];
         let mut subrange_end = 0;
         let mut index = 0;
         while index < input.len() {
-            if index < subrange_end {
-                index = subrange_end;
-                if index >= input.len() {
-                    break;
+            if group_by_top_level {
+                if index < subrange_end {
+                    index = subrange_end;
+                    if index >= input.len() {
+                        break;
+                    }
                 }
             }
             let mut tree = Tree::new(NoteTaskItemTerm::Task(input[index].clone()));
@@ -59,7 +61,7 @@ impl NoteTaskItemTerm {
                     subrange_end += 1;
                 }
                 let subslice = &input[subrange_start..subrange_end];
-                let children = NoteTaskItemTerm::parse(subslice);
+                let children = NoteTaskItemTerm::parse(subslice, true);
                 for child in children {
                     tree.push(child);
                 }
@@ -97,7 +99,7 @@ impl Note {
         }
         let tasks = TaskItem::parse(self, &surf_parsing)?;
 
-        let trees = NoteTaskItemTerm::parse(&tasks);
+        let trees = NoteTaskItemTerm::parse(&tasks, true);
         for task in trees {
             tree.push(task);
         }

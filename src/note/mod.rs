@@ -13,6 +13,7 @@ mod random;
 mod reachable;
 mod skim_item;
 mod task_items_term_tree;
+pub use self::task_items_term_tree::NoteTaskItemTerm;
 use crate::database::Database;
 use duct::cmd;
 use sqlx::Result as SqlxResult;

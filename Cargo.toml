@@ -1,6 +1,6 @@
 [package]
 name = "mds"
-version = "0.10.0"
+version = "0.10.1"
 author = ["dj8yf0μl"]
 description = "A skim-based `*.md` explore and surf note-taking tool"
 repository = "https://github.com/dj8yfo/mds"
@@ -28,7 +28,7 @@ sqlx = { version = "0.6", features = [
   "sqlite",
 ] }
 
-skim = "0.10.2"
+skim = "0.10.4"
 async-trait = "0.1.58"
 log = "0.4.17"
 tokio = { version = "1", features = ["full"] }

@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
@@ -41,7 +43,10 @@ pub(crate) async fn exec(
         let tasks = TaskItem::parse(&note, &surf)?;
 
         let tasks = NoteTaskItemTerm::parse(&tasks, false);
-        let tasks = tasks.into_iter().map(TaskTreeWrapper).collect::<Vec<_>>();
+        let tasks = tasks
+            .into_iter()
+            .map(|el| TaskTreeWrapper(el, Arc::new(Mutex::new(None)), Arc::new(Mutex::new(None))))
+            .collect::<Vec<_>>();
 
         let selected_tasks = CheckmarkIteration::new(tasks).run()?;
         for task in selected_tasks {

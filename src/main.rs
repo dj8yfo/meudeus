@@ -31,7 +31,7 @@ trait Open {
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .version("v0.9.1")
+        .version("v0.10.0")
         .bin_name("mds")
         .arg(clap::arg!(-c --color  "whether color output should be forced"))
         .subcommand_required(true)
@@ -86,8 +86,10 @@ async fn main() {
                         .required(false),
                 ),
         )
+        .subcommand(clap::command!("select").about("select note S, i.e. print it's name to stdout"))
         .subcommand(
-            clap::command!("select").about("select note S, i.e. print it's name to stdout"),
+            clap::command!("chm")
+                .about("checkmark, toggle state TODO/DONE of multiple task items, found in a selected note"),
         );
 
     let matches = cmd.get_matches();
@@ -161,6 +163,10 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                 }
                 "select" => {
                     commands::select::exec(db, config.external_commands, config.surf_parsing).await
+                }
+                "chm" => {
+                    commands::checkmark::exec(db, config.surf_parsing, config.external_commands)
+                        .await
                 }
                 _ => unreachable!("clap should ensure we don't get here"),
             }

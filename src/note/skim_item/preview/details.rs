@@ -1,5 +1,4 @@
 use colored::Colorize;
-use skim::ItemPreview;
 
 use crate::note::Note;
 use comfy_table::presets::UTF8_FULL;
@@ -66,7 +65,7 @@ fn map_recv_result(query_result: Result<R, RecvError>, tag: String) -> String {
     string
 }
 impl Note {
-    pub fn details(&self) -> ItemPreview {
+    pub fn details(&self) -> String {
         let (sender_1, receiver_1) = channel();
         let other_me = self.clone();
         tokio::runtime::Handle::current().spawn(async move {
@@ -104,6 +103,6 @@ impl Note {
                 string.push_str(&body.unwrap());
             }
         }
-        ItemPreview::AnsiText(string)
+        string
     }
 }

@@ -1,7 +1,9 @@
 use colored::Colorize;
+use std::collections::HashMap;
 use std::fmt::Display;
 use std::hash::{Hash, Hasher};
 use std::io::Write;
+use std::sync::{Arc, Mutex};
 use std::{fs::File, io, path::PathBuf};
 
 use crate::config::Open as OpenCfg;
@@ -18,7 +20,7 @@ use crate::database::Database;
 use duct::cmd;
 use sqlx::Result as SqlxResult;
 
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug, Copy, PartialEq, Eq, Hash)]
 pub enum PreviewType {
     Details,
     LinkStructure,
@@ -47,6 +49,7 @@ pub struct AsyncQeuryResources {
     pub external_commands: ExternalCommands,
     pub surf_parsing: SurfParsing,
     pub preview_type: PreviewType,
+    pub cached_preview_result: Arc<Mutex<HashMap<PreviewType, String>>>,
 }
 
 #[derive(Clone, Debug)]

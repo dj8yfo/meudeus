@@ -1,9 +1,12 @@
 use colored::Colorize;
-use std::sync::Arc;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use skim::{
     prelude::{unbounded, Key, SkimOptionsBuilder},
-    Skim, SkimItemReceiver, SkimItemSender,
+    Skim, SkimItemReceiver, SkimItemSender, PreviewContext, SkimItem,
 };
 
 use crate::{
@@ -48,6 +51,21 @@ impl Iteration {
         }
     }
 
+    fn empty_context<'a>() -> PreviewContext<'a> {
+        PreviewContext {
+            query: "",
+            cmd_query: "",
+            width: 0,
+            height: 0,
+            current_index: 0,
+            current_selection: "",
+            selected_indices: &[],
+            selections: &[],
+            
+        }
+        
+    }
+
     pub(crate) async fn run(mut self) -> anyhow::Result<Out> {
         let items = self.items.take().unwrap();
 
@@ -71,19 +89,27 @@ impl Iteration {
         let db = self.db;
         let cloned = items.clone();
         let _jh = std::thread::spawn(move || {
-            for mut note in cloned {
-                note.set_resources(AsyncQeuryResources {
-                    db: db.clone(),
-                    external_commands: self.external_commands.clone(),
-                    surf_parsing: self.surf_parsing.clone(),
-                    preview_type: self.preview_type,
-                });
+            let new_runtime = tokio::runtime::Runtime::new().unwrap();
+            let db_double = db.clone();
+            new_runtime.block_on(async move {
 
-                let result = tx.send(Arc::new(note));
-                if result.is_err() {
-                    eprintln!("{}", format!("{:?}", result).red());
+                for mut note in cloned {
+                    note.set_resources(AsyncQeuryResources {
+                        db: db_double.clone(),
+                        external_commands: self.external_commands.clone(),
+                        surf_parsing: self.surf_parsing.clone(),
+                        preview_type: self.preview_type,
+                        cached_preview_result: Arc::new(Mutex::new(HashMap::new())),
+                    });
+                    note.preview(Self::empty_context());
+
+                    let result = tx.send(Arc::new(note));
+                    if result.is_err() {
+                        eprintln!("{}", format!("{:?}", result).red());
+                    }
                 }
-            }
+                
+            });
         });
 
         if let Some(out) = Skim::run_with(&options, Some(rx)) {

@@ -1,5 +1,8 @@
 use colored::Colorize;
-use std::sync::Arc;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use skim::{
     prelude::{unbounded, Key, SkimOptionsBuilder},
@@ -58,6 +61,7 @@ impl Iteration {
                     external_commands: self.external_commands.clone(),
                     surf_parsing: self.surf_parsing.clone(),
                     preview_type: PreviewType::Details,
+                    cached_preview_result: Arc::new(Mutex::new(HashMap::new())),
                 });
                 let result = tx.send(Arc::new(note));
                 if result.is_err() {

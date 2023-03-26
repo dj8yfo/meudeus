@@ -1,12 +1,11 @@
 use colored::Colorize;
-use skim::ItemPreview;
 
 use crate::note::Note;
 
 use std::{collections::HashSet, sync::mpsc::channel};
 
 impl Note {
-    pub fn link_structure(&self) -> ItemPreview {
+    pub fn link_structure(&self) -> String {
         let (sender_1, receiver_1) = channel();
         let other_me = self.clone();
         tokio::runtime::Handle::current().spawn(async move {
@@ -29,18 +28,16 @@ impl Note {
         let received = match result {
             Ok(received) => received,
 
-            Err(err) => {
-                return ItemPreview::AnsiText(format!("received err {:?}", err).red().to_string())
-            }
+            Err(err) => return format!("received err {:?}", err).red().to_string(),
         };
 
         match received {
-            Ok((tree, _)) => ItemPreview::AnsiText(format!("{}", tree)),
-            Err(err) => ItemPreview::AnsiText(format!("db err {:?}", err).red().to_string()),
+            Ok((tree, _)) => format!("{}", tree),
+            Err(err) => format!("db err {:?}", err).red().to_string(),
         }
     }
 
-    pub fn task_structure(&self) -> ItemPreview {
+    pub fn task_structure(&self) -> String {
         let (sender_1, receiver_1) = channel();
         let other_me = self.clone();
         tokio::runtime::Handle::current().spawn(async move {
@@ -62,14 +59,12 @@ impl Note {
         let received = match result {
             Ok(received) => received,
 
-            Err(err) => {
-                return ItemPreview::AnsiText(format!("received err {:?}", err).red().to_string())
-            }
+            Err(err) => return format!("received err {:?}", err).red().to_string(),
         };
 
         match received {
-            Ok((tree, _)) => ItemPreview::AnsiText(format!("{}", tree)),
-            Err(err) => ItemPreview::AnsiText(format!("db err {:?}", err).red().to_string()),
+            Ok((tree, _)) => format!("{}", tree),
+            Err(err) => format!("db err {:?}", err).red().to_string(),
         }
     }
 }

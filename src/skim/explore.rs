@@ -1,4 +1,3 @@
-use colored::Colorize;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -105,7 +104,8 @@ impl Iteration {
 
                     let result = tx.send(Arc::new(note));
                     if result.is_err() {
-                        eprintln!("{}", format!("{:?}", result).red());
+                        // eat up errors on receiver closed
+                        // eprintln!("{}", format!("very bad {:?}", result).red());
                     }
                 }
                 

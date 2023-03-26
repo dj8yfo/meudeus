@@ -1,68 +1,35 @@
 use colored::Colorize;
 
-use crate::note::Note;
+use crate::{database::SqliteAsyncHandle, note::Note};
 
-use std::{collections::HashSet, sync::mpsc::channel};
+use std::collections::HashSet;
 
 impl Note {
-    pub fn link_structure(&self) -> String {
-        let (sender_1, receiver_1) = channel();
-        let other_me = self.clone();
-        tokio::runtime::Handle::current().spawn(async move {
-            let rs = other_me.resources().unwrap();
+    pub async fn link_structure(&self, db: &SqliteAsyncHandle) -> String {
+        let rs = self.resources().unwrap();
 
-            let result = other_me
-                .construct_link_term_tree(
-                    HashSet::new(),
-                    rs.external_commands.clone(),
-                    rs.surf_parsing.clone(),
-                    rs.db.clone(),
-                )
-                .await;
+        let result = self
+            .construct_link_term_tree(
+                HashSet::new(),
+                rs.external_commands.clone(),
+                rs.surf_parsing.clone(),
+                db.clone(),
+            )
+            .await;
 
-            sender_1.send(result).unwrap()
-        });
-
-        let result = receiver_1.recv();
-
-        let received = match result {
-            Ok(received) => received,
-
-            Err(err) => return format!("received err {:?}", err).red().to_string(),
-        };
-
-        match received {
+        match result {
             Ok((tree, _)) => format!("{}", tree),
             Err(err) => format!("db err {:?}", err).red().to_string(),
         }
     }
 
-    pub fn task_structure(&self) -> String {
-        let (sender_1, receiver_1) = channel();
-        let other_me = self.clone();
-        tokio::runtime::Handle::current().spawn(async move {
-            let rs = other_me.resources().unwrap();
+    pub async fn task_structure(&self, db: &SqliteAsyncHandle) -> String {
+        let rs = self.resources().unwrap();
+        let result = self
+            .construct_task_item_term_tree(HashSet::new(), rs.surf_parsing.clone(), db.clone())
+            .await;
 
-            let result = other_me
-                .construct_task_item_term_tree(
-                    HashSet::new(),
-                    rs.surf_parsing.clone(),
-                    rs.db.clone(),
-                )
-                .await;
-
-            sender_1.send(result).unwrap()
-        });
-
-        let result = receiver_1.recv();
-
-        let received = match result {
-            Ok(received) => received,
-
-            Err(err) => return format!("received err {:?}", err).red().to_string(),
-        };
-
-        match received {
+        match result {
             Ok((tree, _)) => format!("{}", tree),
             Err(err) => format!("db err {:?}", err).red().to_string(),
         }

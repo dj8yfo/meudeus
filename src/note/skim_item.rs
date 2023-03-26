@@ -2,9 +2,36 @@ use std::borrow::Cow;
 
 use skim::{AnsiString, DisplayContext, ItemPreview, PreviewContext, SkimItem};
 
+use crate::database::SqliteAsyncHandle;
+
 use super::PreviewType;
 
 mod preview;
+
+impl super::Note {
+    async fn compute_preview(&self, db: &SqliteAsyncHandle) -> Option<String> {
+        match self.resources() {
+            Some(resources) => {
+                let result = match resources.preview_type {
+                    PreviewType::Details => self.details(db).await,
+                    PreviewType::LinkStructure => self.link_structure(db).await,
+                    PreviewType::TaskStructure => self.task_structure(db).await,
+                };
+                Some(result)
+            }
+            None => None,
+        }
+    }
+    pub async fn prepare_preview(&mut self, db: &SqliteAsyncHandle) {
+        let result = self.compute_preview(db).await;
+        match self.resources_mut() {
+            Some(resources) => {
+                resources.preview_result = result;
+            }
+            None => {}
+        }
+    }
+}
 
 impl SkimItem for super::Note {
     fn text(&self) -> Cow<str> {
@@ -19,19 +46,13 @@ impl SkimItem for super::Note {
     fn preview(&self, _context: PreviewContext) -> ItemPreview {
         match self.resources() {
             Some(resources) => {
-                if let Some(val) = resources.cached_preview_result.lock().expect("poison").get(&resources.preview_type) {
-                    return ItemPreview::AnsiText(val.clone());
+                if let Some(ref result) = resources.preview_result {
+                    ItemPreview::AnsiText(result.clone())
+                } else {
+                    ItemPreview::Text("<empty preview_result>".to_string())
                 }
-
-                let (preview, result) = match resources.preview_type {
-                    preview @ PreviewType::Details => (preview, self.details()),
-                    preview @ PreviewType::LinkStructure => (preview, self.link_structure()),
-                    preview @ PreviewType::TaskStructure => (preview, self.task_structure()),
-                };
-                resources.cached_preview_result.lock().expect("poison").insert(preview, result.clone());
-                ItemPreview::AnsiText(result)
             }
-            None => ItemPreview::Text("<empty>".to_string()),
+            None => ItemPreview::Text("<empty resources>".to_string()),
         }
     }
 }

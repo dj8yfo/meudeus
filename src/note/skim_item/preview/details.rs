@@ -1,18 +1,16 @@
 use colored::Colorize;
 
+use crate::database::SqliteAsyncHandle;
 use crate::note::Note;
 use comfy_table::presets::UTF8_FULL;
 use comfy_table::{Cell, Color, ContentArrangement, Table};
 
 use sqlx::Error;
-use std::sync::mpsc::{channel, RecvError};
 
 use crate::external_commands::fetch_content;
 use crate::print::format_two_tokens;
 
-type R = Result<Vec<Note>, Error>;
-
-fn map_db_result(received: R) -> String {
+fn map_db_result(received: Result<Vec<Note>, Error>) -> String {
     match received {
         Ok(list) => {
             if !list.is_empty() {
@@ -46,14 +44,9 @@ fn map_db_result(received: R) -> String {
         Err(err) => return format!("db err {:?}", err).red().to_string(),
     }
 }
-fn map_recv_result(query_result: Result<R, RecvError>, tag: String) -> String {
-    let received = match query_result {
-        Ok(received) => received,
 
-        Err(err) => return format!("received err {:?}", err).red().to_string(),
-    };
-
-    let links_to = map_db_result(received);
+fn map_result(query_result: Result<Vec<Note>, Error>, tag: String) -> String {
+    let links_to = map_db_result(query_result);
 
     let mut string = String::new();
     if !links_to.is_empty() {
@@ -64,26 +57,13 @@ fn map_recv_result(query_result: Result<R, RecvError>, tag: String) -> String {
     }
     string
 }
+
 impl Note {
-    pub fn details(&self) -> String {
-        let (sender_1, receiver_1) = channel();
-        let other_me = self.clone();
-        tokio::runtime::Handle::current().spawn(async move {
-            let result_from = other_me.fetch_forward_links().await.unwrap();
-
-            sender_1.send(result_from).unwrap()
-        });
-        let (sender_2, receiver_2) = channel();
-        let despicable_me = self.clone();
-        tokio::runtime::Handle::current().spawn(async move {
-            let result_to = despicable_me.fetch_backlinks().await.unwrap();
-
-            sender_2.send(result_to).unwrap()
-        });
-        let result_from = receiver_1.recv();
-        let result_to = receiver_2.recv();
-        let links_to = map_recv_result(result_from, "Links to:".to_string());
-        let linked_by = map_recv_result(result_to, "Linked by:".to_string());
+    pub async fn details(&self, db: &SqliteAsyncHandle) -> String {
+        let result_from = self.fetch_forward_links(db).await;
+        let result_to = self.fetch_backlinks(db).await;
+        let links_to = map_result(result_from, "Links to:".to_string());
+        let linked_by = map_result(result_to, "Linked by:".to_string());
         let mut string = String::new();
         let title = if self.file_path().is_some() {
             format_two_tokens("it's a note:", &self.name())

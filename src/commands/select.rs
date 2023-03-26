@@ -17,7 +17,7 @@ pub(crate) async fn exec(
         external_commands.clone(),
         surf_parsing,
     )
-    .run()?;
+    .run().await?;
 
     Ok(note.name())
 }

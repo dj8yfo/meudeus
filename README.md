@@ -23,6 +23,9 @@
   ```
 
   ```
+  meudeus v0.11.3
+  a skimblade for plain-text papers
+
   Usage: mds [OPTIONS] <COMMAND>
 
   Commands:
@@ -43,8 +46,7 @@
                            by forward links from note P, selected either 
                            non-interactively or in skim interface
     select     select note S, i.e. print it's name to stdout
-    chm        checkmark, toggle state TODO/DONE of multiple task items, 
-                           found in a selected note
+    chm        checkmark, toggle state TODO/DONE of multiple task items, found in a selected note
     help       Print this message or the help of the given subcommand(s)
 
   Options:

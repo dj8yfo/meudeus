@@ -22,7 +22,7 @@ pub(crate) async fn exec(
         external_commands.clone(),
         surf_parsing.clone(),
     )
-    .run()?;
+    .run().await?;
 
     let forward_links = db.lock().await.find_links_from(&from.name()).await?;
     let to = Iteration::new(
@@ -32,7 +32,7 @@ pub(crate) async fn exec(
         external_commands.clone(),
         surf_parsing,
     )
-    .run()?;
+    .run().await?;
 
     db.lock()
         .await

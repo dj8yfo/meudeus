@@ -1,8 +1,4 @@
-use colored::Colorize;
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::sync::Arc;
 
 use skim::{
     prelude::{unbounded, Key, SkimOptionsBuilder},
@@ -12,7 +8,7 @@ use skim::{
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::SqliteAsyncHandle,
-    note::{AsyncQeuryResources, Note, PreviewType},
+    note::{DynResources, Note, PreviewType},
 };
 
 pub(crate) struct Iteration {
@@ -40,37 +36,48 @@ impl Iteration {
         }
     }
 
-    pub(crate) fn run(mut self) -> anyhow::Result<Note> {
+    pub(crate) async fn run(mut self) -> anyhow::Result<Note> {
         let items = self.items.take().unwrap();
-
-        let options = SkimOptionsBuilder::default()
-            .height(Some("100%"))
-            .preview(Some(""))
-            .preview_window(Some("right:65%"))
-            .multi(self.multi)
-            .bind(vec!["ctrl-c:abort", "Enter:accept", "ESC:abort"])
-            .build()?;
 
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
         let db = self.db;
-        let _jh = std::thread::spawn(move || {
-            for mut note in items {
-                note.set_resources(AsyncQeuryResources {
-                    db: db.clone(),
-                    external_commands: self.external_commands.clone(),
-                    surf_parsing: self.surf_parsing.clone(),
-                    preview_type: PreviewType::Details,
-                    cached_preview_result: Arc::new(Mutex::new(HashMap::new())),
-                });
-                let result = tx.send(Arc::new(note));
-                if result.is_err() {
-                    eprintln!("{}", format!("{:?}", result).red());
-                }
-            }
-        });
+        for mut note in items {
+            let db_double = db.clone();
+            let ext_double = self.external_commands.clone();
+            let surf_parsing = self.surf_parsing.clone();
+            let tx_double = tx.clone();
 
-        if let Some(out) = Skim::run_with(&options, Some(rx)) {
+            tokio::task::spawn(async move {
+                note.set_resources(DynResources {
+                    external_commands: ext_double,
+                    surf_parsing,
+                    preview_type: PreviewType::Details,
+                    preview_result: None,
+                });
+                note.prepare_preview(&db_double).await;
+                let result = tx_double.send(Arc::new(note));
+                if result.is_err() {
+                    // eprintln!("{}",format!("{:?}", result).red());
+                }
+            });
+        }
+
+        let out = tokio::task::spawn_blocking(move || {
+            let options = SkimOptionsBuilder::default()
+                .height(Some("100%"))
+                .preview(Some(""))
+                .preview_window(Some("right:65%"))
+                .multi(self.multi)
+                .bind(vec!["ctrl-c:abort", "Enter:accept", "ESC:abort"])
+                .build().unwrap();
+
+            Skim::run_with(&options, Some(rx))
+        })
+        .await
+        .unwrap();
+
+        if let Some(out) = out {
             let selected_items = out
                 .selected_items
                 .iter()

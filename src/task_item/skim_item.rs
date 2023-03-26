@@ -1,8 +1,4 @@
-use std::{
-    borrow::Cow,
-    fmt::Display,
-    sync::{Arc, Mutex},
-};
+use std::{borrow::Cow, fmt::Display};
 
 use skim::{AnsiString, DisplayContext, ItemPreview, PreviewContext, SkimItem};
 use termtree::Tree;
@@ -10,21 +6,39 @@ use termtree::Tree;
 use crate::note::NoteTaskItemTerm;
 
 #[derive(Clone)]
-pub struct TaskTreeWrapper(
-    pub Tree<NoteTaskItemTerm>,
-    pub Arc<Mutex<Option<String>>>,
-    pub Arc<Mutex<Option<String>>>,
-);
+pub struct TaskTreeWrapper {
+    pub data: Tree<NoteTaskItemTerm>,
+    pub display_item: Option<String>,
+    pub preview_item: Option<String>,
+}
 
 impl Display for TaskTreeWrapper {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.data)
     }
 }
+impl TaskTreeWrapper {
+    pub fn prepare_display(&mut self) {
+        match self.data.root {
+            NoteTaskItemTerm::Note(..) => unreachable!("note"),
+            NoteTaskItemTerm::Cycle(..) => unreachable!("cycle"),
+            NoteTaskItemTerm::Task(ref task_item) => {
+                let result = format!("{}", task_item.skim_display(true));
+                self.display_item = Some(result);
+            }
+        };
+    }
+
+    pub fn prepare_preview(&mut self) {
+        let result = format!("{}", self);
+        self.preview_item = Some(result);
+    }
+}
+
 impl SkimItem for TaskTreeWrapper {
     /// The string to be used for matching (without color)
     fn text(&self) -> Cow<str> {
-        let input = match self.0.root {
+        let input = match self.data.root {
             NoteTaskItemTerm::Note(..) => unreachable!("note"),
             NoteTaskItemTerm::Cycle(..) => unreachable!("cycle"),
             NoteTaskItemTerm::Task(ref task_item) => {
@@ -37,36 +51,27 @@ impl SkimItem for TaskTreeWrapper {
 
     /// The content to be displayed on the item list, could contain ANSI properties
     fn display<'a>(&'a self, _context: DisplayContext<'a>) -> AnsiString<'a> {
-        if let Some(ref string) = *self.1.lock().expect("poison") {
-            return AnsiString::parse(string);
+        if let Some(ref string) = self.display_item {
+            AnsiString::parse(string)
+        } else {
+            AnsiString::parse("<not precomputed!!!>")
         }
-        let input = match self.0.root {
-            NoteTaskItemTerm::Note(..) => unreachable!("note"),
-            NoteTaskItemTerm::Cycle(..) => unreachable!("cycle"),
-            NoteTaskItemTerm::Task(ref task_item) => {
-                let result = format!("{}", task_item.skim_display(true));
-                *self.1.lock().expect("poison") = Some(result.clone());
-                result
-            }
-        };
-        AnsiString::parse(&input)
     }
 
     /// Custom preview content, default to `ItemPreview::Global` which will use global preview
     /// setting(i.e. the command set by `preview` option)
     fn preview(&self, _context: PreviewContext) -> ItemPreview {
-        if let Some(ref string) = *self.2.lock().expect("poison") {
+        if let Some(ref string) = self.preview_item {
             return ItemPreview::AnsiText(string.clone());
+        } else {
+            ItemPreview::AnsiText("<not precomputed!!!>".to_string())
         }
-        let result = format!("{}", self);
-        *self.2.lock().expect("poison") = Some(result.clone());
-        ItemPreview::AnsiText(result)
     }
 }
 
 impl TaskTreeWrapper {
     pub fn toggle(self) -> Result<(), std::io::Error> {
-        match self.0.root {
+        match self.data.root {
             NoteTaskItemTerm::Note(..) => unreachable!("note"),
             NoteTaskItemTerm::Cycle(..) => unreachable!("cycle"),
             NoteTaskItemTerm::Task(task_item) => {

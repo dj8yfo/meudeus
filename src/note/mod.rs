@@ -1,9 +1,7 @@
 use colored::Colorize;
-use std::collections::HashMap;
 use std::fmt::Display;
 use std::hash::{Hash, Hasher};
 use std::io::Write;
-use std::sync::{Arc, Mutex};
 use std::{fs::File, io, path::PathBuf};
 
 use crate::config::Open as OpenCfg;
@@ -44,12 +42,11 @@ impl Default for PreviewType {
 }
 
 #[derive(Clone, Debug)]
-pub struct AsyncQeuryResources {
-    pub db: SqliteAsyncHandle,
+pub struct DynResources {
     pub external_commands: ExternalCommands,
     pub surf_parsing: SurfParsing,
     pub preview_type: PreviewType,
-    pub cached_preview_result: Arc<Mutex<HashMap<PreviewType, String>>>,
+    pub preview_result: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -57,11 +54,11 @@ pub enum Note {
     MdFile {
         name: String,
         file_path: PathBuf,
-        resources: Option<AsyncQeuryResources>,
+        resources: Option<DynResources>,
     },
     Tag {
         name: String,
-        resources: Option<AsyncQeuryResources>,
+        resources: Option<DynResources>,
     },
 }
 
@@ -150,7 +147,7 @@ impl Note {
             Self::Tag { .. } => None,
         }
     }
-    pub fn set_resources(&mut self, to_set: AsyncQeuryResources) {
+    pub fn set_resources(&mut self, to_set: DynResources) {
         match self {
             Self::MdFile { resources, .. } => {
                 *resources = Some(to_set);
@@ -161,33 +158,28 @@ impl Note {
         }
     }
 
-    fn resources(&self) -> Option<&AsyncQeuryResources> {
+    fn resources_mut(&mut self) -> Option<&mut DynResources> {
         match self {
-            Self::MdFile { resources, .. } => resources.as_ref(),
-            Self::Tag { resources, .. } => resources.as_ref(),
+            Self::MdFile {
+                ref mut resources, ..
+            } => resources.as_mut(),
+            Self::Tag {
+                ref mut resources, ..
+            } => resources.as_mut(),
+        }
+    }
+    fn resources(&self) -> Option<&DynResources> {
+        match self {
+            Self::MdFile { ref resources, .. } => resources.as_ref(),
+            Self::Tag { ref resources, .. } => resources.as_ref(),
         }
     }
 
-    pub async fn fetch_forward_links(&self) -> Option<SqlxResult<Vec<Note>>> {
-        if let Some(resources) = self.resources() {
-            Some(
-                resources
-                    .db
-                    .lock()
-                    .await
-                    .find_links_from(&self.name())
-                    .await,
-            )
-        } else {
-            None
-        }
+    pub async fn fetch_forward_links(&self, db: &SqliteAsyncHandle) -> SqlxResult<Vec<Note>> {
+        db.lock().await.find_links_from(&self.name()).await
     }
 
-    pub async fn fetch_backlinks(&self) -> Option<SqlxResult<Vec<Note>>> {
-        if let Some(resources) = self.resources() {
-            Some(resources.db.lock().await.find_links_to(&self.name()).await)
-        } else {
-            None
-        }
+    pub async fn fetch_backlinks(&self, db: &SqliteAsyncHandle) -> SqlxResult<Vec<Note>> {
+        db.lock().await.find_links_to(&self.name()).await
     }
 }

@@ -101,7 +101,7 @@ impl Link {
             );
             Self::ast_parse_code_blocks(note, &mut result, external_commands, &file_content);
 
-            Ok(result.into_iter().rev().collect())
+            Ok(result)
         } else {
             return Ok(vec![]);
         }

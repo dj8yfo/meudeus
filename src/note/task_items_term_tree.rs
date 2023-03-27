@@ -84,6 +84,13 @@ impl Note {
         let mut tree = Tree::new(NoteTaskItemTerm::Note(self.clone()));
         all_reachable.insert(self.clone());
 
+        let tasks = TaskItem::parse(self, &surf_parsing)?;
+
+        let trees = NoteTaskItemTerm::parse(&tasks, true);
+        for task in trees {
+            tree.push(task);
+        }
+
         let forward_links = db.lock().await.find_links_from(&self.name()).await?;
 
         for next in forward_links {
@@ -96,12 +103,6 @@ impl Note {
                 all_reachable = roundtrip_reachable;
                 tree.push(next_tree);
             }
-        }
-        let tasks = TaskItem::parse(self, &surf_parsing)?;
-
-        let trees = NoteTaskItemTerm::parse(&tasks, true);
-        for task in trees {
-            tree.push(task);
         }
 
         Ok((tree, all_reachable))

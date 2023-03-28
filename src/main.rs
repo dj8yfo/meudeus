@@ -31,8 +31,8 @@ trait Open {
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .version("v0.11.3")
-        .about("meudeus v0.11.3\na skimblade for plain-text papers")
+        .version("v0.11.4")
+        .about("meudeus v0.11.4\na skimblade for plain-text papers")
         .bin_name("mds")
         .arg(clap::arg!(-c --color  "whether color output should be forced"))
         .subcommand_required(true)
@@ -42,14 +42,14 @@ async fn main() {
                 .about("`initialize` .sqlite database in notes dir, specified by config"),
         )
         .subcommand(
-            clap::command!("n").about("create a note").arg(
+            clap::command!("note").visible_alias("n").about("create a note").arg(
                 clap::arg!([title] "note title (unique name among notes and tags)")
                     .value_parser(clap::value_parser!(String))
                     .required(true),
             ),
         )
         .subcommand(
-            clap::command!("t")
+            clap::command!("tag").visible_alias("t")
                 .about("create a tag (note without file body)")
                 .arg(
                     clap::arg!([title] "tag title (unique name among notes and tags)")
@@ -57,29 +57,19 @@ async fn main() {
                         .required(true),
                 ),
         )
+        .subcommand(clap::command!("select").about("select note S, i.e. print its name to stdout"))
         .subcommand(
-            clap::command!("l").about("link 2 notes A -> B, selected twice in skim interface"),
+            clap::command!("link").visible_alias("l").about("link 2 notes A -> B, selected twice in skim interface"),
         )
         .subcommand(
-            clap::command!("e").about("explore notes by <c-h> (backlinks) , <c-l> (links forward)"),
+            clap::command!("unlink").visible_alias("ul").about("unlink 2 notes A -> B, selected twice in skim interface"),
         )
-        .subcommand(clap::command!("s").about(
-            "surf (fuzzy find) through all [markdown reference](links) 
-        and ```code_block(s)```, found in all notes, 
-        reachable by forward links from note/tag S, 
-        selected interactively by skim",
-        ))
+        .subcommand(clap::command!("remove").visible_alias("rm").about("remove note R, selected in skim interface"))
+        .subcommand(clap::command!("rename").visible_alias("mv").about("rename note R, selected in skim interface"))
         .subcommand(
-            clap::command!("ul").about("unlink 2 notes A -> B, selected twice in skim interface"),
-        )
-        .subcommand(clap::command!("remove").about("remove note R, selected in skim interface"))
-        .subcommand(clap::command!("rename").about("rename note R, selected in skim interface"))
-        .subcommand(
-            clap::command!("p")
+            clap::command!("print").visible_alias("p")
                 .about(
-                    "print tree of nodes reachable 
-        by forward links from note P, selected either 
-        non-interactively or in skim interface",
+                    "print subgraph of notes and links reachable downwards from selected note P",
                 )
                 .arg(
                     clap::arg!(-n --name <NOTE_NAME> "note name")
@@ -87,9 +77,15 @@ async fn main() {
                         .required(false),
                 ),
         )
-        .subcommand(clap::command!("select").about("select note S, i.e. print it's name to stdout"))
-        .subcommand(clap::command!("chm").about(
-            "checkmark, toggle state TODO/DONE of multiple task items, found in a selected note",
+        .subcommand(
+            clap::command!("explore").visible_alias("ex").about("explore notes by <c-h> (backlinks) , <c-l> (links forward)"),
+        )
+        .subcommand(
+            clap::command!("surf").visible_alias("s").about(
+            "surf through all links and code snippets found downwards from selected note S",
+        ))
+        .subcommand(clap::command!("checkmark").visible_alias("k").about(
+            "checkmark, toggle state TODO/DONE of multiple task items, found in a selected note C",
         ));
 
     let matches = cmd.get_matches();
@@ -130,24 +126,24 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                 Err(err) => return Err(err.into()),
             };
             match subcommand {
-                cmd @ "n" | cmd @ "t" => {
-                    let is_tag = cmd == "t";
+                cmd @ "note" | cmd @ "tag" => {
+                    let is_tag = cmd == "tag";
                     let title = matches
                         .get_one::<String>("title")
                         .ok_or(anyhow::anyhow!("empty title"))?;
 
                     commands::create::exec(title, db, is_tag).await
                 }
-                "e" => {
+                "explore" => {
                     commands::explore::exec(db, config.external_commands, config.surf_parsing).await
                 }
-                "l" => {
+                "link" => {
                     commands::link::exec(db, config.external_commands, config.surf_parsing).await
                 }
-                "s" => {
+                "surf" => {
                     commands::surf::exec(db, config.surf_parsing, config.external_commands).await
                 }
-                "ul" => {
+                "unlink" => {
                     commands::unlink::exec(db, config.external_commands, config.surf_parsing).await
                 }
                 "remove" => {
@@ -156,7 +152,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                 "rename" => {
                     commands::rename::exec(db, config.external_commands, config.surf_parsing).await
                 }
-                "p" => {
+                "print" => {
                     let name = matches.get_one::<String>("name").cloned();
                     commands::print::exec(db, config.external_commands, config.surf_parsing, name)
                         .await
@@ -164,7 +160,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                 "select" => {
                     commands::select::exec(db, config.external_commands, config.surf_parsing).await
                 }
-                "chm" => {
+                "checkmark" => {
                     commands::checkmark::exec(db, config.surf_parsing, config.external_commands)
                         .await
                 }

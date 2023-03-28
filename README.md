@@ -23,7 +23,7 @@
   ```
 
   ```
-  meudeus v0.11.3
+  meudeus v0.11.4
   a skimblade for plain-text papers
 
   Usage: mds [OPTIONS] <COMMAND>
@@ -31,22 +31,17 @@
   Commands:
     debug-cfg  print Debug representtion of config
     init       `initialize` .sqlite database in notes dir, specified by config
-    n          create a note
-    t          create a tag (note without file body)
-    l          link 2 notes A -> B, selected twice in skim interface
-    e          explore notes by <c-h> (backlinks) , <c-l> (links forward)
-    s          surf (fuzzy find) through all [markdown reference](links) 
-                           and ```code_block(s)```, found in all notes, 
-                           reachable by forward links from note/tag S, 
-                           selected interactively by skim
-    ul         unlink 2 notes A -> B, selected twice in skim interface
-    remove     remove note R, selected in skim interface
-    rename     rename note R, selected in skim interface
-    p          print tree of nodes reachable 
-                           by forward links from note P, selected either 
-                           non-interactively or in skim interface
-    select     select note S, i.e. print it's name to stdout
-    chm        checkmark, toggle state TODO/DONE of multiple task items, found in a selected note
+    note       create a note [aliases: n]
+    tag        create a tag (note without file body) [aliases: t]
+    select     select note S, i.e. print its name to stdout
+    link       link 2 notes A -> B, selected twice in skim interface [aliases: l]
+    unlink     unlink 2 notes A -> B, selected twice in skim interface [aliases: ul]
+    remove     remove note R, selected in skim interface [aliases: rm]
+    rename     rename note R, selected in skim interface [aliases: mv]
+    print      print subgraph of notes and links reachable downwards from selected note P [aliases: p]
+    explore    explore notes by <c-h> (backlinks) , <c-l> (links forward) [aliases: ex]
+    surf       surf through all links and code snippets found downwards from selected note S [aliases: s]
+    checkmark  checkmark, toggle state TODO/DONE of multiple task items, found in a selected note C [aliases: k]
     help       Print this message or the help of the given subcommand(s)
 
   Options:

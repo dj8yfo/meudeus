@@ -3,10 +3,10 @@ use std::{fmt::Display, io, path::PathBuf};
 use colored::Colorize;
 use duct::cmd;
 use regex::Regex;
+use skim::AnsiString;
 
 use crate::{
     config::{cmd_template::CmdTemplate, ExternalCommands, Open as OpenCfg},
-    highlight::highlight_code_block,
     print::format_two_tokens,
     Open,
 };
@@ -32,21 +32,6 @@ pub enum Destination {
     },
 }
 
-impl Display for Destination {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            Self::URL(url) => write!(f, "{}", url),
-            Self::File { file, .. } => write!(f, "{}", file.display()),
-            Self::Dir { dir, .. } => write!(f, "{}", dir.display()),
-            Self::Broken(broken) => write!(f, "{}", broken.display()),
-            Self::CodeBlock {
-                code_block,
-                syntax_label,
-                ..
-            } => write!(f, "\n{}", highlight_code_block(code_block, syntax_label)),
-        }
-    }
-}
 
 impl Open for Link {
     fn open(&self, mut cfg: OpenCfg) -> io::Result<Option<std::process::ExitStatus>> {
@@ -102,14 +87,16 @@ pub struct Link {
     pub parent_name: String,
     pub description: String,
     pub link: Destination,
+    pub display_item: Option<AnsiString<'static>>,
+    pub preview_item: Option<String>,
 }
 
 impl Display for Link {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,
-            "{} -> [{}] {}",
-            self.parent_name, self.description, self.link
+            "{} -> [{}]",
+            self.parent_name, self.description
         )
     }
 }
@@ -143,6 +130,8 @@ impl Link {
                 syntax_label,
                 open: external_commands.open.file_cmd.clone(),
             },
+            preview_item: None,
+            display_item: None,
         }
     }
     pub fn new(
@@ -158,6 +147,8 @@ impl Link {
                 parent_name,
                 description,
                 link: Destination::URL(link),
+                preview_item: None,
+                display_item: None,
             }
         } else {
             let mut link = PathBuf::from(&link);
@@ -172,6 +163,8 @@ impl Link {
                         file: link,
                         preview: external_commands.preview.file_cmd.clone(),
                     },
+                    preview_item: None,
+                    display_item: None,
                 }
             } else if link.is_dir() {
                 Self {
@@ -181,12 +174,16 @@ impl Link {
                         dir: link,
                         preview: external_commands.preview.dir_cmd.clone(),
                     },
+                    preview_item: None,
+                    display_item: None,
                 }
             } else {
                 Self {
                     parent_name,
                     description,
                     link: Destination::Broken(link),
+                    preview_item: None,
+                    display_item: None,
                 }
             }
         }

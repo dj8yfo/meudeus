@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use colored::Colorize;
 use skim::{
     prelude::{unbounded, Key, SkimOptionsBuilder},
     Skim, SkimItemReceiver, SkimItemSender,
@@ -20,29 +19,37 @@ impl Iteration {
         }
     }
 
-    pub(crate) fn run(mut self) -> anyhow::Result<Link> {
+    pub(crate) async fn run(mut self) -> anyhow::Result<Link> {
         let items = self.items.take().unwrap();
-
-        let options = SkimOptionsBuilder::default()
-            .height(Some("100%"))
-            .preview(Some(""))
-            .preview_window(Some("right:65%"))
-            .multi(self.multi)
-            .bind(vec!["ctrl-c:abort", "Enter:accept", "ESC:abort"])
-            .build()?;
 
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
-        let _jh = std::thread::spawn(move || {
-            for link in items {
-                let result = tx.send(Arc::new(link));
-                if result.is_err() {
-                    eprintln!("{}", format!("{:?}", result).red());
-                }
-            }
-        });
+        for mut link in items {
+            let tx_double = tx.clone();
+            tokio::task::spawn(async move {
+                link.prepare_display();
+                link.prepare_preview();
+                let _result = tx_double.send(Arc::new(link));
+                // if result.is_err() {
+                //     eprintln!("{}", format!("{:?}", result).red());
+                // }
+            });
+        }
+        let out = tokio::task::spawn_blocking(move || {
+            let options = SkimOptionsBuilder::default()
+                .height(Some("100%"))
+                .preview(Some(""))
+                .preview_window(Some("right:65%"))
+                .multi(self.multi)
+                .bind(vec!["ctrl-c:abort", "Enter:accept", "ESC:abort"])
+                .build()
+                .unwrap();
+            Skim::run_with(&options, Some(rx))
+        })
+        .await
+        .unwrap();
 
-        if let Some(out) = Skim::run_with(&options, Some(rx)) {
+        if let Some(out) = out {
             let selected_items = out
                 .selected_items
                 .iter()

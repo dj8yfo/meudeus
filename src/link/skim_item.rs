@@ -8,26 +8,22 @@ use crate::{
     highlight::highlight_code_block,
 };
 
-impl SkimItem for super::Link {
-    fn text(&self) -> Cow<str> {
-        Cow::Owned(format!("{}", self))
-    }
-    fn display<'a>(&'a self, _context: DisplayContext<'a>) -> AnsiString<'a> {
+impl super::Link {
+    pub fn prepare_display(&mut self) {
         let input = self.skim_display();
-        let ansistring = AnsiString::parse(&input);
-        ansistring
+        self.display_item = Some(AnsiString::parse(&input));
     }
 
-    fn preview(&self, _context: PreviewContext) -> ItemPreview {
+    pub fn compute_preview(&self) -> String {
         match &self.link {
-            super::Destination::URL(url) => ItemPreview::AnsiText(url.cyan().to_string()),
+            super::Destination::URL(url) => url.cyan().to_string(),
             super::Destination::File { file, preview } => {
-                ItemPreview::AnsiText(fetch_content(preview.clone(), Some(file)).unwrap())
+                fetch_content(preview.clone(), Some(file)).unwrap()
             }
             super::Destination::Dir { dir, preview } => {
-                ItemPreview::AnsiText(list_dir(preview.clone(), dir))
+                list_dir(preview.clone(), dir)
             }
-            super::Destination::Broken(broken) => ItemPreview::AnsiText(format!(
+            super::Destination::Broken(broken) => format!(
                 "{}: {}",
                 "Broken path",
                 broken
@@ -35,13 +31,40 @@ impl SkimItem for super::Link {
                     .unwrap_or("not valid unicode")
                     .red()
                     .to_string(),
-            )),
+            ),
 
             super::Destination::CodeBlock {
                 code_block,
                 syntax_label,
                 ..
-            } => ItemPreview::AnsiText(highlight_code_block(code_block, syntax_label)),
+            } => highlight_code_block(code_block, syntax_label),
         }
+    }
+
+    pub fn prepare_preview(&mut self) {
+        let result = self.compute_preview();
+        self.preview_item = Some(result);
+    }
+}
+
+impl SkimItem for super::Link {
+    fn text(&self) -> Cow<str> {
+        Cow::Owned(format!("{}", self))
+    }
+    fn display<'a>(&'a self, _context: DisplayContext<'a>) -> AnsiString<'a> {
+        if let Some(ref string) = self.display_item {
+            string.clone()
+        } else {
+            AnsiString::parse("<not precomputed!!!>")
+        }
+    }
+
+    fn preview(&self, _context: PreviewContext) -> ItemPreview {
+        if let Some(ref string) = self.preview_item {
+            return ItemPreview::AnsiText(string.clone());
+        } else {
+            ItemPreview::AnsiText("<not precomputed!!!>".to_string())
+        }
+        
     }
 }

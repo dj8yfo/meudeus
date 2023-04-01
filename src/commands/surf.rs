@@ -48,7 +48,7 @@ pub(crate) async fn exec(
         .collect();
     let links: Vec<_> = links?.into_iter().flat_map(|v| v).collect();
 
-    let link = SurfIteration::new(links, false).run()?;
+    let link = SurfIteration::new(links, false).run().await?;
     link.open(external_commands.open)?;
 
     eprintln!("{}", link);

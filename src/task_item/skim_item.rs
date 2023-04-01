@@ -8,7 +8,7 @@ use crate::note::NoteTaskItemTerm;
 #[derive(Clone)]
 pub struct TaskTreeWrapper {
     pub data: Tree<NoteTaskItemTerm>,
-    pub display_item: Option<String>,
+    pub display_item: Option<AnsiString<'static>>,
     pub preview_item: Option<String>,
 }
 
@@ -23,8 +23,8 @@ impl TaskTreeWrapper {
             NoteTaskItemTerm::Note(..) => unreachable!("note"),
             NoteTaskItemTerm::Cycle(..) => unreachable!("cycle"),
             NoteTaskItemTerm::Task(ref task_item) => {
-                let result = format!("{}", task_item.skim_display(true));
-                self.display_item = Some(result);
+                let result = task_item.skim_display(true);
+                self.display_item = Some(AnsiString::parse(&result));
             }
         };
     }
@@ -52,7 +52,7 @@ impl SkimItem for TaskTreeWrapper {
     /// The content to be displayed on the item list, could contain ANSI properties
     fn display<'a>(&'a self, _context: DisplayContext<'a>) -> AnsiString<'a> {
         if let Some(ref string) = self.display_item {
-            AnsiString::parse(string)
+            string.clone()
         } else {
             AnsiString::parse("<not precomputed!!!>")
         }

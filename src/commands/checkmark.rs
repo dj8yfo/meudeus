@@ -1,3 +1,5 @@
+use futures::future::join_all;
+
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
@@ -41,18 +43,27 @@ pub(crate) async fn exec(
         let tasks = TaskItem::parse(&note, &surf)?;
 
         let tasks = NoteTaskItemTerm::parse(&tasks, false);
+
+        let compute_display_jh = tasks
+            .into_iter()
+            .map(|element| {
+                tokio::task::spawn(async move {
+                    let mut wrapper = TaskTreeWrapper {
+                        data: element,
+                        display_item: None,
+                        preview_item: None,
+                    };
+
+                    wrapper.prepare_display();
+                    wrapper.prepare_preview();
+                    wrapper
+                })
+            })
+            .collect::<Vec<_>>();
+        let tasks = join_all(compute_display_jh).await;
         let tasks = tasks
             .into_iter()
-            .map(|el| TaskTreeWrapper {
-                data: el,
-                display_item: None,
-                preview_item: None,
-            })
-            .map(|mut el| {
-                el.prepare_display();
-                el.prepare_preview();
-                el
-            })
+            .map(|result| result.expect("we do not expect preview generation to panic"))
             .collect::<Vec<_>>();
 
         let selected_tasks = CheckmarkIteration::new(tasks).run()?;

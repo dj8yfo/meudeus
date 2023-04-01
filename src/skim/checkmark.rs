@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use colored::Colorize;
 use skim::{
     prelude::{unbounded, Key, SkimOptionsBuilder},
     Skim, SkimItemReceiver, SkimItemSender,
@@ -29,12 +28,12 @@ impl Iteration {
 
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
-        let _jh = std::thread::spawn(move || {
+        let _jh = tokio::task::spawn_blocking(move || {
             for link in items.into_iter().rev() {
-                let result = tx.send(Arc::new(link));
-                if result.is_err() {
-                    eprintln!("{}", format!("{:?}", result).red());
-                }
+                let _result = tx.send(Arc::new(link));
+                // if result.is_err() {
+                //     eprintln!("{}", format!("{:?}", result).red());
+                // }
             }
         });
 

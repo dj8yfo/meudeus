@@ -1,0 +1,2 @@
+bacon:
+	bacon check

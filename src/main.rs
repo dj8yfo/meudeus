@@ -16,6 +16,7 @@ mod config;
 mod database;
 mod external_commands;
 mod highlight;
+mod lines;
 mod link;
 mod note;
 mod print;
@@ -31,8 +32,8 @@ trait Open {
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .version("v0.11.6")
-        .about("meudeus v0.11.6\na skimblade for plain-text papers")
+        .version("v0.12.0")
+        .about("meudeus v0.12.0\na skimblade for plain-text papers")
         .bin_name("mds")
         .arg(clap::arg!(-c --color  "whether color output should be forced"))
         .subcommand_required(true)
@@ -42,14 +43,18 @@ async fn main() {
                 .about("`initialize` .sqlite database in notes dir, specified by config"),
         )
         .subcommand(
-            clap::command!("note").visible_alias("n").about("create a note").arg(
-                clap::arg!([title] "note title (unique name among notes and tags)")
-                    .value_parser(clap::value_parser!(String))
-                    .required(true),
-            ),
+            clap::command!("note")
+                .visible_alias("n")
+                .about("create a note")
+                .arg(
+                    clap::arg!([title] "note title (unique name among notes and tags)")
+                        .value_parser(clap::value_parser!(String))
+                        .required(true),
+                ),
         )
         .subcommand(
-            clap::command!("tag").visible_alias("t")
+            clap::command!("tag")
+                .visible_alias("t")
                 .about("create a tag (note without file body)")
                 .arg(
                     clap::arg!([title] "tag title (unique name among notes and tags)")
@@ -59,18 +64,29 @@ async fn main() {
         )
         .subcommand(clap::command!("select").about("select note S, i.e. print its name to stdout"))
         .subcommand(
-            clap::command!("link").visible_alias("l").about("link 2 notes A -> B, selected twice in skim interface"),
+            clap::command!("link")
+                .visible_alias("l")
+                .about("link 2 notes A -> B, selected twice in skim interface"),
         )
         .subcommand(
-            clap::command!("unlink").visible_alias("ul").about("unlink 2 notes A -> B, selected twice in skim interface"),
+            clap::command!("unlink")
+                .visible_alias("ul")
+                .about("unlink 2 notes A -> B, selected twice in skim interface"),
         )
-        .subcommand(clap::command!("remove").visible_alias("rm").about("remove note R, selected in skim interface"))
-        .subcommand(clap::command!("rename").visible_alias("mv").about("rename note R, selected in skim interface"))
         .subcommand(
-            clap::command!("print").visible_alias("p")
-                .about(
-                    "print subgraph of notes and links reachable downwards from selected note P",
-                )
+            clap::command!("remove")
+                .visible_alias("rm")
+                .about("remove note R, selected in skim interface"),
+        )
+        .subcommand(
+            clap::command!("rename")
+                .visible_alias("mv")
+                .about("rename note R, selected in skim interface"),
+        )
+        .subcommand(
+            clap::command!("print")
+                .visible_alias("p")
+                .about("print subgraph of notes and links reachable downwards from selected note P")
                 .arg(
                     clap::arg!(-n --name <NOTE_NAME> "note name")
                         .value_parser(clap::value_parser!(String))
@@ -78,12 +94,15 @@ async fn main() {
                 ),
         )
         .subcommand(
-            clap::command!("explore").visible_alias("ex").about("explore notes by <c-h> (backlinks) , <c-l> (links forward)"),
+            clap::command!("explore")
+                .visible_alias("ex")
+                .about("explore notes by <c-h> (backlinks) , <c-l> (links forward)"),
         )
         .subcommand(
             clap::command!("surf").visible_alias("s").about(
-            "surf through all links and code snippets found downwards from selected note S",
-        ))
+                "surf through all links and code snippets found downwards from selected note S",
+            ),
+        )
         .subcommand(clap::command!("checkmark").visible_alias("k").about(
             "checkmark, toggle state TODO/DONE of multiple task items, found in a selected note C",
         ));

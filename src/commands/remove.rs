@@ -23,7 +23,8 @@ pub(crate) async fn exec(
         external_commands.clone(),
         surf_parsing,
     )
-    .run().await?;
+    .run()
+    .await?;
 
     db.lock().await.remove_note(&note).await?;
 

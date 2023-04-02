@@ -44,4 +44,18 @@ impl CmdTemplate {
             self.args[index] = value.to_string();
         }
     }
+
+    pub fn replace_in_matching_element(&mut self, placeholder: &str, value: &str) {
+        let args = self.args.drain(..).collect::<Vec<_>>();
+        self.args = args
+            .into_iter()
+            .map(|element| {
+                if element.contains(placeholder) {
+                    let new = element.replace(placeholder, value);
+                    return new;
+                }
+                element
+            })
+            .collect::<Vec<_>>();
+    }
 }

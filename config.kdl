@@ -10,6 +10,9 @@ world {
 		open {
 			file "hx" "$FILE"
 
+			file-jump "hx" "$FILE:$LINE:$COLUMN"
+			// file-jump  "nvim" "$FILE" "+call cursor($LINE, $COLUMN)"
+
 			dir "zellij" "action" "new-pane" "--cwd" "$DIR" "--" "broot"
 
 			url "firefox" "$URL"

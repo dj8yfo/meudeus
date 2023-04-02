@@ -7,6 +7,11 @@ use skim::{
 
 use crate::task_item::TaskTreeWrapper;
 
+pub enum Action {
+    Toggle(Vec<TaskTreeWrapper>),
+    Open(TaskTreeWrapper),
+}
+
 pub(crate) struct Iteration {
     items: Option<Vec<TaskTreeWrapper>>,
 }
@@ -15,7 +20,7 @@ impl Iteration {
         Self { items: Some(items) }
     }
 
-    pub(crate) fn run(mut self) -> anyhow::Result<Vec<TaskTreeWrapper>> {
+    pub(crate) fn run(mut self) -> anyhow::Result<Action> {
         let items = self.items.take().unwrap();
 
         let options = SkimOptionsBuilder::default()
@@ -23,7 +28,12 @@ impl Iteration {
             .preview(Some(""))
             .preview_window(Some("right:65%"))
             .multi(true)
-            .bind(vec!["ctrl-c:abort", "Enter:accept", "ESC:abort"])
+            .bind(vec![
+                "ctrl-c:abort",
+                "Enter:accept",
+                "ESC:abort",
+                "ctrl-j:accept",
+            ])
             .build()?;
 
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
@@ -52,7 +62,11 @@ impl Iteration {
 
             match out.final_key {
                 Key::Enter => {
-                    return Ok(selected_items);
+                    return Ok(Action::Toggle(selected_items));
+                }
+                Key::Ctrl('j') => {
+                    let first = selected_items.first().expect("non empty");
+                    return Ok(Action::Open(first.clone()));
                 }
                 Key::Ctrl('c') | Key::ESC => {
                     return Err(anyhow::anyhow!(

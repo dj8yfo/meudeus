@@ -70,7 +70,8 @@ impl Iteration {
                 .preview_window(Some("right:65%"))
                 .multi(self.multi)
                 .bind(vec!["ctrl-c:abort", "Enter:accept", "ESC:abort"])
-                .build().unwrap();
+                .build()
+                .unwrap();
 
             Skim::run_with(&options, Some(rx))
         })

@@ -4,9 +4,11 @@ use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     note::{NoteTaskItemTerm, PreviewType},
+    skim::checkmark::Action as TaskAction,
     skim::checkmark::Iteration as CheckmarkIteration,
     skim::explore::{Action, Iteration},
     task_item::{TaskItem, TaskTreeWrapper},
+    Open,
 };
 
 pub(crate) async fn exec(
@@ -66,9 +68,17 @@ pub(crate) async fn exec(
             .map(|result| result.expect("we do not expect preview generation to panic"))
             .collect::<Vec<_>>();
 
-        let selected_tasks = CheckmarkIteration::new(tasks).run()?;
-        for task in selected_tasks {
-            task.toggle()?;
+        let action = CheckmarkIteration::new(tasks).run()?;
+        match action {
+            TaskAction::Toggle(selected_tasks) => {
+                for task in selected_tasks {
+                    task.toggle()?;
+                }
+            }
+            TaskAction::Open(task) => {
+                let note_task_item_term = task.data.root;
+                note_task_item_term.open(external_commands.open.clone())?;
+            }
         }
     }
 }

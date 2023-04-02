@@ -32,7 +32,6 @@ pub enum Destination {
     },
 }
 
-
 impl Open for Link {
     fn open(&self, mut cfg: OpenCfg) -> io::Result<Option<std::process::ExitStatus>> {
         match &self.link {
@@ -93,11 +92,7 @@ pub struct Link {
 
 impl Display for Link {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            f,
-            "{} -> [{}]",
-            self.parent_name, self.description
-        )
+        write!(f, "{} -> [{}]", self.parent_name, self.description)
     }
 }
 

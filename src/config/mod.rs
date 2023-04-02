@@ -39,6 +39,7 @@ pub struct Preview {
 #[derive(Debug, Clone)]
 pub struct Open {
     pub file_cmd: CmdTemplate,
+    pub file_jump_cmd: CmdTemplate,
     pub url_cmd: CmdTemplate,
     pub dir_cmd: CmdTemplate,
     pub pipe_text_snippet_cmd: CmdTemplate,
@@ -75,9 +76,17 @@ impl TryFrom<&KdlNode> for Open {
 
         let snippet = snippet.try_into()?;
 
+        let file_jump = value
+            .children()
+            .ok_or(anyhow!("`open` should have children"))?
+            .get_args("file-jump");
+
+        let file_jump = file_jump.try_into()?;
+
         Ok(Self {
             url_cmd: url,
             file_cmd: file,
+            file_jump_cmd: file_jump,
             dir_cmd: dir,
             pipe_text_snippet_cmd: snippet,
         })

@@ -20,9 +20,7 @@ impl super::Link {
             super::Destination::File { file, preview } => {
                 fetch_content(preview.clone(), Some(file)).unwrap()
             }
-            super::Destination::Dir { dir, preview } => {
-                list_dir(preview.clone(), dir)
-            }
+            super::Destination::Dir { dir, preview } => list_dir(preview.clone(), dir),
             super::Destination::Broken(broken) => format!(
                 "{}: {}",
                 "Broken path",
@@ -65,6 +63,5 @@ impl SkimItem for super::Link {
         } else {
             ItemPreview::AnsiText("<not precomputed!!!>".to_string())
         }
-        
     }
 }

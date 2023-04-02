@@ -28,7 +28,8 @@ pub(crate) async fn exec(
                 external_commands.clone(),
                 surf_parsing.clone(),
             )
-            .run().await?
+            .run()
+            .await?
         }
     };
 

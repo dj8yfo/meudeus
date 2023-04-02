@@ -22,7 +22,8 @@ pub(crate) async fn exec(
         external_commands.clone(),
         surf_parsing,
     )
-    .run().await?;
+    .run()
+    .await?;
 
     let new_name = Text::new("Enter new note's name:")
         .with_initial_value(&note.name())

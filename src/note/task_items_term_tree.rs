@@ -1,15 +1,18 @@
-use std::{collections::HashSet, fmt::Display};
+use std::{collections::HashSet, fmt::Display, fs};
 
 use crate::{
     config::SurfParsing,
     database::{Database, SqliteAsyncHandle},
+    lines::find_position,
     task_item::TaskItem,
+    Open,
 };
 use async_recursion::async_recursion;
 use colored::Colorize;
 use termtree::Tree;
 
 use super::Note;
+use duct::cmd;
 use sqlx::Result as SqlxResult;
 
 #[derive(Clone)]
@@ -70,6 +73,40 @@ impl NoteTaskItemTerm {
             index += 1;
         }
         result
+    }
+}
+
+impl Open for NoteTaskItemTerm {
+    fn open(
+        &self,
+        mut cfg: crate::config::Open,
+    ) -> std::io::Result<Option<std::process::ExitStatus>> {
+        let task = match self {
+            NoteTaskItemTerm::Note(..) => unreachable!("not expecting a note here"),
+            NoteTaskItemTerm::Cycle(..) => unreachable!("not expecting a cycle here"),
+            NoteTaskItemTerm::Task(task) => task.clone(),
+        };
+
+        let initial_contents: &str = &fs::read_to_string(&task.file_name)?;
+        let offset = task.checkmark_offsets_in_string.start;
+        let position = find_position(initial_contents, offset);
+
+        cfg.file_jump_cmd.replace_in_matching_element(
+            "$FILE",
+            task.file_name.to_str().unwrap_or("bad utf path"),
+        );
+
+        cfg.file_jump_cmd
+            .replace_in_matching_element("$LINE", &format!("{}", position.line));
+
+        cfg.file_jump_cmd
+            .replace_in_matching_element("$COLUMN", &format!("{}", position.column));
+
+        Ok(Some(
+            cmd(cfg.file_jump_cmd.command, cfg.file_jump_cmd.args)
+                .run()?
+                .status,
+        ))
     }
 }
 

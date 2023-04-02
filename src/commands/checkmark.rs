@@ -8,7 +8,7 @@ use crate::{
     skim::checkmark::Iteration as CheckmarkIteration,
     skim::explore::{Action, Iteration},
     task_item::{TaskItem, TaskTreeWrapper},
-    Open,
+    Jump,
 };
 
 pub(crate) async fn exec(
@@ -77,7 +77,7 @@ pub(crate) async fn exec(
             }
             TaskAction::Open(task) => {
                 let note_task_item_term = task.data.root;
-                note_task_item_term.open(external_commands.open.clone())?;
+                note_task_item_term.jump(external_commands.open.clone())?;
             }
         }
     }

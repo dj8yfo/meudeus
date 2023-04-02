@@ -1,3 +1,7 @@
+use std::time::Duration;
+
+use tokio::time::sleep;
+
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
@@ -5,10 +9,10 @@ use crate::{
     note::PreviewType,
     print::format_two_tokens,
     skim::explore::{Action, Iteration},
+    skim::surf::Action as SurfAction,
     skim::surf::Iteration as SurfIteration,
-    Open,
+    Jump, Open,
 };
-use colored::Colorize;
 
 pub(crate) async fn exec(
     db: SqliteAsyncHandle,
@@ -41,18 +45,28 @@ pub(crate) async fn exec(
         list = out.next_items;
     };
 
-    let all_vec = note.reachable_notes(db.clone()).await?;
-    let links: std::io::Result<Vec<_>> = all_vec
-        .into_iter()
-        .map(|v| Link::parse(&v, &surf, &external_commands))
-        .collect();
-    let links: Vec<_> = links?.into_iter().flat_map(|v| v).collect();
-
-    let link = SurfIteration::new(links, false).run().await?;
-    link.open(external_commands.open)?;
-
-    eprintln!("{}", link);
-    eprintln!("{}", format_two_tokens("surfed", &note.name()));
-
-    Ok("success".cyan().to_string())
+    loop {
+        let all_vec = note.reachable_notes(db.clone()).await?;
+        let links: std::io::Result<Vec<_>> = all_vec
+            .into_iter()
+            .map(|v| Link::parse(&v, &surf))
+            .collect();
+        let links: Vec<_> = links?.into_iter().flat_map(|v| v).collect();
+        let action = SurfIteration::new(links, false, external_commands.clone())
+            .run()
+            .await?;
+        eprintln!("{}", action);
+        match action {
+            SurfAction::Open(ref link) => {
+                link.open(external_commands.clone().open)?;
+                eprintln!("{}", link.preview_item.as_ref().unwrap());
+            }
+            SurfAction::Jump(ref link) => {
+                link.jump(external_commands.clone().open)?;
+                eprintln!("{}", link.preview_item.as_ref().unwrap());
+            }
+        }
+        sleep(Duration::new(3, 0)).await;
+        eprintln!("{}", format_two_tokens("surfed", &note.name()));
+    }
 }

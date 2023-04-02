@@ -23,10 +23,14 @@ world {
 	}
 
 	surf-parsing {
+		// regex can be arbitrary, but the named groups `description`, `url`
+		// must exist, otherwise panics will entail
 		markdown-reference-link-regex  r#"\[(?P<description>[^\]]+)\]\((?P<url>[^\)]+)\)"#	
 
 		url-regex  r#"^https?://\S+"#		
 
+		// regex can be arbitrary, but the named groups `whitespace`, `checkmark`, `task_text`
+		// must exist, otherwise panics will entail
 		task-item-regex r#"(?P<whitespace>(  )*)- \[(?P<checkmark>[x ])\]\s+(?P<task_text>.+)"#
 	}
 

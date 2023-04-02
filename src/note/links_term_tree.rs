@@ -68,7 +68,7 @@ impl Note {
                 tree.push(next_tree);
             }
         }
-        let links = Link::parse(self, &surf_parsing, &external_commands)?;
+        let links = Link::parse(self, &surf_parsing)?;
         for link in links {
             tree.push(NoteLinkTerm::Link(link));
         }

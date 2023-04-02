@@ -29,11 +29,15 @@ trait Open {
     fn open(&self, cfg: OpenCfg) -> io::Result<Option<ExitStatus>>;
 }
 
+trait Jump {
+    fn jump(&self, cfg: OpenCfg) -> io::Result<Option<ExitStatus>>;
+}
+
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .version("v0.12.0")
-        .about("meudeus v0.12.0\na skimblade for plain-text papers")
+        .version("v0.12.1")
+        .about("meudeus v0.12.1\na skimblade for plain-text papers")
         .bin_name("mds")
         .arg(clap::arg!(-c --color  "whether color output should be forced"))
         .subcommand_required(true)

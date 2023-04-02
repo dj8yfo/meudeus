@@ -1,15 +1,12 @@
 use std::{fmt::Display, io, path::PathBuf};
 
 use colored::Colorize;
+use comrak::nodes::Sourcepos;
 use duct::cmd;
 use regex::Regex;
 use skim::AnsiString;
 
-use crate::{
-    config::{cmd_template::CmdTemplate, ExternalCommands, Open as OpenCfg},
-    print::format_two_tokens,
-    Open,
-};
+use crate::{config::Open as OpenCfg, lines::EditorPosition, print::format_two_tokens, Jump, Open};
 mod parse;
 mod skim_item;
 
@@ -18,17 +15,14 @@ pub enum Destination {
     URL(String),
     File {
         file: PathBuf,
-        preview: CmdTemplate,
     },
     Dir {
         dir: PathBuf,
-        preview: CmdTemplate,
     },
     Broken(PathBuf),
     CodeBlock {
         code_block: String,
         syntax_label: String,
-        open: CmdTemplate,
     },
 }
 
@@ -81,13 +75,42 @@ impl Open for Link {
         }
     }
 }
+
+impl Jump for Link {
+    fn jump(
+        &self,
+        mut cfg: crate::config::Open,
+    ) -> std::io::Result<Option<std::process::ExitStatus>> {
+        let position = self.start;
+
+        cfg.file_jump_cmd.replace_in_matching_element(
+            "$FILE",
+            self.containing_file_name.to_str().unwrap_or("bad utf path"),
+        );
+
+        cfg.file_jump_cmd
+            .replace_in_matching_element("$LINE", &format!("{}", position.line));
+
+        cfg.file_jump_cmd
+            .replace_in_matching_element("$COLUMN", &format!("{}", position.column));
+
+        Ok(Some(
+            cmd(cfg.file_jump_cmd.command, cfg.file_jump_cmd.args)
+                .run()?
+                .status,
+        ))
+    }
+}
 #[derive(Clone, Debug)]
 pub struct Link {
+    pub containing_file_name: PathBuf,
     pub parent_name: String,
     pub description: String,
     pub link: Destination,
     pub display_item: Option<AnsiString<'static>>,
     pub preview_item: Option<String>,
+
+    pub start: EditorPosition,
 }
 
 impl Display for Link {
@@ -111,11 +134,12 @@ impl Link {
         input
     }
     pub fn new_code_block(
+        parent_note: PathBuf,
         parent_name: String,
         description: String,
         code_block: String,
         syntax_label: String,
-        external_commands: &ExternalCommands,
+        source_position: Sourcepos,
     ) -> Self {
         Self {
             parent_name,
@@ -123,10 +147,14 @@ impl Link {
             link: Destination::CodeBlock {
                 code_block,
                 syntax_label,
-                open: external_commands.open.file_cmd.clone(),
             },
             preview_item: None,
             display_item: None,
+            start: EditorPosition {
+                line: source_position.start.line,
+                column: source_position.start.column,
+            },
+            containing_file_name: parent_note,
         }
     }
     pub fn new(
@@ -135,7 +163,7 @@ impl Link {
         parent_note: PathBuf,
         parent_name: String,
         url: &Regex,
-        external_commands: &ExternalCommands,
+        start: EditorPosition,
     ) -> Self {
         if url.is_match(&link) {
             Self {
@@ -144,6 +172,8 @@ impl Link {
                 link: Destination::URL(link),
                 preview_item: None,
                 display_item: None,
+                start,
+                containing_file_name: parent_note,
             }
         } else {
             let mut link = PathBuf::from(&link);
@@ -154,23 +184,21 @@ impl Link {
                 Self {
                     parent_name,
                     description,
-                    link: Destination::File {
-                        file: link,
-                        preview: external_commands.preview.file_cmd.clone(),
-                    },
+                    link: Destination::File { file: link },
                     preview_item: None,
                     display_item: None,
+                    start,
+                    containing_file_name: parent_note,
                 }
             } else if link.is_dir() {
                 Self {
                     parent_name,
                     description,
-                    link: Destination::Dir {
-                        dir: link,
-                        preview: external_commands.preview.dir_cmd.clone(),
-                    },
+                    link: Destination::Dir { dir: link },
                     preview_item: None,
                     display_item: None,
+                    start,
+                    containing_file_name: parent_note,
                 }
             } else {
                 Self {
@@ -179,6 +207,8 @@ impl Link {
                     link: Destination::Broken(link),
                     preview_item: None,
                     display_item: None,
+                    start,
+                    containing_file_name: parent_note,
                 }
             }
         }

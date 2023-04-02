@@ -4,6 +4,7 @@ use colored::Colorize;
 use skim::{AnsiString, DisplayContext, ItemPreview, PreviewContext, SkimItem};
 
 use crate::{
+    config::Preview,
     external_commands::{fetch_content, list_dir},
     highlight::highlight_code_block,
 };
@@ -14,13 +15,13 @@ impl super::Link {
         self.display_item = Some(AnsiString::parse(&input));
     }
 
-    pub fn compute_preview(&self) -> String {
+    pub fn compute_preview(&self, preview_cmds: &Preview) -> String {
         match &self.link {
             super::Destination::URL(url) => url.cyan().to_string(),
-            super::Destination::File { file, preview } => {
-                fetch_content(preview.clone(), Some(file)).unwrap()
+            super::Destination::File { file } => {
+                fetch_content(preview_cmds.file_cmd.clone(), Some(file)).unwrap()
             }
-            super::Destination::Dir { dir, preview } => list_dir(preview.clone(), dir),
+            super::Destination::Dir { dir } => list_dir(preview_cmds.dir_cmd.clone(), dir),
             super::Destination::Broken(broken) => format!(
                 "{}: {}",
                 "Broken path",
@@ -39,8 +40,8 @@ impl super::Link {
         }
     }
 
-    pub fn prepare_preview(&mut self) {
-        let result = self.compute_preview();
+    pub fn prepare_preview(&mut self, preview_cmds: &Preview) {
+        let result = self.compute_preview(preview_cmds);
         self.preview_item = Some(result);
     }
 }

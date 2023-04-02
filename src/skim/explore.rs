@@ -147,7 +147,7 @@ impl Iteration {
                     if let Some(item) = selected_items.first() {
                         let mut next = item.fetch_forward_links(&self.db).await?;
                         if next.is_empty() {
-                            next = items;
+                            next = vec![item.clone()];
                         }
                         return Ok(Out {
                             action: Action::Noop,

@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct EditorPosition {
     pub line: usize,
     pub column: usize,

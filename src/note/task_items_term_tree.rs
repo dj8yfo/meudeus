@@ -5,7 +5,7 @@ use crate::{
     database::{Database, SqliteAsyncHandle},
     lines::find_position,
     task_item::TaskItem,
-    Open,
+    Jump,
 };
 use async_recursion::async_recursion;
 use colored::Colorize;
@@ -76,8 +76,8 @@ impl NoteTaskItemTerm {
     }
 }
 
-impl Open for NoteTaskItemTerm {
-    fn open(
+impl Jump for NoteTaskItemTerm {
+    fn jump(
         &self,
         mut cfg: crate::config::Open,
     ) -> std::io::Result<Option<std::process::ExitStatus>> {

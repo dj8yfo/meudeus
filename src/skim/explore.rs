@@ -82,6 +82,7 @@ impl Iteration {
                 .height(Some("100%"))
                 .preview_window(Some("right:65%"))
                 .preview(Some(""))
+                .prompt(Some("(explore) >"))
                 .multi(false)
                 .bind(vec![
                     "ctrl-c:abort",

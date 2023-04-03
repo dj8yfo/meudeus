@@ -26,6 +26,7 @@ impl Iteration {
         let options = SkimOptionsBuilder::default()
             .height(Some("100%"))
             .preview(Some(""))
+            .prompt(Some("(checkmark) >"))
             .preview_window(Some("right:65%"))
             .multi(true)
             .bind(vec![

@@ -1,6 +1,6 @@
 [package]
 name = "mds"
-version = "0.12.1"
+version = "0.12.2"
 author = ["dj8yf0μl"]
 description = "A skim-based `*.md` explore and surf note-taking tool"
 repository = "https://github.com/dj8yfo/meudeus"

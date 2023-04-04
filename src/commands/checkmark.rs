@@ -8,7 +8,7 @@ use crate::{
     skim::checkmark::Iteration as CheckmarkIteration,
     skim::explore::{Action, Iteration},
     task_item::{TaskItem, TaskTreeWrapper},
-    Jump,
+    Jump, Yank,
 };
 
 pub(crate) async fn exec(
@@ -44,7 +44,12 @@ pub(crate) async fn exec(
     loop {
         let tasks = TaskItem::parse(&note, &surf)?;
 
-        let tasks = NoteTaskItemTerm::parse(&tasks, false);
+        let tasks_stereo = NoteTaskItemTerm::parse(&tasks, false, false);
+        let tasks_mono = NoteTaskItemTerm::parse(&tasks, false, true);
+        let tasks = tasks_stereo
+            .into_iter()
+            .zip(tasks_mono.into_iter())
+            .collect::<Vec<_>>();
 
         let compute_display_jh = tasks
             .into_iter()
@@ -54,6 +59,7 @@ pub(crate) async fn exec(
                         data: element,
                         display_item: None,
                         preview_item: None,
+                        mono_preview_item: None,
                     };
 
                     wrapper.prepare_display();
@@ -76,8 +82,11 @@ pub(crate) async fn exec(
                 }
             }
             TaskAction::Open(task) => {
-                let note_task_item_term = task.data.root;
+                let note_task_item_term = task.data.0.root;
                 note_task_item_term.jump(external_commands.open.clone())?;
+            }
+            TaskAction::Yank(task) => {
+                task.yank(external_commands.open.clone())?;
             }
         }
     }

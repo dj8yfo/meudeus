@@ -10,6 +10,7 @@ use crate::task_item::TaskTreeWrapper;
 pub enum Action {
     Toggle(Vec<TaskTreeWrapper>),
     Open(TaskTreeWrapper),
+    Yank(TaskTreeWrapper),
 }
 
 pub(crate) struct Iteration {
@@ -34,6 +35,7 @@ impl Iteration {
                 "Enter:accept",
                 "ESC:abort",
                 "ctrl-j:accept",
+                "ctrl-y:accept",
             ])
             .build()?;
 
@@ -68,6 +70,10 @@ impl Iteration {
                 Key::Ctrl('j') => {
                     let first = selected_items.first().expect("non empty");
                     return Ok(Action::Open(first.clone()));
+                }
+                Key::Ctrl('y') => {
+                    let first = selected_items.first().expect("non empty");
+                    return Ok(Action::Yank(first.clone()));
                 }
                 Key::Ctrl('c') | Key::ESC => {
                     return Err(anyhow::anyhow!(

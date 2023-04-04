@@ -19,6 +19,7 @@ use sqlx::Result as SqlxResult;
 pub enum NoteTaskItemTerm {
     Note(Note),
     Task(TaskItem),
+    TaskMono(TaskItem),
     Cycle(String),
 }
 
@@ -32,6 +33,9 @@ impl Display for NoteTaskItemTerm {
             Self::Task(task) => {
                 write!(f, "{}", task.skim_display(false))
             }
+            Self::TaskMono(task) => {
+                write!(f, "{}", task.skim_display_mono(false))
+            }
             Self::Cycle(cycle) => {
                 write!(f, "⟳ {}", cycle.truecolor(150, 75, 0).to_string())
             }
@@ -40,7 +44,7 @@ impl Display for NoteTaskItemTerm {
 }
 
 impl NoteTaskItemTerm {
-    pub fn parse(input: &[TaskItem], group_by_top_level: bool) -> Vec<Tree<Self>> {
+    pub fn parse(input: &[TaskItem], group_by_top_level: bool, mono: bool) -> Vec<Tree<Self>> {
         let mut result = vec![];
         let mut subrange_end = 0;
         let mut index = 0;
@@ -53,7 +57,12 @@ impl NoteTaskItemTerm {
                     }
                 }
             }
-            let mut tree = Tree::new(NoteTaskItemTerm::Task(input[index].clone()));
+            let mut tree;
+            if mono {
+                tree = Tree::new(NoteTaskItemTerm::TaskMono(input[index].clone()));
+            } else {
+                tree = Tree::new(NoteTaskItemTerm::Task(input[index].clone()));
+            }
             let current_offset = input[index].nested_level;
             let subrange_start = index + 1;
             subrange_end = index + 1;
@@ -64,7 +73,7 @@ impl NoteTaskItemTerm {
                     subrange_end += 1;
                 }
                 let subslice = &input[subrange_start..subrange_end];
-                let children = NoteTaskItemTerm::parse(subslice, true);
+                let children = NoteTaskItemTerm::parse(subslice, true, mono);
                 for child in children {
                     tree.push(child);
                 }
@@ -85,6 +94,7 @@ impl Jump for NoteTaskItemTerm {
             NoteTaskItemTerm::Note(..) => unreachable!("not expecting a note here"),
             NoteTaskItemTerm::Cycle(..) => unreachable!("not expecting a cycle here"),
             NoteTaskItemTerm::Task(task) => task.clone(),
+            NoteTaskItemTerm::TaskMono(task) => task.clone(),
         };
 
         let initial_contents: &str = &fs::read_to_string(&task.file_name)?;
@@ -123,7 +133,7 @@ impl Note {
 
         let tasks = TaskItem::parse(self, &surf_parsing)?;
 
-        let trees = NoteTaskItemTerm::parse(&tasks, true);
+        let trees = NoteTaskItemTerm::parse(&tasks, true, false);
         for task in trees {
             tree.push(task);
         }

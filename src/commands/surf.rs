@@ -66,7 +66,7 @@ pub(crate) async fn exec(
                 eprintln!("{}", link.preview_item.as_ref().unwrap());
             }
         }
-        sleep(Duration::new(3, 0)).await;
+        sleep(Duration::new(1, 500_000_000)).await;
         eprintln!("{}", format_two_tokens("surfed", &note.name()));
     }
 }

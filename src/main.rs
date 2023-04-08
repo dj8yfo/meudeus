@@ -40,8 +40,8 @@ trait Yank {
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .version("v0.12.2")
-        .about("meudeus v0.12.2\na skimblade for plain-text papers")
+        .version("v0.12.3")
+        .about("meudeus v0.12.3\na skimblade for plain-text papers")
         .bin_name("mds")
         .arg(clap::arg!(-c --color  "whether color output should be forced"))
         .subcommand_required(true)

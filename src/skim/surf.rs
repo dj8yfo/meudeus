@@ -52,12 +52,15 @@ impl Iteration {
                 // }
             });
         }
+
+        drop(tx);
+
         let out = tokio::task::spawn_blocking(move || {
             let options = SkimOptionsBuilder::default()
                 .height(Some("100%"))
                 .preview(Some(""))
-                .prompt(Some("(surf) >"))
-                .preview_window(Some("right:65%"))
+                .prompt(Some("(surf) > "))
+                .preview_window(Some("right:55%"))
                 .multi(self.multi)
                 .bind(vec![
                     "ctrl-j:accept",

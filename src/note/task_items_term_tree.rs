@@ -20,6 +20,7 @@ pub enum NoteTaskItemTerm {
     Note(Note),
     Task(TaskItem),
     TaskMono(TaskItem),
+    TaskHint(usize),
     Cycle(String),
 }
 
@@ -32,6 +33,13 @@ impl Display for NoteTaskItemTerm {
 
             Self::Task(task) => {
                 write!(f, "{}", task.skim_display(false))
+            }
+            Self::TaskHint(num) => {
+                write!(
+                    f,
+                    "{}",
+                    format!("[ has {num} task items ]").truecolor(242, 242, 223)
+                )
             }
             Self::TaskMono(task) => {
                 write!(f, "{}", task.skim_display_mono(false))
@@ -73,6 +81,16 @@ impl NoteTaskItemTerm {
                     subrange_end += 1;
                 }
                 let subslice = &input[subrange_start..subrange_end];
+                let height_task = subrange_end - index;
+                match tree.root {
+                    NoteTaskItemTerm::Note(..) => unreachable!("note"),
+                    NoteTaskItemTerm::Cycle(..) => unreachable!("cycle"),
+                    NoteTaskItemTerm::TaskHint(_num) => unreachable!("hint"),
+                    NoteTaskItemTerm::Task(ref mut task)
+                    | NoteTaskItemTerm::TaskMono(ref mut task) => {
+                        task.next_index = Some(task.self_index + height_task);
+                    }
+                }
                 let children = NoteTaskItemTerm::parse(subslice, true, mono);
                 for child in children {
                     tree.push(child);
@@ -93,6 +111,7 @@ impl Jump for NoteTaskItemTerm {
         let task = match self {
             NoteTaskItemTerm::Note(..) => unreachable!("not expecting a note here"),
             NoteTaskItemTerm::Cycle(..) => unreachable!("not expecting a cycle here"),
+            NoteTaskItemTerm::TaskHint(_num) => unreachable!("hint"),
             NoteTaskItemTerm::Task(task) => task.clone(),
             NoteTaskItemTerm::TaskMono(task) => task.clone(),
         };
@@ -124,6 +143,7 @@ impl Note {
     #[async_recursion]
     pub async fn construct_task_item_term_tree(
         &self,
+        level: usize,
         mut all_reachable: HashSet<Note>,
         surf_parsing: SurfParsing,
         db: SqliteAsyncHandle,
@@ -134,8 +154,14 @@ impl Note {
         let tasks = TaskItem::parse(self, &surf_parsing)?;
 
         let trees = NoteTaskItemTerm::parse(&tasks, true, false);
-        for task in trees {
-            tree.push(task);
+        if trees.len() > 0 {
+            if level > 1 {
+                tree.push(NoteTaskItemTerm::TaskHint(trees.len()));
+            } else {
+                for task in trees {
+                    tree.push(task);
+                }
+            }
         }
 
         let forward_links = db.lock().await.find_links_from(&self.name()).await?;
@@ -145,7 +171,12 @@ impl Note {
                 tree.push(Tree::new(NoteTaskItemTerm::Cycle(next.name())));
             } else {
                 let (next_tree, roundtrip_reachable) = next
-                    .construct_task_item_term_tree(all_reachable, surf_parsing.clone(), db.clone())
+                    .construct_task_item_term_tree(
+                        level + 1,
+                        all_reachable,
+                        surf_parsing.clone(),
+                        db.clone(),
+                    )
                     .await?;
                 all_reachable = roundtrip_reachable;
                 tree.push(next_tree);

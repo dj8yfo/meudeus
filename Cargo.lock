@@ -1329,7 +1329,7 @@ dependencies = [
 
 [[package]]
 name = "mds"
-version = "0.12.2"
+version = "0.12.3"
 dependencies = [
  "anyhow",
  "async-recursion",

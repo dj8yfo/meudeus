@@ -10,6 +10,7 @@ impl Note {
 
         let result = self
             .construct_link_term_tree(
+                0,
                 HashSet::new(),
                 rs.external_commands.clone(),
                 rs.surf_parsing.clone(),
@@ -26,7 +27,7 @@ impl Note {
     pub async fn task_structure(&self, db: &SqliteAsyncHandle) -> String {
         let rs = self.resources().unwrap();
         let result = self
-            .construct_task_item_term_tree(HashSet::new(), rs.surf_parsing.clone(), db.clone())
+            .construct_task_item_term_tree(0, HashSet::new(), rs.surf_parsing.clone(), db.clone())
             .await;
 
         match result {

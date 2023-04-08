@@ -83,7 +83,7 @@ impl Display for Note {
                 write!(f, "{}", self.name().cyan().to_string())
             }
         } else {
-            write!(f, "{}", self.name().yellow().to_string())
+            write!(f, "{}", self.name())
         }
     }
 }

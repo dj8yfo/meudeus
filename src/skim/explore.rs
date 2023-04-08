@@ -76,13 +76,14 @@ impl Iteration {
                 }
             });
         }
+        drop(tx);
 
         let out = tokio::task::spawn_blocking(move || {
             let options = SkimOptionsBuilder::default()
                 .height(Some("100%"))
-                .preview_window(Some("right:65%"))
+                .preview_window(Some("right:55%"))
                 .preview(Some(""))
-                .prompt(Some("(explore) >"))
+                .prompt(Some("(explore) > "))
                 .multi(false)
                 .bind(vec![
                     "ctrl-c:abort",

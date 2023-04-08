@@ -15,10 +15,12 @@ pub struct TaskItem {
     pub completed: bool,
     pub nested_level: usize,
     pub checkmark_offsets_in_string: std::ops::Range<usize>,
+    pub self_index: usize,
+    pub next_index: Option<usize>,
 }
 
-impl From<(PathBuf, regex::Captures<'_>)> for TaskItem {
-    fn from(value: (PathBuf, regex::Captures<'_>)) -> Self {
+impl From<(PathBuf, regex::Captures<'_>, usize)> for TaskItem {
+    fn from(value: (PathBuf, regex::Captures<'_>, usize)) -> Self {
         let title = value.1.name("task_text").unwrap();
         let checkmark = value.1.name("checkmark").unwrap();
         let completed = if checkmark.as_str() == "x" {
@@ -35,6 +37,8 @@ impl From<(PathBuf, regex::Captures<'_>)> for TaskItem {
             completed,
             title: title.as_str().to_string(),
             checkmark_offsets_in_string,
+            self_index: value.2,
+            next_index: None,
         }
     }
 }
@@ -43,8 +47,8 @@ impl TaskItem {
     fn parse_string(file_name: &PathBuf, input: &str, regex: &Regex) -> Vec<Self> {
         let mut result = vec![];
 
-        for capture in regex.captures_iter(input) {
-            result.push((file_name.clone(), capture).into());
+        for (index, capture) in regex.captures_iter(input).enumerate() {
+            result.push((file_name.clone(), capture, index).into());
         }
         result
     }
@@ -152,6 +156,8 @@ mod tests {
                 completed: true,
                 file_name: "./tmp.rs".into(),
                 checkmark_offsets_in_string: 362..363,
+                self_index: 4,
+                next_index: None,
             }
         );
         for el in list {

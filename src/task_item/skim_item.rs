@@ -41,6 +41,7 @@ impl TaskTreeWrapper {
         match self.data.0.root {
             NoteTaskItemTerm::Note(..) => unreachable!("note"),
             NoteTaskItemTerm::Cycle(..) => unreachable!("cycle"),
+            NoteTaskItemTerm::TaskHint(..) => unreachable!("hint"),
             NoteTaskItemTerm::TaskMono(..) => unreachable!("task_mono"),
             NoteTaskItemTerm::Task(ref task_item) => {
                 let result = task_item.skim_display(true);
@@ -62,6 +63,7 @@ impl SkimItem for TaskTreeWrapper {
         let input = match self.data.0.root {
             NoteTaskItemTerm::Note(..) => unreachable!("note"),
             NoteTaskItemTerm::Cycle(..) => unreachable!("cycle"),
+            NoteTaskItemTerm::TaskHint(..) => unreachable!("hint"),
             NoteTaskItemTerm::TaskMono(..) => unreachable!("task_mono"),
             NoteTaskItemTerm::Task(ref task_item) => {
                 format!("{}", task_item.skim_display_mono(true))
@@ -96,6 +98,7 @@ impl TaskTreeWrapper {
         match self.data.0.root {
             NoteTaskItemTerm::Note(..) => unreachable!("note"),
             NoteTaskItemTerm::Cycle(..) => unreachable!("cycle"),
+            NoteTaskItemTerm::TaskHint(..) => unreachable!("hint"),
             NoteTaskItemTerm::TaskMono(..) => unreachable!("task_mono"),
             NoteTaskItemTerm::Task(task_item) => {
                 task_item.toggle()?;

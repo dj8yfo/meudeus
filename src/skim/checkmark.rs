@@ -5,12 +5,14 @@ use skim::{
     Skim, SkimItemReceiver, SkimItemSender,
 };
 
-use crate::task_item::TaskTreeWrapper;
+use crate::{note::NoteTaskItemTerm, task_item::TaskTreeWrapper};
 
 pub enum Action {
     Toggle(Vec<TaskTreeWrapper>),
     Open(TaskTreeWrapper),
     Yank(TaskTreeWrapper),
+    Widen,
+    Narrow(usize, usize),
 }
 
 pub(crate) struct Iteration {
@@ -27,8 +29,8 @@ impl Iteration {
         let options = SkimOptionsBuilder::default()
             .height(Some("100%"))
             .preview(Some(""))
-            .prompt(Some("(checkmark) >"))
-            .preview_window(Some("right:65%"))
+            .prompt(Some("(checkmark) > "))
+            .preview_window(Some("right:55%"))
             .multi(true)
             .bind(vec![
                 "ctrl-c:abort",
@@ -36,6 +38,8 @@ impl Iteration {
                 "ESC:abort",
                 "ctrl-j:accept",
                 "ctrl-y:accept",
+                "ctrl-w:accept",
+                "ctrl-l:accept",
             ])
             .build()?;
 
@@ -74,6 +78,21 @@ impl Iteration {
                 Key::Ctrl('y') => {
                     let first = selected_items.first().expect("non empty");
                     return Ok(Action::Yank(first.clone()));
+                }
+                Key::Ctrl('w') => {
+                    return Ok(Action::Widen);
+                }
+                Key::Ctrl('l') => {
+                    let first = selected_items.first().expect("non empty");
+                    let (start, end) = match first.data.0.root {
+                        NoteTaskItemTerm::Note(..) => unreachable!("note"),
+                        NoteTaskItemTerm::Cycle(..) => unreachable!("cycle"),
+                        NoteTaskItemTerm::TaskHint(..) => unreachable!("hint"),
+                        NoteTaskItemTerm::Task(ref task) | NoteTaskItemTerm::TaskMono(ref task) => {
+                            (task.self_index, task.next_index.unwrap())
+                        }
+                    };
+                    return Ok(Action::Narrow(start, end));
                 }
                 Key::Ctrl('c') | Key::ESC => {
                     return Err(anyhow::anyhow!(

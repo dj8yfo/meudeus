@@ -34,7 +34,7 @@ pub(crate) async fn exec(
     };
 
     let (tree, _) = note
-        .construct_link_term_tree(HashSet::new(), external_commands, surf_parsing, db)
+        .construct_link_term_tree(0, HashSet::new(), external_commands, surf_parsing, db)
         .await?;
 
     println!("{}", tree);

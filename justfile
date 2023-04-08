@@ -1,6 +1,9 @@
 bacon:
 	bacon check
 
+cargo-test:
+	cargo test -- --nocapture
+
 fmt: 
 	cargo fmt --all
 

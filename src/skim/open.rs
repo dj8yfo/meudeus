@@ -15,12 +15,14 @@ pub(crate) struct Iteration {
     db: SqliteAsyncHandle,
     items: Option<Vec<Note>>,
     multi: bool,
+    hint: String,
     external_commands: ExternalCommands,
     surf_parsing: SurfParsing,
 }
 
 impl Iteration {
     pub(crate) fn new(
+        hint: String,
         items: Vec<Note>,
         db: SqliteAsyncHandle,
         multi: bool,
@@ -33,6 +35,7 @@ impl Iteration {
             multi,
             external_commands,
             surf_parsing,
+            hint,
         }
     }
 
@@ -64,11 +67,13 @@ impl Iteration {
         }
         drop(tx);
 
+        let hint = self.hint;
         let out = tokio::task::spawn_blocking(move || {
+            let hint = format!("({hint}) > ");
             let options = SkimOptionsBuilder::default()
                 .height(Some("100%"))
                 .preview(Some(""))
-                .prompt(Some("(select) > "))
+                .prompt(Some(&hint))
                 .preview_window(Some("right:55%"))
                 .multi(self.multi)
                 .bind(vec!["ctrl-c:abort", "Enter:accept", "ESC:abort"])

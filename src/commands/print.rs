@@ -22,6 +22,7 @@ pub(crate) async fn exec(
             let list = db.lock().await.list().await?;
             let multi = false;
             crate::skim::open::Iteration::new(
+                "print".to_string(),
                 list,
                 db.clone(),
                 multi,

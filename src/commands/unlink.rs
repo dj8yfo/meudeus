@@ -16,6 +16,7 @@ pub(crate) async fn exec(
 
     let multi = false;
     let from = Iteration::new(
+        "unlink from".to_string(),
         list,
         db.clone(),
         multi,
@@ -27,6 +28,7 @@ pub(crate) async fn exec(
 
     let forward_links = db.lock().await.find_links_from(&from.name()).await?;
     let to = Iteration::new(
+        "unlink".to_string(),
         forward_links,
         db.clone(),
         multi,

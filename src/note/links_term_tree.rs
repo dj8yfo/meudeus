@@ -37,7 +37,7 @@ impl Display for NoteLinkTerm {
                 write!(
                     f,
                     "{}",
-                    format!("[ has {num} links ]").truecolor(242, 242, 223)
+                    format!("[ has {num} links ]").truecolor(170, 170, 170)
                 )
             }
             Self::Cycle(cycle) => {

@@ -7,6 +7,8 @@ use crate::{
     Open,
 };
 
+use super::rename::rename;
+
 pub(crate) async fn exec(
     db: SqliteAsyncHandle,
     external_commands: ExternalCommands,
@@ -27,9 +29,16 @@ pub(crate) async fn exec(
         preview_type = preview_type_after;
         list = next_items;
 
-        if let Some(Action::Open(opened)) = opened {
-            opened.open(external_commands.open.clone())?;
-            eprintln!("{}", format_two_tokens("viewed", &opened.name()));
+        match opened {
+            Some(Action::Open(opened)) => {
+                opened.open(external_commands.open.clone())?;
+                eprintln!("{}", format_two_tokens("viewed", &opened.name()));
+            }
+            Some(Action::Rename(opened)) => {
+                let note = rename(opened, db.clone()).await?;
+                list = vec![note];
+            }
+            _ => {}
         }
     }
 }
@@ -39,7 +48,7 @@ pub async fn iteration(
     list: Vec<Note>,
     external_commands: &ExternalCommands,
     surf_parsing: &SurfParsing,
-    preview_type: PreviewType, 
+    preview_type: PreviewType,
 ) -> Result<(Vec<Note>, Option<Action>, PreviewType), anyhow::Error> {
     let out = Iteration::new(
         list.clone(),
@@ -55,6 +64,7 @@ pub async fn iteration(
         Action::Back | Action::Forward => (out.next_items, None, preview_type),
         Action::Widen => (db.lock().await.list().await?, None, preview_type),
         action @ Action::Open(..) => (out.next_items, Some(action), preview_type),
+        action @ Action::Rename(..) => (out.next_items, Some(action), preview_type),
         Action::TogglePreview => (out.next_items, None, preview_type.toggle()),
     };
     Ok(res)

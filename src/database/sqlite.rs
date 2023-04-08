@@ -138,19 +138,17 @@ async fn parse_names(notes: Vec<Note>) -> Vec<Note> {
 
     for mut note in notes {
         let jh = tokio::task::spawn(async move {
-            note.set_name();
+            note.set_markdown();
             note
-            
         });
         vec_jh.push(jh);
-        
     }
-    let result = join_all(vec_jh).await.into_iter().map(|join_result| {
-        join_result.unwrap()
-        
-    }).collect::<Vec<_>>();
+    let result = join_all(vec_jh)
+        .await
+        .into_iter()
+        .map(|join_result| join_result.unwrap())
+        .collect::<Vec<_>>();
     result
-    
 }
 
 #[async_trait]
@@ -194,7 +192,7 @@ impl Database for Sqlite {
             .map(Self::query_note)
             .fetch_one(&self.pool)
             .await?;
-        res.set_name();
+        res.set_markdown();
 
         Ok(res)
     }

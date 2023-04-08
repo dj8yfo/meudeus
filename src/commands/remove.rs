@@ -17,6 +17,7 @@ pub(crate) async fn exec(
 
     let multi = false;
     let note = Iteration::new(
+        "remove".to_string(),
         list,
         db.clone(),
         multi,

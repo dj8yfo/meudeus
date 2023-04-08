@@ -114,29 +114,37 @@ impl Eq for Note {}
 impl Note {
     pub(crate) fn new(name: String, file_path: Option<PathBuf>) -> Self {
         match file_path {
-            Some(file_path) => {
-                Self::MdFile {
-                    name,
-                    file_path,
-                    resources: None,
-                    name_markdown: None,
-                }
-            }
+            Some(file_path) => Self::MdFile {
+                name,
+                file_path,
+                resources: None,
+                name_markdown: None,
+            },
             None => Self::Tag {
                 name,
                 resources: None,
             },
         }
     }
+    pub(crate) fn rename(&mut self, new_name: &str) {
+        match self {
+            Self::MdFile { ref mut name, .. } => {
+                *name = new_name.to_string();
+            }
+            Self::Tag { ref mut name, .. } => {
+                *name = new_name.to_string();
+            }
+        }
+        self.set_markdown();
+    }
 
-    pub(crate) fn set_name(&mut self) {
+    pub(crate) fn set_markdown(&mut self) {
         match self {
             Self::MdFile {
-                name, 
+                name,
                 ref mut name_markdown,
                 ..
             } => {
-
                 let markdown = format!(
                     "{} {}",
                     highlight_code_block(&name, "markdown"),
@@ -144,9 +152,7 @@ impl Note {
                 );
                 *name_markdown = Some(markdown);
             }
-            Self::Tag {
-                ..
-            } => {
+            Self::Tag { .. } => {
                 // nothing
             }
         }
@@ -159,7 +165,7 @@ impl Note {
 
         let file_path = (!is_tag).then_some(PathBuf::from("./").join(fname));
         let mut note = Self::new(name, file_path);
-        note.set_name();
+        note.set_markdown();
         note
     }
 

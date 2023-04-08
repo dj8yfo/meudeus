@@ -17,8 +17,10 @@ pub(crate) async fn exec(
 
     let multi = false;
     let (mut from, mut to): (Option<Note>, Option<Note>) = (None, None);
-    for target in [&mut from, &mut to] {
+    let (hint_from, hint_to) = ("link from".to_string(), "link to".to_string());
+    for (target, hint) in [(&mut from, hint_from), (&mut to, hint_to)] {
         let note = Iteration::new(
+            hint,
             list.clone(),
             db.clone(),
             multi,

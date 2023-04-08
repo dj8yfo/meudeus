@@ -38,7 +38,7 @@ impl Display for NoteTaskItemTerm {
                 write!(
                     f,
                     "{}",
-                    format!("[ has {num} task items ]").truecolor(242, 242, 223)
+                    format!("[ has {num} task items ]").truecolor(170, 170, 170)
                 )
             }
             Self::TaskMono(task) => {

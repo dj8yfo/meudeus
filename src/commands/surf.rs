@@ -25,14 +25,8 @@ pub(crate) async fn exec(
 
     let mut preview_type = PreviewType::default();
     let note = loop {
-        let (next_items, opened, preview_type_after) = iteration(
-            db.clone(),
-            list,
-            &external_commands,
-            &surf,
-            preview_type,
-        )
-        .await?;
+        let (next_items, opened, preview_type_after) =
+            iteration(db.clone(), list, &external_commands, &surf, preview_type).await?;
         preview_type = preview_type_after;
         list = next_items;
 

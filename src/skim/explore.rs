@@ -24,6 +24,7 @@ pub enum Action {
     Back,
     Forward,
     Widen,
+    Rename(Note),
     TogglePreview,
 }
 
@@ -95,6 +96,7 @@ impl Iteration {
                     "ctrl-l:accept",
                     "ctrl-t:accept",
                     "ctrl-w:accept",
+                    "alt-r:accept",
                 ])
                 .build()
                 .unwrap();
@@ -179,6 +181,17 @@ impl Iteration {
                         action: Action::Widen,
                         next_items: vec![],
                     });
+                }
+
+                Key::Alt('r') => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Out {
+                            action: Action::Rename(item.clone()),
+                            next_items: vec![],
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
                 }
                 _ => {
                     unreachable!();

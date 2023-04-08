@@ -2,6 +2,7 @@ use std::{fs, path::Path, str::FromStr, sync::Arc};
 
 use async_std::sync::Mutex;
 use async_trait::async_trait;
+use futures::future::join_all;
 use sql_builder::{quote, SqlBuilder, SqlName};
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteRow},
@@ -132,6 +133,26 @@ impl Sqlite {
     }
 }
 
+async fn parse_names(notes: Vec<Note>) -> Vec<Note> {
+    let mut vec_jh = vec![];
+
+    for mut note in notes {
+        let jh = tokio::task::spawn(async move {
+            note.set_name();
+            note
+            
+        });
+        vec_jh.push(jh);
+        
+    }
+    let result = join_all(vec_jh).await.into_iter().map(|join_result| {
+        join_result.unwrap()
+        
+    }).collect::<Vec<_>>();
+    result
+    
+}
+
 #[async_trait]
 impl Database for Sqlite {
     async fn save(&mut self, note: &Note) -> Result<()> {
@@ -156,6 +177,7 @@ impl Database for Sqlite {
             .map(Self::query_note)
             .fetch_all(&self.pool)
             .await?;
+        let res = parse_names(res).await;
 
         Ok(res)
     }
@@ -168,10 +190,11 @@ impl Database for Sqlite {
 
         let query = query.sql().expect("bug in list query. please report");
 
-        let res = sqlx::query(&query)
+        let mut res = sqlx::query(&query)
             .map(Self::query_note)
             .fetch_one(&self.pool)
             .await?;
+        res.set_name();
 
         Ok(res)
     }
@@ -195,6 +218,7 @@ impl Database for Sqlite {
             .map(Self::query_note)
             .fetch_all(&self.pool)
             .await?;
+        let res = parse_names(res).await;
 
         Ok(res)
     }
@@ -218,6 +242,7 @@ impl Database for Sqlite {
             .map(Self::query_note)
             .fetch_all(&self.pool)
             .await?;
+        let res = parse_names(res).await;
 
         Ok(res)
     }

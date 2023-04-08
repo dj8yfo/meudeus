@@ -23,7 +23,7 @@
   ```
 
   ```
-  meudeus v0.12.3
+  meudeus v0.13.0
   a skimblade for plain-text papers
 
   Usage: mds [OPTIONS] <COMMAND>

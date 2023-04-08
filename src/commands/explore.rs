@@ -1,7 +1,7 @@
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
-    note::PreviewType,
+    note::{Note, PreviewType},
     print::format_two_tokens,
     skim::explore::{Action, Iteration},
     Open,
@@ -16,27 +16,46 @@ pub(crate) async fn exec(
 
     let mut preview_type = PreviewType::default();
     loop {
-        let out = Iteration::new(
-            list.clone(),
+        let (next_items, opened, preview_type_after) = iteration(
             db.clone(),
-            external_commands.clone(),
-            surf_parsing.clone(),
+            list,
+            &external_commands,
+            &surf_parsing,
             preview_type,
         )
-        .run()
         .await?;
+        preview_type = preview_type_after;
+        list = next_items;
 
-        match out.action {
-            Action::Noop => {}
-            Action::Open(note) => {
-                note.open(external_commands.open.clone())?;
-
-                eprintln!("{}", format_two_tokens("viewed", &note.name()));
-            }
-            Action::TogglePreview => {
-                preview_type = preview_type.toggle();
-            }
+        if let Some(Action::Open(opened)) = opened {
+            opened.open(external_commands.open.clone())?;
+            eprintln!("{}", format_two_tokens("viewed", &opened.name()));
         }
-        list = out.next_items;
     }
+}
+
+pub async fn iteration(
+    db: SqliteAsyncHandle,
+    list: Vec<Note>,
+    external_commands: &ExternalCommands,
+    surf_parsing: &SurfParsing,
+    preview_type: PreviewType, 
+) -> Result<(Vec<Note>, Option<Action>, PreviewType), anyhow::Error> {
+    let out = Iteration::new(
+        list.clone(),
+        db.clone(),
+        external_commands.clone(),
+        surf_parsing.clone(),
+        preview_type,
+    )
+    .run()
+    .await?;
+
+    let res = match out.action {
+        Action::Back | Action::Forward => (out.next_items, None, preview_type),
+        Action::Widen => (db.lock().await.list().await?, None, preview_type),
+        action @ Action::Open(..) => (out.next_items, Some(action), preview_type),
+        Action::TogglePreview => (out.next_items, None, preview_type.toggle()),
+    };
+    Ok(res)
 }

@@ -8,11 +8,13 @@ use crate::{
     link::Link,
     note::PreviewType,
     print::format_two_tokens,
-    skim::explore::{Action, Iteration},
+    skim::explore::Action,
     skim::surf::Action as SurfAction,
     skim::surf::Iteration as SurfIteration,
     Jump, Open,
 };
+
+use super::explore::iteration;
 
 pub(crate) async fn exec(
     db: SqliteAsyncHandle,
@@ -23,26 +25,20 @@ pub(crate) async fn exec(
 
     let mut preview_type = PreviewType::default();
     let note = loop {
-        let out = Iteration::new(
-            list.clone(),
+        let (next_items, opened, preview_type_after) = iteration(
             db.clone(),
-            external_commands.clone(),
-            surf.clone(),
+            list,
+            &external_commands,
+            &surf,
             preview_type,
         )
-        .run()
         .await?;
+        preview_type = preview_type_after;
+        list = next_items;
 
-        match out.action {
-            Action::Noop => {}
-            Action::Open(note) => {
-                break note;
-            }
-            Action::TogglePreview => {
-                preview_type = preview_type.toggle();
-            }
+        if let Some(Action::Open(opened)) = opened {
+            break opened;
         }
-        list = out.next_items;
     };
 
     loop {

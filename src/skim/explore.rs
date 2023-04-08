@@ -21,7 +21,9 @@ pub(crate) struct Iteration {
 
 pub enum Action {
     Open(Note),
-    Noop,
+    Back,
+    Forward,
+    Widen,
     TogglePreview,
 }
 
@@ -92,6 +94,7 @@ impl Iteration {
                     "ctrl-h:accept",
                     "ctrl-l:accept",
                     "ctrl-t:accept",
+                    "ctrl-w:accept",
                 ])
                 .build()
                 .unwrap();
@@ -118,7 +121,7 @@ impl Iteration {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::Open(item.clone()),
-                            next_items: items,
+                            next_items: vec![item.clone()],
                         });
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));
@@ -137,7 +140,7 @@ impl Iteration {
                             next = items;
                         }
                         return Ok(Out {
-                            action: Action::Noop,
+                            action: Action::Back,
                             next_items: next,
                         });
                     } else {
@@ -152,7 +155,7 @@ impl Iteration {
                             next = vec![item.clone()];
                         }
                         return Ok(Out {
-                            action: Action::Noop,
+                            action: Action::Forward,
                             next_items: next,
                         });
                     } else {
@@ -161,9 +164,20 @@ impl Iteration {
                 }
 
                 Key::Ctrl('t') => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Out {
+                            action: Action::TogglePreview,
+                            next_items: vec![item.clone()],
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+
+                Key::Ctrl('w') => {
                     return Ok(Out {
-                        action: Action::TogglePreview,
-                        next_items: items,
+                        action: Action::Widen,
+                        next_items: vec![],
                     });
                 }
                 _ => {

@@ -6,10 +6,12 @@ use crate::{
     note::{Note, NoteTaskItemTerm, PreviewType},
     skim::checkmark::Action as TaskAction,
     skim::checkmark::Iteration as CheckmarkIteration,
-    skim::explore::{Action, Iteration},
+    skim::explore::Action,
     task_item::{TaskItem, TaskTreeWrapper},
     Jump, Yank,
 };
+
+use super::explore::iteration;
 
 pub(crate) async fn exec(
     db: SqliteAsyncHandle,
@@ -20,26 +22,20 @@ pub(crate) async fn exec(
 
     let mut preview_type = PreviewType::TaskStructure;
     let note = loop {
-        let out = Iteration::new(
-            list.clone(),
+        let (next_items, opened, preview_type_after) = iteration(
             db.clone(),
-            external_commands.clone(),
-            surf.clone(),
+            list,
+            &external_commands,
+            &surf,
             preview_type,
         )
-        .run()
         .await?;
+        preview_type = preview_type_after;
+        list = next_items;
 
-        match out.action {
-            Action::Noop => {}
-            Action::Open(note) => {
-                break note;
-            }
-            Action::TogglePreview => {
-                preview_type = preview_type.toggle();
-            }
+        if let Some(Action::Open(opened)) = opened {
+            break opened;
         }
-        list = out.next_items;
     };
     let mut next_tasks_window = None;
     let mut tasks = read_tasks_from_file(&note, &surf).await?;

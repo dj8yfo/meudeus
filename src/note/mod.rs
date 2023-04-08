@@ -7,6 +7,7 @@ use std::{fs::File, io, path::PathBuf};
 use crate::config::Open as OpenCfg;
 use crate::config::{ExternalCommands, SurfParsing};
 use crate::database::SqliteAsyncHandle;
+use crate::highlight::highlight_code_block;
 use crate::Open;
 mod links_term_tree;
 mod random;
@@ -55,6 +56,7 @@ pub enum Note {
         name: String,
         file_path: PathBuf,
         resources: Option<DynResources>,
+        name_markdown: Option<String>,
     },
     Tag {
         name: String,
@@ -76,14 +78,19 @@ impl PartialEq for Note {
 
 impl Display for Note {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.file_path().is_none() {
-            if self.name() == "METATAG" || self.name() == "root" {
-                write!(f, "{}", self.name().red().to_string())
-            } else {
-                write!(f, "{}", self.name().cyan().to_string())
+        match self {
+            Self::MdFile { name_markdown, .. } => {
+                let md = name_markdown.as_ref().cloned().unwrap();
+                write!(f, "{}", md)
             }
-        } else {
-            write!(f, "{}", self.name())
+
+            Self::Tag { name, .. } => {
+                if name == "METATAG" || name == "root" {
+                    write!(f, "{}", name.red().to_string())
+                } else {
+                    write!(f, "{}", name.cyan().to_string())
+                }
+            }
         }
     }
 }
@@ -107,24 +114,53 @@ impl Eq for Note {}
 impl Note {
     pub(crate) fn new(name: String, file_path: Option<PathBuf>) -> Self {
         match file_path {
-            Some(file_path) => Self::MdFile {
-                name,
-                file_path,
-                resources: None,
-            },
+            Some(file_path) => {
+                Self::MdFile {
+                    name,
+                    file_path,
+                    resources: None,
+                    name_markdown: None,
+                }
+            }
             None => Self::Tag {
                 name,
                 resources: None,
             },
         }
     }
+
+    pub(crate) fn set_name(&mut self) {
+        match self {
+            Self::MdFile {
+                name, 
+                ref mut name_markdown,
+                ..
+            } => {
+
+                let markdown = format!(
+                    "{} {}",
+                    highlight_code_block(&name, "markdown"),
+                    " ".black().to_string()
+                );
+                *name_markdown = Some(markdown);
+            }
+            Self::Tag {
+                ..
+            } => {
+                // nothing
+            }
+        }
+    }
+
     pub(crate) fn init(name: String, is_tag: bool) -> Self {
         let time_str = chrono::Utc::now().naive_utc().timestamp().to_string();
         let suffix = random::rand_suffix();
         let fname = format!("{}_{}.md", time_str, suffix);
 
         let file_path = (!is_tag).then_some(PathBuf::from("./").join(fname));
-        Self::new(name, file_path)
+        let mut note = Self::new(name, file_path);
+        note.set_name();
+        note
     }
 
     pub(crate) fn persist(&self) -> Result<(), io::Error> {

@@ -9,7 +9,7 @@ use crate::{
     Open,
 };
 
-use super::{rename::rename, unlink::unlink};
+use super::{remove::remove, rename::rename, unlink::unlink};
 
 pub(crate) async fn exec(
     db: SqliteAsyncHandle,
@@ -44,27 +44,45 @@ pub(crate) async fn exec(
             }
 
             Some(Action::Link(linked_from)) => {
-                link(
+                if let Err(err) = link(
                     linked_from.clone(),
                     db.clone(),
                     &external_commands,
                     &surf_parsing,
                     md_static,
                 )
-                .await?;
+                .await
+                {
+                    eprintln!("link error: {:?}", err);
+                }
                 list = vec![linked_from];
             }
 
             Some(Action::Unlink(unlinked_from)) => {
-                unlink(
+                if let Err(err) = unlink(
                     unlinked_from.clone(),
                     db.clone(),
                     &external_commands,
                     &surf_parsing,
                     md_static,
                 )
-                .await?;
+                .await
+                {
+                    eprintln!("unlink error: {:?}", err);
+                }
                 list = vec![unlinked_from];
+            }
+
+            Some(Action::Remove(removed)) => {
+                let next = match remove(db.clone(), removed.clone(), true).await {
+                    Ok(true) => vec![],
+                    Ok(false) => vec![removed],
+                    Err(err) => {
+                        eprintln!("remove error: {:?}", err);
+                        vec![removed]
+                    }
+                };
+                list = next;
             }
             _ => {}
         }
@@ -97,6 +115,7 @@ pub async fn iteration(
         action @ Action::Rename(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Link(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Unlink(..) => (out.next_items, Some(action), preview_type),
+        action @ Action::Remove(..) => (out.next_items, Some(action), preview_type),
         Action::TogglePreview => (out.next_items, None, preview_type.toggle()),
     };
     Ok(res)

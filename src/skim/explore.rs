@@ -29,6 +29,7 @@ pub enum Action {
     Forward,
     Widen,
     Rename(Note),
+    Remove(Note),
     TogglePreview,
 }
 
@@ -105,6 +106,7 @@ impl Iteration {
                     "alt-r:accept",
                     "alt-l:accept",
                     "alt-u:accept",
+                    "alt-d:accept",
                 ])
                 .build()
                 .unwrap();
@@ -217,6 +219,17 @@ impl Iteration {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::Unlink(item.clone()),
+                            next_items: vec![],
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+
+                Key::Alt('d') => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Out {
+                            action: Action::Remove(item.clone()),
                             next_items: vec![],
                         });
                     } else {

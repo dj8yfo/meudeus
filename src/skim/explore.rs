@@ -24,6 +24,7 @@ pub(crate) struct Iteration {
 pub enum Action {
     Open(Note),
     Link(Note),
+    Unlink(Note),
     Back,
     Forward,
     Widen,
@@ -103,6 +104,7 @@ impl Iteration {
                     "ctrl-w:accept",
                     "alt-r:accept",
                     "alt-l:accept",
+                    "alt-u:accept",
                 ])
                 .build()
                 .unwrap();
@@ -204,6 +206,17 @@ impl Iteration {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::Link(item.clone()),
+                            next_items: vec![],
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+
+                Key::Alt('u') => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Out {
+                            action: Action::Unlink(item.clone()),
                             next_items: vec![],
                         });
                     } else {

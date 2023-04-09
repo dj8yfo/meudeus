@@ -9,7 +9,7 @@ use crate::{
     Open,
 };
 
-use super::rename::rename;
+use super::{rename::rename, unlink::unlink};
 
 pub(crate) async fn exec(
     db: SqliteAsyncHandle,
@@ -54,6 +54,18 @@ pub(crate) async fn exec(
                 .await?;
                 list = vec![linked_from];
             }
+
+            Some(Action::Unlink(unlinked_from)) => {
+                unlink(
+                    unlinked_from.clone(),
+                    db.clone(),
+                    &external_commands,
+                    &surf_parsing,
+                    md_static,
+                )
+                .await?;
+                list = vec![unlinked_from];
+            }
             _ => {}
         }
     }
@@ -84,6 +96,7 @@ pub async fn iteration(
         action @ Action::Open(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Rename(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Link(..) => (out.next_items, Some(action), preview_type),
+        action @ Action::Unlink(..) => (out.next_items, Some(action), preview_type),
         Action::TogglePreview => (out.next_items, None, preview_type.toggle()),
     };
     Ok(res)

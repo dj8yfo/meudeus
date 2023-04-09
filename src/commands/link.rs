@@ -43,9 +43,12 @@ pub(crate) async fn link(
     surf_parsing: &SurfParsing,
     md_static: MarkdownStatic,
 ) -> Result<(), anyhow::Error> {
+    let name: String = from.name().chars().take(40).collect();
+
+    let hint = format!("link from {}", name);
     let list = db.lock().await.list(md_static).await?;
     let to = Iteration::new(
-        "link_to".to_string(),
+        hint,
         list,
         db.clone(),
         false,

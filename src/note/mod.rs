@@ -3,11 +3,12 @@ use std::fmt::Display;
 use std::hash::{Hash, Hasher};
 use std::io::Write;
 use std::{fs::File, io, path::PathBuf};
+use syntect::easy::HighlightLines;
 
 use crate::config::Open as OpenCfg;
 use crate::config::{ExternalCommands, SurfParsing};
 use crate::database::SqliteAsyncHandle;
-use crate::highlight::highlight_code_block;
+use crate::highlight::{highlight, MarkdownStatic};
 use crate::Open;
 mod links_term_tree;
 mod random;
@@ -126,7 +127,12 @@ impl Note {
             },
         }
     }
-    pub(crate) fn rename(&mut self, new_name: &str) {
+    pub(crate) fn rename(
+        &mut self,
+        new_name: &str,
+        highlighter: &mut HighlightLines,
+        md_static: MarkdownStatic,
+    ) {
         match self {
             Self::MdFile { ref mut name, .. } => {
                 *name = new_name.to_string();
@@ -135,10 +141,14 @@ impl Note {
                 *name = new_name.to_string();
             }
         }
-        self.set_markdown();
+        self.set_markdown(highlighter, md_static);
     }
 
-    pub(crate) fn set_markdown(&mut self) {
+    pub(crate) fn set_markdown(
+        &mut self,
+        highlighter: &mut HighlightLines,
+        md_static: MarkdownStatic,
+    ) {
         match self {
             Self::MdFile {
                 name,
@@ -147,7 +157,7 @@ impl Note {
             } => {
                 let markdown = format!(
                     "{} {}",
-                    highlight_code_block(&name, "markdown"),
+                    highlight(name, highlighter, md_static),
                     " ".black().to_string()
                 );
                 *name_markdown = Some(markdown);
@@ -158,14 +168,19 @@ impl Note {
         }
     }
 
-    pub(crate) fn init(name: String, is_tag: bool) -> Self {
+    pub(crate) fn init(
+        name: String,
+        is_tag: bool,
+        highlighter: &mut HighlightLines,
+        md_static: MarkdownStatic,
+    ) -> Self {
         let time_str = chrono::Utc::now().naive_utc().timestamp().to_string();
         let suffix = random::rand_suffix();
         let fname = format!("{}_{}.md", time_str, suffix);
 
         let file_path = (!is_tag).then_some(PathBuf::from("./").join(fname));
         let mut note = Self::new(name, file_path);
-        note.set_markdown();
+        note.set_markdown(highlighter, md_static);
         note
     }
 
@@ -217,11 +232,22 @@ impl Note {
         }
     }
 
-    pub async fn fetch_forward_links(&self, db: &SqliteAsyncHandle) -> SqlxResult<Vec<Note>> {
-        db.lock().await.find_links_from(&self.name()).await
+    pub async fn fetch_forward_links(
+        &self,
+        db: &SqliteAsyncHandle,
+        md_static: MarkdownStatic,
+    ) -> SqlxResult<Vec<Note>> {
+        db.lock()
+            .await
+            .find_links_from(&self.name(), md_static)
+            .await
     }
 
-    pub async fn fetch_backlinks(&self, db: &SqliteAsyncHandle) -> SqlxResult<Vec<Note>> {
-        db.lock().await.find_links_to(&self.name()).await
+    pub async fn fetch_backlinks(
+        &self,
+        db: &SqliteAsyncHandle,
+        md_static: MarkdownStatic,
+    ) -> SqlxResult<Vec<Note>> {
+        db.lock().await.find_links_to(&self.name(), md_static).await
     }
 }

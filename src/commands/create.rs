@@ -1,5 +1,8 @@
+use syntect::easy::HighlightLines;
+
 use crate::{
     database::{Database, SqliteAsyncHandle},
+    highlight::MarkdownStatic,
     note::Note,
     print::format_two_tokens,
 };
@@ -9,8 +12,11 @@ pub(crate) async fn exec(
     db: SqliteAsyncHandle,
 
     is_tag: bool,
+
+    md_static: MarkdownStatic,
 ) -> Result<String, anyhow::Error> {
-    let note = Note::init(title.clone(), is_tag);
+    let mut highlighter = HighlightLines::new(md_static.1, md_static.2);
+    let note = Note::init(title.clone(), is_tag, &mut highlighter, md_static);
 
     db.lock().await.save(&note).await?;
     note.persist()?;

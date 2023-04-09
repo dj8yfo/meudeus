@@ -3,6 +3,7 @@ use std::fs;
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
+    highlight::MarkdownStatic,
     print::format_two_tokens,
     skim::open::Iteration,
 };
@@ -12,8 +13,9 @@ pub(crate) async fn exec(
     db: SqliteAsyncHandle,
     external_commands: ExternalCommands,
     surf_parsing: SurfParsing,
+    md_static: MarkdownStatic,
 ) -> Result<String, anyhow::Error> {
-    let list = db.lock().await.list().await?;
+    let list = db.lock().await.list(md_static).await?;
 
     let multi = false;
     let note = Iteration::new(
@@ -23,6 +25,7 @@ pub(crate) async fn exec(
         multi,
         external_commands.clone(),
         surf_parsing,
+        md_static,
     )
     .run()
     .await?;

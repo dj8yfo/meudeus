@@ -2,8 +2,13 @@ use std::{fs, path::PathBuf};
 
 use colored::Colorize;
 use regex::Regex;
+use syntect::easy::HighlightLines;
 
-use crate::{config::SurfParsing, highlight::highlight_code_block, note::Note};
+use crate::{
+    config::SurfParsing,
+    highlight::{highlight, MarkdownStatic},
+    note::Note,
+};
 mod skim_item;
 
 pub use skim_item::TaskTreeWrapper;
@@ -12,6 +17,7 @@ pub use skim_item::TaskTreeWrapper;
 pub struct TaskItem {
     pub file_name: PathBuf,
     pub title: String,
+    pub title_markdown: String,
     pub completed: bool,
     pub nested_level: usize,
     pub checkmark_offsets_in_string: std::ops::Range<usize>,
@@ -19,8 +25,12 @@ pub struct TaskItem {
     pub next_index: Option<usize>,
 }
 
-impl From<(PathBuf, regex::Captures<'_>, usize)> for TaskItem {
-    fn from(value: (PathBuf, regex::Captures<'_>, usize)) -> Self {
+impl TaskItem {
+    fn parse_capture(
+        value: (PathBuf, regex::Captures<'_>, usize),
+        highlighter: &mut HighlightLines,
+        md_static: MarkdownStatic,
+    ) -> Self {
         let title = value.1.name("task_text").unwrap();
         let checkmark = value.1.name("checkmark").unwrap();
         let completed = if checkmark.as_str() == "x" {
@@ -31,6 +41,12 @@ impl From<(PathBuf, regex::Captures<'_>, usize)> for TaskItem {
         let whitespace = value.1.name("whitespace").unwrap().as_str();
         let nested_level = whitespace.len() / 2;
         let checkmark_offsets_in_string = checkmark.start()..checkmark.end();
+
+        let title_markdown = format!(
+            "{} {}",
+            highlight(title.as_str(), highlighter, md_static),
+            " ".black().to_string()
+        );
         Self {
             file_name: value.0,
             nested_level,
@@ -39,23 +55,42 @@ impl From<(PathBuf, regex::Captures<'_>, usize)> for TaskItem {
             checkmark_offsets_in_string,
             self_index: value.2,
             next_index: None,
+            title_markdown,
         }
     }
-}
-
-impl TaskItem {
-    fn parse_string(file_name: &PathBuf, input: &str, regex: &Regex) -> Vec<Self> {
+    fn parse_string(
+        file_name: &PathBuf,
+        input: &str,
+        regex: &Regex,
+        highlighter: &mut HighlightLines,
+        md_static: MarkdownStatic,
+    ) -> Vec<Self> {
         let mut result = vec![];
 
         for (index, capture) in regex.captures_iter(input).enumerate() {
-            result.push((file_name.clone(), capture, index).into());
+            result.push(Self::parse_capture(
+                (file_name.clone(), capture, index),
+                highlighter,
+                md_static,
+            ));
         }
         result
     }
-    pub fn parse(note: &Note, surf: &SurfParsing) -> std::io::Result<Vec<Self>> {
+    pub fn parse(
+        note: &Note,
+        surf: &SurfParsing,
+        highlighter: &mut HighlightLines,
+        md_static: MarkdownStatic,
+    ) -> std::io::Result<Vec<Self>> {
         if let Some(file_path) = note.file_path() {
             let file_content = fs::read_to_string(file_path)?;
-            let result = Self::parse_string(file_path, &file_content, &surf.task_item_regex);
+            let result = Self::parse_string(
+                file_path,
+                &file_content,
+                &surf.task_item_regex,
+                highlighter,
+                md_static,
+            );
 
             Ok(result)
         } else {
@@ -80,13 +115,7 @@ impl TaskItem {
         } else {
             " ".to_string()
         };
-        let input = format!(
-            "{}[{}] {} {}",
-            indent,
-            symbol,
-            highlight_code_block(&self.title, "markdown"),
-            " ".black().to_string()
-        );
+        let input = format!("{}[{}] {}", indent, symbol, self.title_markdown,);
         input
     }
 
@@ -127,6 +156,9 @@ mod tests {
     use std::path::PathBuf;
 
     use regex::Regex;
+    use syntect::easy::HighlightLines;
+
+    use crate::highlight::static_markdown_syntax;
 
     use super::TaskItem;
 
@@ -146,12 +178,23 @@ mod tests {
         let regex =
             Regex::new(r#"(?P<whitespace>(  )*)- \[(?P<checkmark>[x ])\]\s+(?P<task_text>.+)"#)
                 .unwrap();
-        let list = TaskItem::parse_string(&PathBuf::from("./tmp.rs"), TEST_STR, &regex);
+
+        let md_static = static_markdown_syntax();
+        let mut highlighter = HighlightLines::new(md_static.1, md_static.2);
+        let list = TaskItem::parse_string(
+            &PathBuf::from("./tmp.rs"),
+            TEST_STR,
+            &regex,
+            &mut highlighter,
+            md_static,
+        );
         assert_eq!(8, list.len());
         assert_eq!(
             &list[4],
             &TaskItem {
                 title: "in development <Tue Mar 21 08:20:37 PM EET 2023>".to_string(),
+                title_markdown: "\u{1b}[48;2;45;45;45m\u{1b}[38;2;211;208;200min development \u{1b}[48;2;45;45;45m\u{1b}[38;2;211;208;200m<\u{1b}[48;2;45;45;45m\u{1b}[38;2;211;208;200mTue Mar 21 08:20:37 PM EET 2023>  ".to_string(),
+
                 nested_level: 3,
                 completed: true,
                 file_name: "./tmp.rs".into(),

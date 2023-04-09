@@ -23,8 +23,8 @@
   ```
 
   ```
-  meudeus v0.13.1
-  a skimblade for plain-text papers
+  meudeus v0.13.2
+  a skim shredder for plain-text papers
 
   Usage: mds [OPTIONS] <COMMAND>
 

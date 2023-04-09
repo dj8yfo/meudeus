@@ -2,28 +2,32 @@ use std::borrow::Cow;
 
 use skim::{AnsiString, DisplayContext, ItemPreview, PreviewContext, SkimItem};
 
-use crate::database::SqliteAsyncHandle;
+use crate::{database::SqliteAsyncHandle, highlight::MarkdownStatic};
 
 use super::PreviewType;
 
 mod preview;
 
 impl super::Note {
-    async fn compute_preview(&self, db: &SqliteAsyncHandle) -> Option<String> {
+    async fn compute_preview(
+        &self,
+        db: &SqliteAsyncHandle,
+        md_static: MarkdownStatic,
+    ) -> Option<String> {
         match self.resources() {
             Some(resources) => {
                 let result = match resources.preview_type {
-                    PreviewType::Details => self.details(db).await,
-                    PreviewType::LinkStructure => self.link_structure(db).await,
-                    PreviewType::TaskStructure => self.task_structure(db).await,
+                    PreviewType::Details => self.details(db, md_static).await,
+                    PreviewType::LinkStructure => self.link_structure(db, md_static).await,
+                    PreviewType::TaskStructure => self.task_structure(db, md_static).await,
                 };
                 Some(result)
             }
             None => None,
         }
     }
-    pub async fn prepare_preview(&mut self, db: &SqliteAsyncHandle) {
-        let result = self.compute_preview(db).await;
+    pub async fn prepare_preview(&mut self, db: &SqliteAsyncHandle, md_static: MarkdownStatic) {
+        let result = self.compute_preview(db, md_static).await;
         match self.resources_mut() {
             Some(resources) => {
                 resources.preview_result = result;

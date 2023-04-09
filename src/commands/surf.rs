@@ -5,6 +5,7 @@ use tokio::time::sleep;
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
+    highlight::MarkdownStatic,
     link::Link,
     note::PreviewType,
     print::format_two_tokens,
@@ -20,13 +21,21 @@ pub(crate) async fn exec(
     db: SqliteAsyncHandle,
     surf: SurfParsing,
     external_commands: ExternalCommands,
+    md_static: MarkdownStatic,
 ) -> Result<String, anyhow::Error> {
-    let mut list = db.lock().await.list().await?;
+    let mut list = db.lock().await.list(md_static).await?;
 
     let mut preview_type = PreviewType::default();
     let note = loop {
-        let (next_items, opened, preview_type_after) =
-            iteration(db.clone(), list, &external_commands, &surf, preview_type).await?;
+        let (next_items, opened, preview_type_after) = iteration(
+            db.clone(),
+            list,
+            &external_commands,
+            &surf,
+            preview_type,
+            md_static,
+        )
+        .await?;
         preview_type = preview_type_after;
         list = next_items;
 
@@ -36,7 +45,7 @@ pub(crate) async fn exec(
     };
 
     loop {
-        let all_vec = note.reachable_notes(db.clone()).await?;
+        let all_vec = note.reachable_notes(db.clone(), md_static).await?;
         let links: std::io::Result<Vec<_>> = all_vec
             .into_iter()
             .map(|v| Link::parse(&v, &surf))

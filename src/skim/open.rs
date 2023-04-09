@@ -8,6 +8,7 @@ use skim::{
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::SqliteAsyncHandle,
+    highlight::MarkdownStatic,
     note::{DynResources, Note, PreviewType},
 };
 
@@ -18,6 +19,7 @@ pub(crate) struct Iteration {
     hint: String,
     external_commands: ExternalCommands,
     surf_parsing: SurfParsing,
+    md_static: MarkdownStatic,
 }
 
 impl Iteration {
@@ -28,6 +30,7 @@ impl Iteration {
         multi: bool,
         external_commands: ExternalCommands,
         surf_parsing: SurfParsing,
+        md_static: MarkdownStatic,
     ) -> Self {
         Self {
             items: Some(items),
@@ -36,6 +39,7 @@ impl Iteration {
             external_commands,
             surf_parsing,
             hint,
+            md_static,
         }
     }
 
@@ -58,7 +62,7 @@ impl Iteration {
                     preview_type: PreviewType::Details,
                     preview_result: None,
                 });
-                note.prepare_preview(&db_double).await;
+                note.prepare_preview(&db_double, self.md_static).await;
                 let result = tx_double.send(Arc::new(note));
                 if result.is_err() {
                     // eprintln!("{}",format!("{:?}", result).red());

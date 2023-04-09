@@ -1,6 +1,7 @@
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
+    highlight::MarkdownStatic,
     note::{Note, PreviewType},
     print::format_two_tokens,
     skim::explore::{Action, Iteration},
@@ -13,8 +14,9 @@ pub(crate) async fn exec(
     db: SqliteAsyncHandle,
     external_commands: ExternalCommands,
     surf_parsing: SurfParsing,
+    md_static: MarkdownStatic,
 ) -> Result<String, anyhow::Error> {
-    let mut list = db.lock().await.list().await?;
+    let mut list = db.lock().await.list(md_static).await?;
 
     let mut preview_type = PreviewType::default();
     loop {
@@ -24,6 +26,7 @@ pub(crate) async fn exec(
             &external_commands,
             &surf_parsing,
             preview_type,
+            md_static,
         )
         .await?;
         preview_type = preview_type_after;
@@ -35,7 +38,7 @@ pub(crate) async fn exec(
                 eprintln!("{}", format_two_tokens("viewed", &opened.name()));
             }
             Some(Action::Rename(opened)) => {
-                let note = rename(opened, db.clone()).await?;
+                let note = rename(opened, db.clone(), md_static).await?;
                 list = vec![note];
             }
             _ => {}
@@ -49,6 +52,7 @@ pub async fn iteration(
     external_commands: &ExternalCommands,
     surf_parsing: &SurfParsing,
     preview_type: PreviewType,
+    md_static: MarkdownStatic,
 ) -> Result<(Vec<Note>, Option<Action>, PreviewType), anyhow::Error> {
     let out = Iteration::new(
         list.clone(),
@@ -56,13 +60,14 @@ pub async fn iteration(
         external_commands.clone(),
         surf_parsing.clone(),
         preview_type,
+        md_static,
     )
     .run()
     .await?;
 
     let res = match out.action {
         Action::Back | Action::Forward => (out.next_items, None, preview_type),
-        Action::Widen => (db.lock().await.list().await?, None, preview_type),
+        Action::Widen => (db.lock().await.list(md_static).await?, None, preview_type),
         action @ Action::Open(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Rename(..) => (out.next_items, Some(action), preview_type),
         Action::TogglePreview => (out.next_items, None, preview_type.toggle()),

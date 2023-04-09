@@ -9,6 +9,7 @@ use sqlx::Result as SqlxResult;
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
+    highlight::MarkdownStatic,
     link::Link,
 };
 
@@ -56,11 +57,16 @@ impl Note {
         external_commands: ExternalCommands,
         surf_parsing: SurfParsing,
         db: SqliteAsyncHandle,
+        md_static: MarkdownStatic,
     ) -> SqlxResult<(Tree<NoteLinkTerm>, HashSet<Note>)> {
         let mut tree = Tree::new(NoteLinkTerm::Note(self.clone()));
         all_reachable.insert(self.clone());
 
-        let forward_links = db.lock().await.find_links_from(&self.name()).await?;
+        let forward_links = db
+            .lock()
+            .await
+            .find_links_from(&self.name(), md_static)
+            .await?;
 
         for next in forward_links {
             if all_reachable.contains(&next) {
@@ -73,6 +79,7 @@ impl Note {
                         external_commands.clone(),
                         surf_parsing.clone(),
                         db.clone(),
+                        md_static,
                     )
                     .await?;
                 all_reachable = roundtrip_reachable;

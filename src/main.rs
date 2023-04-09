@@ -5,6 +5,7 @@ use clap::ArgMatches;
 
 use colored::Colorize;
 use config::Open as OpenCfg;
+use highlight::static_markdown_syntax;
 use std::{
     env, io,
     path::PathBuf,
@@ -40,8 +41,8 @@ trait Yank {
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .version("v0.13.1")
-        .about("meudeus v0.13.1\na skimblade for plain-text papers")
+        .version("v0.13.2")
+        .about("meudeus v0.13.2\na skim shredder for plain-text papers")
         .bin_name("mds")
         .arg(clap::arg!(-c --color  "whether color output should be forced"))
         .subcommand_required(true)
@@ -144,6 +145,8 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
     }
 
     let db_dir = PathBuf::from("./.sqlite");
+    let md_static = static_markdown_syntax();
+
     let result = match matches.subcommand() {
         Some(("init", _matches)) => commands::init_db::exec(db_dir).await,
         Some(("debug-cfg", _matches)) => commands::debug_cfg::exec(config),
@@ -159,37 +162,90 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         .get_one::<String>("title")
                         .ok_or(anyhow::anyhow!("empty title"))?;
 
-                    commands::create::exec(title, db, is_tag).await
+                    commands::create::exec(title, db, is_tag, md_static).await
                 }
                 "explore" => {
-                    commands::explore::exec(db, config.external_commands, config.surf_parsing).await
+                    commands::explore::exec(
+                        db,
+                        config.external_commands,
+                        config.surf_parsing,
+                        md_static,
+                    )
+                    .await
                 }
                 "link" => {
-                    commands::link::exec(db, config.external_commands, config.surf_parsing).await
+                    commands::link::exec(
+                        db,
+                        config.external_commands,
+                        config.surf_parsing,
+                        md_static,
+                    )
+                    .await
                 }
                 "surf" => {
-                    commands::surf::exec(db, config.surf_parsing, config.external_commands).await
+                    commands::surf::exec(
+                        db,
+                        config.surf_parsing,
+                        config.external_commands,
+                        md_static,
+                    )
+                    .await
                 }
                 "unlink" => {
-                    commands::unlink::exec(db, config.external_commands, config.surf_parsing).await
+                    commands::unlink::exec(
+                        db,
+                        config.external_commands,
+                        config.surf_parsing,
+                        md_static,
+                    )
+                    .await
                 }
                 "remove" => {
-                    commands::remove::exec(db, config.external_commands, config.surf_parsing).await
+                    commands::remove::exec(
+                        db,
+                        config.external_commands,
+                        config.surf_parsing,
+                        md_static,
+                    )
+                    .await
                 }
                 "rename" => {
-                    commands::rename::exec(db, config.external_commands, config.surf_parsing).await
+                    commands::rename::exec(
+                        db,
+                        config.external_commands,
+                        config.surf_parsing,
+                        md_static,
+                    )
+                    .await
                 }
                 "print" => {
                     let name = matches.get_one::<String>("name").cloned();
-                    commands::print::exec(db, config.external_commands, config.surf_parsing, name)
-                        .await
+                    commands::print::exec(
+                        db,
+                        config.external_commands,
+                        config.surf_parsing,
+                        name,
+                        md_static,
+                    )
+                    .await
                 }
                 "select" => {
-                    commands::select::exec(db, config.external_commands, config.surf_parsing).await
+                    commands::select::exec(
+                        db,
+                        config.external_commands,
+                        config.surf_parsing,
+                        md_static,
+                    )
+                    .await
                 }
                 "checkmark" => {
-                    commands::checkmark::exec(db, config.surf_parsing, config.external_commands)
-                        .await
+                    commands::checkmark::exec(
+                        db,
+                        config.surf_parsing,
+                        config.external_commands,
+                        md_static,
+                    )
+                    .await
                 }
                 _ => unreachable!("clap should ensure we don't get here"),
             }

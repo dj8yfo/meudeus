@@ -2,14 +2,14 @@ use std::{fs, path::Path, str::FromStr, sync::Arc};
 
 use async_std::sync::Mutex;
 use async_trait::async_trait;
-use futures::future::join_all;
 use sql_builder::{quote, SqlBuilder, SqlName};
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteRow},
     Error, Result, Row, SqlitePool,
 };
+use syntect::easy::HighlightLines;
 
-use crate::note::Note;
+use crate::{highlight::MarkdownStatic, note::Note};
 
 use super::Database;
 
@@ -133,22 +133,15 @@ impl Sqlite {
     }
 }
 
-async fn parse_names(notes: Vec<Note>) -> Vec<Note> {
-    let mut vec_jh = vec![];
-
-    for mut note in notes {
-        let jh = tokio::task::spawn(async move {
-            note.set_markdown();
-            note
-        });
-        vec_jh.push(jh);
-    }
-    let result = join_all(vec_jh)
-        .await
+async fn parse_names(notes: Vec<Note>, md_static: MarkdownStatic) -> Vec<Note> {
+    let mut highlighter = HighlightLines::new(md_static.1, md_static.2);
+    notes
         .into_iter()
-        .map(|join_result| join_result.unwrap())
-        .collect::<Vec<_>>();
-    result
+        .map(|mut note| {
+            note.set_markdown(&mut highlighter, md_static);
+            note
+        })
+        .collect::<Vec<_>>()
 }
 
 #[async_trait]
@@ -163,7 +156,7 @@ impl Database for Sqlite {
         Ok(())
     }
 
-    async fn list(&self) -> Result<Vec<Note>> {
+    async fn list(&self, md_static: MarkdownStatic) -> Result<Vec<Note>> {
         log::debug!("listing notes");
 
         let mut query = SqlBuilder::select_from(SqlName::new("notes").alias("n").baquoted());
@@ -175,12 +168,12 @@ impl Database for Sqlite {
             .map(Self::query_note)
             .fetch_all(&self.pool)
             .await?;
-        let res = parse_names(res).await;
+        let res = parse_names(res, md_static).await;
 
         Ok(res)
     }
 
-    async fn get(&self, name: &str) -> Result<Note> {
+    async fn get(&self, name: &str, md_static: MarkdownStatic) -> Result<Note> {
         log::debug!("listing notes");
 
         let mut query = SqlBuilder::select_from(SqlName::new("notes").alias("n").baquoted());
@@ -192,12 +185,13 @@ impl Database for Sqlite {
             .map(Self::query_note)
             .fetch_one(&self.pool)
             .await?;
-        res.set_markdown();
+        let mut highlighter = HighlightLines::new(md_static.1, md_static.2);
+        res.set_markdown(&mut highlighter, md_static);
 
         Ok(res)
     }
 
-    async fn find_links_from(&self, from: &str) -> Result<Vec<Note>> {
+    async fn find_links_from(&self, from: &str, md_static: MarkdownStatic) -> Result<Vec<Note>> {
         log::debug!("listing notes, linked by current");
 
         let sql = SqlBuilder::select_from(name!("linkx"; "l"))
@@ -216,12 +210,12 @@ impl Database for Sqlite {
             .map(Self::query_note)
             .fetch_all(&self.pool)
             .await?;
-        let res = parse_names(res).await;
+        let res = parse_names(res, md_static).await;
 
         Ok(res)
     }
 
-    async fn find_links_to(&self, to: &str) -> Result<Vec<Note>> {
+    async fn find_links_to(&self, to: &str, md_static: MarkdownStatic) -> Result<Vec<Note>> {
         log::debug!("listing notes, linked by current");
 
         let sql = SqlBuilder::select_from(name!("linkx"; "l"))
@@ -240,7 +234,7 @@ impl Database for Sqlite {
             .map(Self::query_note)
             .fetch_all(&self.pool)
             .await?;
-        let res = parse_names(res).await;
+        let res = parse_names(res, md_static).await;
 
         Ok(res)
     }

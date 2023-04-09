@@ -3,12 +3,14 @@ use std::{collections::HashSet, fmt::Display, fs};
 use crate::{
     config::SurfParsing,
     database::{Database, SqliteAsyncHandle},
+    highlight::MarkdownStatic,
     lines::find_position,
     task_item::TaskItem,
     Jump,
 };
 use async_recursion::async_recursion;
 use colored::Colorize;
+use syntect::easy::HighlightLines;
 use termtree::Tree;
 
 use super::Note;
@@ -147,11 +149,15 @@ impl Note {
         mut all_reachable: HashSet<Note>,
         surf_parsing: SurfParsing,
         db: SqliteAsyncHandle,
+        md_static: MarkdownStatic,
     ) -> SqlxResult<(Tree<NoteTaskItemTerm>, HashSet<Note>)> {
         let mut tree = Tree::new(NoteTaskItemTerm::Note(self.clone()));
         all_reachable.insert(self.clone());
 
-        let tasks = TaskItem::parse(self, &surf_parsing)?;
+        let tasks = {
+            let mut highlighter = HighlightLines::new(md_static.1, md_static.2);
+            TaskItem::parse(self, &surf_parsing, &mut highlighter, md_static)?
+        };
 
         let trees = NoteTaskItemTerm::parse(&tasks, true, false);
         if trees.len() > 0 {
@@ -164,7 +170,11 @@ impl Note {
             }
         }
 
-        let forward_links = db.lock().await.find_links_from(&self.name()).await?;
+        let forward_links = db
+            .lock()
+            .await
+            .find_links_from(&self.name(), md_static)
+            .await?;
 
         for next in forward_links {
             if all_reachable.contains(&next) {
@@ -176,6 +186,7 @@ impl Note {
                         all_reachable,
                         surf_parsing.clone(),
                         db.clone(),
+                        md_static,
                     )
                     .await?;
                 all_reachable = roundtrip_reachable;

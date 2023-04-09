@@ -3,6 +3,7 @@ use colored::Colorize;
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
+    highlight::MarkdownStatic,
     note::Note,
     print::format_two_tokens,
     skim::open::Iteration,
@@ -12,8 +13,9 @@ pub(crate) async fn exec(
     db: SqliteAsyncHandle,
     external_commands: ExternalCommands,
     surf_parsing: SurfParsing,
+    md_static: MarkdownStatic,
 ) -> Result<String, anyhow::Error> {
-    let list = db.lock().await.list().await?;
+    let list = db.lock().await.list(md_static).await?;
 
     let multi = false;
     let (mut from, mut to): (Option<Note>, Option<Note>) = (None, None);
@@ -26,6 +28,7 @@ pub(crate) async fn exec(
             multi,
             external_commands.clone(),
             surf_parsing.clone(),
+            md_static,
         )
         .run()
         .await?;

@@ -1,8 +1,10 @@
 use futures::future::join_all;
+use syntect::easy::HighlightLines;
 
 use crate::{
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
+    highlight::MarkdownStatic,
     note::{Note, NoteTaskItemTerm, PreviewType},
     skim::checkmark::Action as TaskAction,
     skim::checkmark::Iteration as CheckmarkIteration,
@@ -17,13 +19,21 @@ pub(crate) async fn exec(
     db: SqliteAsyncHandle,
     surf: SurfParsing,
     external_commands: ExternalCommands,
+    md_static: MarkdownStatic,
 ) -> Result<String, anyhow::Error> {
-    let mut list = db.lock().await.list().await?;
+    let mut list = db.lock().await.list(md_static).await?;
 
     let mut preview_type = PreviewType::TaskStructure;
     let note = loop {
-        let (next_items, opened, preview_type_after) =
-            iteration(db.clone(), list, &external_commands, &surf, preview_type).await?;
+        let (next_items, opened, preview_type_after) = iteration(
+            db.clone(),
+            list,
+            &external_commands,
+            &surf,
+            preview_type,
+            md_static,
+        )
+        .await?;
         preview_type = preview_type_after;
         list = next_items;
 
@@ -32,7 +42,7 @@ pub(crate) async fn exec(
         }
     };
     let mut next_tasks_window = None;
-    let mut tasks = read_tasks_from_file(&note, &surf).await?;
+    let mut tasks = read_tasks_from_file(&note, &surf, md_static).await?;
     loop {
         let action = CheckmarkIteration::new(tasks).run()?;
         next_tasks_window = match action {
@@ -56,9 +66,9 @@ pub(crate) async fn exec(
             TaskAction::Narrow(start, end) => Some((start, end)),
         };
         tasks = match next_tasks_window {
-            None => read_tasks_from_file(&note, &surf).await?,
+            None => read_tasks_from_file(&note, &surf, md_static).await?,
             Some((start, end)) => {
-                let all = read_tasks_from_file(&note, &surf).await?;
+                let all = read_tasks_from_file(&note, &surf, md_static).await?;
                 all[start..end].to_vec()
             }
         };
@@ -68,8 +78,10 @@ pub(crate) async fn exec(
 async fn read_tasks_from_file(
     note: &Note,
     surf: &SurfParsing,
+    md_static: MarkdownStatic,
 ) -> Result<Vec<TaskTreeWrapper>, anyhow::Error> {
-    let tasks = TaskItem::parse(&note, &surf)?;
+    let mut highlighter = HighlightLines::new(md_static.1, md_static.2);
+    let tasks = TaskItem::parse(&note, &surf, &mut highlighter, md_static)?;
 
     let tasks_stereo = NoteTaskItemTerm::parse(&tasks, false, false);
     let tasks_mono = NoteTaskItemTerm::parse(&tasks, false, true);

@@ -1,5 +1,5 @@
 use crate::{
-    commands::link::link,
+    commands::link::{link, link_noninteractive},
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
@@ -9,7 +9,9 @@ use crate::{
     Open,
 };
 
-use super::{remove::remove, rename::rename, unlink::unlink};
+use super::{remove::remove, rename::rename, unlink::unlink, create};
+use inquire::Select;
+use inquire::Text;
 
 pub(crate) async fn exec(
     db: SqliteAsyncHandle,
@@ -84,6 +86,23 @@ pub(crate) async fn exec(
                 };
                 list = next;
             }
+
+            Some(Action::CreateLinkedFrom(linked_from)) => {
+                let options: Vec<&str> = vec!["tag", "note"]; 
+                let note_type = Select::new("select note type", options).prompt()?;
+                let is_tag = note_type == "tag";
+
+
+                let new_name = Text::new("Enter name of a new note:").prompt()?;
+                let to = create::create(&new_name, db.clone(), is_tag, md_static).await?;
+
+                
+                link_noninteractive(
+                    linked_from.clone(), to, db.clone(),
+                )
+                .await?;
+                list = vec![linked_from];
+            }
             _ => {}
         }
     }
@@ -116,6 +135,7 @@ pub async fn iteration(
         action @ Action::Link(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Unlink(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Remove(..) => (out.next_items, Some(action), preview_type),
+        action @ Action::CreateLinkedFrom(..) => (out.next_items, Some(action), preview_type),
         Action::TogglePreview => (out.next_items, None, preview_type.toggle()),
     };
     Ok(res)

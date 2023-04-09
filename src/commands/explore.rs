@@ -1,4 +1,5 @@
 use crate::{
+    commands::link::link,
     config::{ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
@@ -41,6 +42,18 @@ pub(crate) async fn exec(
                 let note = rename(opened, db.clone(), md_static).await?;
                 list = vec![note];
             }
+
+            Some(Action::Link(linked_from)) => {
+                link(
+                    linked_from.clone(),
+                    db.clone(),
+                    &external_commands,
+                    &surf_parsing,
+                    md_static,
+                )
+                .await?;
+                list = vec![linked_from];
+            }
             _ => {}
         }
     }
@@ -70,6 +83,7 @@ pub async fn iteration(
         Action::Widen => (db.lock().await.list(md_static).await?, None, preview_type),
         action @ Action::Open(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Rename(..) => (out.next_items, Some(action), preview_type),
+        action @ Action::Link(..) => (out.next_items, Some(action), preview_type),
         Action::TogglePreview => (out.next_items, None, preview_type.toggle()),
     };
     Ok(res)

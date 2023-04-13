@@ -68,7 +68,7 @@ impl Note {
             .find_links_from(&self.name(), md_static)
             .await?;
 
-        for next in forward_links {
+        for next in forward_links.into_iter().rev() {
             if all_reachable.contains(&next) {
                 tree.push(Tree::new(NoteLinkTerm::Cycle(next.name())));
             } else {

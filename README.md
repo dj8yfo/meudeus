@@ -1,8 +1,8 @@
 ![crates.io](https://img.shields.io/crates/v/mds.svg)
 
-# Meta screenshot
+# Short showcast
 
-![Alt](./logo.jpeg "Concentrate by means of relaxation")
+[![asciicast](https://asciinema.org/a/QtWI1lMVbQ52LMP7Yf6u7QvAA.svg)](https://asciinema.org/a/QtWI1lMVbQ52LMP7Yf6u7QvAA)
 
 # [Installation](./INSTALLATION.md)
 
@@ -23,7 +23,7 @@
   ```
 
   ```
-  meudeus v0.13.6
+  meudeus v0.13.7
   a skim shredder for plain-text papers
 
   Usage: mds [OPTIONS] <COMMAND>

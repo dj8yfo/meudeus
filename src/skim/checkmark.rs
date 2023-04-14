@@ -5,7 +5,7 @@ use skim::{
     Skim, SkimItemReceiver, SkimItemSender,
 };
 
-use crate::{note::NoteTaskItemTerm, task_item::TaskTreeWrapper};
+use crate::{note::{NoteTaskItemTerm, Note}, task_item::TaskTreeWrapper};
 
 pub enum Action {
     Toggle(Vec<TaskTreeWrapper>),
@@ -13,14 +13,16 @@ pub enum Action {
     Yank(TaskTreeWrapper),
     Widen,
     Narrow(usize, usize),
+    Return(Note),
 }
 
 pub(crate) struct Iteration {
     items: Option<Vec<TaskTreeWrapper>>,
+    return_note: Note,
 }
 impl Iteration {
-    pub(crate) fn new(items: Vec<TaskTreeWrapper>) -> Self {
-        Self { items: Some(items) }
+    pub(crate) fn new(items: Vec<TaskTreeWrapper>, return_note: Note) -> Self {
+        Self { items: Some(items), return_note }
     }
 
     pub(crate) fn run(mut self) -> anyhow::Result<Action> {
@@ -40,6 +42,7 @@ impl Iteration {
                 "ctrl-y:accept",
                 "ctrl-w:accept",
                 "ctrl-l:accept",
+                "ctrl-e:abort",
             ])
             .build()?;
 
@@ -98,6 +101,9 @@ impl Iteration {
                     return Err(anyhow::anyhow!(
                         "user chose to abort current iteration of checkmark cycle"
                     ))
+                }
+                Key::Ctrl('e') => {
+                    return Ok(Action::Return(self.return_note));
                 }
                 _ => {
                     unreachable!();

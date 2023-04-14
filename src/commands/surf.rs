@@ -7,7 +7,7 @@ use crate::{
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
     link::Link,
-    note::PreviewType,
+    note::{Note, PreviewType},
     print::format_two_tokens,
     skim::explore::Action,
     skim::surf::Action as SurfAction,
@@ -44,6 +44,18 @@ pub(crate) async fn exec(
         }
     };
 
+    let _exit_note = surf_note(note, db, &external_commands, &surf, md_static).await?;
+
+    Ok("success".to_string())
+}
+
+pub(crate) async fn surf_note(
+    note: Note,
+    db: SqliteAsyncHandle,
+    external_commands: &ExternalCommands,
+    surf: &SurfParsing,
+    md_static: MarkdownStatic,
+) -> Result<Note, anyhow::Error> {
     loop {
         let all_vec = note.reachable_notes(db.clone(), md_static).await?;
         let links: std::io::Result<Vec<_>> = all_vec
@@ -51,7 +63,7 @@ pub(crate) async fn exec(
             .map(|v| Link::parse(&v, &surf))
             .collect();
         let links: Vec<_> = links?.into_iter().flat_map(|v| v).collect();
-        let action = SurfIteration::new(links, false, external_commands.clone())
+        let action = SurfIteration::new(links, false, external_commands.clone(), note.clone())
             .run()
             .await?;
         eprintln!("{}", action);
@@ -63,6 +75,9 @@ pub(crate) async fn exec(
             SurfAction::Jump(ref link) => {
                 link.jump(external_commands.clone().open)?;
                 eprintln!("{}", link.preview_item.as_ref().unwrap());
+            }
+            SurfAction::Return(note) => {
+                return Ok(note);
             }
         }
         sleep(Duration::new(1, 500_000_000)).await;

@@ -9,7 +9,7 @@ use crate::{
     Open,
 };
 
-use super::{remove::remove, rename::rename, unlink::unlink, create};
+use super::{create, remove::remove, rename::rename, surf::surf_note, unlink::unlink, checkmark::checkmark_note};
 use inquire::Select;
 use inquire::Text;
 
@@ -39,6 +39,32 @@ pub(crate) async fn exec(
             Some(Action::Open(opened)) => {
                 opened.open(external_commands.open.clone())?;
                 eprintln!("{}", format_two_tokens("viewed", &opened.name()));
+            }
+            Some(Action::Surf(surfed)) => {
+                if let Err(err) = surf_note(
+                    surfed,
+                    db.clone(),
+                    &external_commands,
+                    &surf_parsing,
+                    md_static,
+                )
+                .await
+                {
+                    eprintln!("surf error: {:?}", err);
+                }
+            }
+
+            Some(Action::Checkmark(surfed)) => {
+                if let Err(err) = checkmark_note(
+                    surfed,
+                    &external_commands,
+                    &surf_parsing,
+                    md_static,
+                )
+                .await
+                {
+                    eprintln!("checkmark error: {:?}", err);
+                }
             }
             Some(Action::Rename(opened)) => {
                 let note = rename(opened, db.clone(), md_static).await?;
@@ -88,19 +114,14 @@ pub(crate) async fn exec(
             }
 
             Some(Action::CreateLinkedFrom(linked_from)) => {
-                let options: Vec<&str> = vec!["tag", "note"]; 
+                let options: Vec<&str> = vec!["tag", "note"];
                 let note_type = Select::new("select note type", options).prompt()?;
                 let is_tag = note_type == "tag";
-
 
                 let new_name = Text::new("Enter name of a new note:").prompt()?;
                 let to = create::create(&new_name, db.clone(), is_tag, md_static).await?;
 
-                
-                link_noninteractive(
-                    linked_from.clone(), to, db.clone(),
-                )
-                .await?;
+                link_noninteractive(linked_from.clone(), to, db.clone()).await?;
                 list = vec![linked_from];
             }
             _ => {}
@@ -136,6 +157,8 @@ pub async fn iteration(
         action @ Action::Unlink(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Remove(..) => (out.next_items, Some(action), preview_type),
         action @ Action::CreateLinkedFrom(..) => (out.next_items, Some(action), preview_type),
+        action @ Action::Surf(..) => (out.next_items, Some(action), preview_type),
+        action @ Action::Checkmark(..) => (out.next_items, Some(action), preview_type),
         Action::TogglePreview => (out.next_items, None, preview_type.toggle()),
     };
     Ok(res)

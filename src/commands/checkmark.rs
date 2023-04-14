@@ -41,10 +41,20 @@ pub(crate) async fn exec(
             break opened;
         }
     };
+    let _note = checkmark_note(note, &external_commands, &surf, md_static).await?;
+    Ok("success".to_string())
+}
+
+pub(crate) async fn checkmark_note(
+    note: Note,
+    external_commands: &ExternalCommands,
+    surf: &SurfParsing,
+    md_static: MarkdownStatic,
+) -> Result<Note, anyhow::Error> {
     let mut next_tasks_window = None;
     let mut tasks = read_tasks_from_file(&note, &surf, md_static).await?;
     loop {
-        let action = CheckmarkIteration::new(tasks).run()?;
+        let action = CheckmarkIteration::new(tasks, note.clone()).run()?;
         next_tasks_window = match action {
             TaskAction::Toggle(selected_tasks) => {
                 for task in selected_tasks {
@@ -64,6 +74,10 @@ pub(crate) async fn exec(
             }
             TaskAction::Widen => None,
             TaskAction::Narrow(start, end) => Some((start, end)),
+
+            TaskAction::Return(note) => {
+                return Ok(note);
+            }
         };
         tasks = match next_tasks_window {
             None => read_tasks_from_file(&note, &surf, md_static).await?,

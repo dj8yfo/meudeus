@@ -31,6 +31,8 @@ pub enum Action {
     Rename(Note),
     Remove(Note),
     CreateLinkedFrom(Note),
+    Surf(Note),
+    Checkmark(Note),
     TogglePreview,
 }
 
@@ -92,7 +94,7 @@ impl Iteration {
         let out = tokio::task::spawn_blocking(move || {
             let options = SkimOptionsBuilder::default()
                 .height(Some("100%"))
-                .preview_window(Some("up:80%"))
+                .preview_window(Some("up:70%"))
                 .preview(Some(""))
                 .prompt(Some("(explore) > "))
                 .multi(false)
@@ -104,6 +106,8 @@ impl Iteration {
                     "ctrl-l:accept",
                     "ctrl-t:accept",
                     "ctrl-w:accept",
+                    "ctrl-s:accept",
+                    "ctrl-k:accept",
                     "alt-r:accept",
                     "alt-l:accept",
                     "alt-u:accept",
@@ -244,6 +248,27 @@ impl Iteration {
                         return Ok(Out {
                             action: Action::CreateLinkedFrom(item.clone()),
                             next_items: vec![],
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+
+                Key::Ctrl('s') => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Out {
+                            action: Action::Surf(item.clone()),
+                            next_items: vec![item.clone()],
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+                Key::Ctrl('k') => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Out {
+                            action: Action::Checkmark(item.clone()),
+                            next_items: vec![item.clone()],
                         });
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));

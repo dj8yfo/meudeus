@@ -5,12 +5,13 @@ use skim::{
     Skim, SkimItemReceiver, SkimItemSender,
 };
 
-use crate::{config::ExternalCommands, link::Link};
+use crate::{config::ExternalCommands, link::Link, note::Note};
 
 #[derive(Debug)]
 pub enum Action {
     Jump(Link),
     Open(Link),
+    Return(Note),
 }
 
 impl Display for Action {
@@ -18,6 +19,7 @@ impl Display for Action {
         match self {
             Self::Jump(link) => write!(f, "{} : {}", "jump", link),
             Self::Open(link) => write!(f, "{} : {}", "open", link),
+            Self::Return(note) => write!(f, "{} : {}", "return to explore", note),
         }
     }
 }
@@ -25,13 +27,15 @@ pub(crate) struct Iteration {
     items: Option<Vec<Link>>,
     multi: bool,
     external_commands: ExternalCommands,
+    return_note: Note,
 }
 impl Iteration {
-    pub(crate) fn new(items: Vec<Link>, multi: bool, external_commands: ExternalCommands) -> Self {
+    pub(crate) fn new(items: Vec<Link>, multi: bool, external_commands: ExternalCommands, return_note: Note) -> Self {
         Self {
             items: Some(items),
             multi,
             external_commands,
+            return_note,
         }
     }
 
@@ -60,11 +64,12 @@ impl Iteration {
                 .height(Some("100%"))
                 .preview(Some(""))
                 .prompt(Some("(surf) > "))
-                .preview_window(Some("up:80%"))
+                .preview_window(Some("up:50%"))
                 .multi(self.multi)
                 .bind(vec![
                     "ctrl-j:accept",
                     "ctrl-c:abort",
+                    "ctrl-e:abort",
                     "Enter:accept",
                     "ESC:abort",
                 ])
@@ -102,6 +107,10 @@ impl Iteration {
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
+                }
+
+                Key::Ctrl('e') => {
+                    return Ok(Action::Return(self.return_note));
                 }
                 Key::Ctrl('c') | Key::ESC => {
                     return Err(anyhow::anyhow!(

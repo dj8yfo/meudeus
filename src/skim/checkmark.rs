@@ -30,7 +30,7 @@ impl Iteration {
             .height(Some("100%"))
             .preview(Some(""))
             .prompt(Some("(checkmark) > "))
-            .preview_window(Some("right:55%"))
+            .preview_window(Some("up:80%"))
             .multi(true)
             .bind(vec![
                 "ctrl-c:abort",

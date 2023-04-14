@@ -92,7 +92,7 @@ impl Iteration {
         let out = tokio::task::spawn_blocking(move || {
             let options = SkimOptionsBuilder::default()
                 .height(Some("100%"))
-                .preview_window(Some("right:55%"))
+                .preview_window(Some("up:80%"))
                 .preview(Some(""))
                 .prompt(Some("(explore) > "))
                 .multi(false)

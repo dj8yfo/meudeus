@@ -78,7 +78,7 @@ impl Iteration {
                 .height(Some("100%"))
                 .preview(Some(""))
                 .prompt(Some(&hint))
-                .preview_window(Some("right:55%"))
+                .preview_window(Some("up:80%"))
                 .multi(self.multi)
                 .bind(vec!["ctrl-c:abort", "Enter:accept", "ESC:abort"])
                 .build()

@@ -60,7 +60,7 @@ impl Iteration {
                 .height(Some("100%"))
                 .preview(Some(""))
                 .prompt(Some("(surf) > "))
-                .preview_window(Some("right:55%"))
+                .preview_window(Some("up:80%"))
                 .multi(self.multi)
                 .bind(vec![
                     "ctrl-j:accept",

@@ -67,13 +67,13 @@
 
 - `surf` mode
 
- | Binding   | Effect                                                                     |
- |---------|------------------------------------------------------------------------------|
- | Ctrl-c  | Abort                                                                        |
- | ESC | Abort                                                                            |
- | Enter | Open selected link with a command, depending on link's type                    |
- | Ctrl-j  |  Jump to selected link's position in editor                                  |
- | Ctrl-e  |  Return to `explore` mode (in `explore` command) or abort `surf` command     |
+ | Binding   | Effect                                                                             |
+ |---------|--------------------------------------------------------------------------------------|
+ | Ctrl-c  | Abort                                                                                |
+ | ESC | Abort                                                                                    |
+ | Enter | Open selected `[markdown link]()` with a command, depending on [markdown link]()'s type|
+ | Ctrl-j  |  Jump to selected [markdown link]()'s position in editor                             |
+ | Ctrl-e  |  Return to `explore` mode (in `explore` command) or abort `surf` command             |
 
 - `checkmark` mode
 
@@ -87,7 +87,7 @@
  | Ctrl-j  |  Jump to selected task item's position in editor                              |
  | Ctrl-y  |  Copy selected task item's subtree to clipboard                               |
  | Ctrl-w  |  Widen context of task items to all tasks, parse again from file              |
- | Ctrl-l  |  Narrown context of task items to subtree of selected note                    |
+ | Ctrl-l  |  Narrown context of task items to subtree of selected task item               |
  | Ctrl-e  |  Return to `explore` mode (in `explore` command) or abort `checkmark` command |
 
 - common less obvious keybindings from vanilla skim

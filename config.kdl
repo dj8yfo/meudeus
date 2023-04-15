@@ -1,45 +1,37 @@
 world {
-
 	external-commands {
 		preview {
 			dir "exa" "-l" "--all" "--color=always" "--group-directories-first" "--git" "$DIR"
-
 			file "bat" "--color=always" "$FILE"
 		}
-
 		open {
 			file "hx" "$FILE"
-
 			file-jump "hx" "$FILE:$LINE:$COLUMN"
 			// file-jump  "nvim" "$FILE" "+call cursor($LINE, $COLUMN)"
-
 			dir "zellij" "action" "new-pane" "--cwd" "$DIR" "--" "broot"
-
 			url "firefox" "$URL"
-
 			pipe-$SNIPPET_TEXT-into "wl-copy"
 		}
 		
 	}
-
 	surf-parsing {
 		// regex can be arbitrary, but the named groups `description`, `url`
 		// must exist, otherwise panics will entail
 		markdown-reference-link-regex  r#"\[(?P<description>[^\]]+)\]\((?P<url>[^\)]+)\)"#	
-
 		url-regex  r#"^https?://\S+"#		
-
 		// regex can be arbitrary, but the named groups `whitespace`, `checkmark`, `task_text`
-		// must exist, otherwise panics will entail
+		// must exist, otherwise panics will entail.
+		// checkmark must be one char, either ' ' or 'x', otherwise the behaviour is hard
+		// to predict.
+		//
+		// the nesting will be computed as the the length of `whitespace` group in bytes
+		// divided by 2
 		task-item-regex r#"(?P<whitespace>(  )*)- \[(?P<checkmark>[x ])\]\s+(?P<task_text>.+)"#
 	}
-
 	notes-work-dir "/home/user/notes"
-
 	color {
 		// used for notes' name, task items' titles and code snippets
 		// 
 		theme "/home/user/Downloads/file.tmTheme"
 	}
-
 }

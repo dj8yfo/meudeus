@@ -8,12 +8,9 @@
 
 # Help
 
-  All of `explore`, `surf` and `checkmark` are equipped with `<Ctrl-h>` and `<Ctrl-l>` keybindings to follow 
-  backlinks and forward links respectively.
-
-  All of `explore`, `surf` and `checkmark` are equipped with `<Ctrl-t>` keyding to toggle 
-  between **details** -> **structural links** -> **structural task** preview of current note or 
-  note subgraph respectively. This renders `p/print` command somewhat redundant.
+  All of `explore`, `surf` and `checkmark` are equipped with `< Ctrl-t >` keyding to toggle 
+  between **structural links** -> **structural task** -> **details** -> **(cycle)** preview of current note or 
+  note subgraph respectively. This rendered `p/print` command somewhat redundant.
 
   ```
   mds -h
@@ -46,6 +43,61 @@
     -h, --help     Print help
     -V, --version  Print version
   ```
+
+# Keybindings of `explore` command
+
+- `explore` mode
+
+ | Binding   | Effect                                                                     |
+ |---------|------------------------------------------------------------------------------|
+ | Ctrl-c  | Abort                                                                        |
+ | ESC | Abort                                                                            |
+ | Enter | Open selected note in editor                                                   |
+ | Ctrl-h  |  Populate skim selection with backlinks of selected note                     |
+ | Ctrl-l  |  Populate skim selection with forward links of selected note                 |
+ | Ctrl-t  |  Toggle preview type of notes                                                |
+ | Ctrl-w  |  Widen skim selection to full list of all notes                              |
+ | Ctrl-s  |  Switch mode to `surf` with the selected note as the root of surfed subtree  |
+ | Ctrl-k  |  Switch mode to `checkmark` for task items of selected note                  |
+ | Alt-r  |  Rename selected note                                                         |
+ | Alt-l  |  Create a link from selected note to another, selected in next skim iteration |
+ | Alt-u  |  Remove a link from selected note to one of its forward links                 |
+ | Alt-d  |  Remove selected note                                                         |
+ | Alt-c  |  Create a new note/tag, which will become one of selected note's forward links|
+
+- `surf` mode
+
+ | Binding   | Effect                                                                     |
+ |---------|------------------------------------------------------------------------------|
+ | Ctrl-c  | Abort                                                                        |
+ | ESC | Abort                                                                            |
+ | Enter | Open selected link with a command, depending on link's type                    |
+ | Ctrl-j  |  Jump to selected link's position in editor                                  |
+ | Ctrl-e  |  Return to `explore` mode (in `explore` command) or abort `surf` command     |
+
+- `checkmark` mode
+
+ | Binding   | Effect                                                                      |
+ |---------|-------------------------------------------------------------------------------|
+ | Ctrl-c  | Abort                                                                         |
+ | ESC | Abort                                                                             |
+ | TAB (skim) | Select and move down                                                       |
+ | Shift+TAB (skim) | Select and move up                                                   |
+ | Enter | Toggle state todo/done of multiple selected task items                          |
+ | Ctrl-j  |  Jump to selected task item's position in editor                              |
+ | Ctrl-y  |  Copy selected task item's subtree to clipboard                               |
+ | Ctrl-w  |  Widen context of task items to all tasks, parse again from file              |
+ | Ctrl-l  |  Narrown context of task items to subtree of selected note                    |
+ | Ctrl-e  |  Return to `explore` mode (in `explore` command) or abort `checkmark` command |
+
+- common less obvious keybindings from vanilla skim
+
+ | Binding   | Effect                                                                      |
+ |---------|-------------------------------------------------------------------------------|
+ | PageUp| Move up by many items in skim selection                                         |
+ | PageDown|Move down by many items in skim selection                                      |
+ | Shift-ArrowUp| Scroll preview port up (without mouse)                                   |
+ | Shirt-ArrowDown| Scroll preview port down (without mouse)                               |
 
 # Colors 
 

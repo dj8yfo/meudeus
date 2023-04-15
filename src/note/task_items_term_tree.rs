@@ -1,7 +1,7 @@
 use std::{collections::HashSet, fmt::Display, fs};
 
 use crate::{
-    config::SurfParsing,
+    config::{color::ColorScheme, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
     lines::find_position,
@@ -22,8 +22,8 @@ pub enum NoteTaskItemTerm {
     Note(Note),
     Task(TaskItem),
     TaskMono(TaskItem),
-    TaskHint(usize),
-    Cycle(String),
+    TaskHint(usize, ColorScheme),
+    Cycle(String, ColorScheme),
 }
 
 impl Display for NoteTaskItemTerm {
@@ -36,18 +36,21 @@ impl Display for NoteTaskItemTerm {
             Self::Task(task) => {
                 write!(f, "{}", task.skim_display(false))
             }
-            Self::TaskHint(num) => {
+            Self::TaskHint(num, color) => {
+                let c = color.links.unlisted;
+
                 write!(
                     f,
                     "{}",
-                    format!("[ has {num} task items ]").truecolor(170, 170, 170)
+                    format!("[ has {num} task items ]").truecolor(c.r, c.g, c.b)
                 )
             }
             Self::TaskMono(task) => {
                 write!(f, "{}", task.skim_display_mono(false))
             }
-            Self::Cycle(cycle) => {
-                write!(f, "⟳ {}", cycle.truecolor(150, 75, 0).to_string())
+            Self::Cycle(cycle, color) => {
+                let c = color.links.cycle;
+                write!(f, "⟳ {}", cycle.truecolor(c.r, c.g, c.b).to_string())
             }
         }
     }
@@ -87,7 +90,7 @@ impl NoteTaskItemTerm {
                 match tree.root {
                     NoteTaskItemTerm::Note(..) => unreachable!("note"),
                     NoteTaskItemTerm::Cycle(..) => unreachable!("cycle"),
-                    NoteTaskItemTerm::TaskHint(_num) => unreachable!("hint"),
+                    NoteTaskItemTerm::TaskHint(_num, ..) => unreachable!("hint"),
                     NoteTaskItemTerm::Task(ref mut task)
                     | NoteTaskItemTerm::TaskMono(ref mut task) => {
                         task.next_index = Some(task.self_index + height_task);
@@ -113,7 +116,7 @@ impl Jump for NoteTaskItemTerm {
         let task = match self {
             NoteTaskItemTerm::Note(..) => unreachable!("not expecting a note here"),
             NoteTaskItemTerm::Cycle(..) => unreachable!("not expecting a cycle here"),
-            NoteTaskItemTerm::TaskHint(_num) => unreachable!("hint"),
+            NoteTaskItemTerm::TaskHint(_num, ..) => unreachable!("hint"),
             NoteTaskItemTerm::Task(task) => task.clone(),
             NoteTaskItemTerm::TaskMono(task) => task.clone(),
         };
@@ -150,6 +153,7 @@ impl Note {
         surf_parsing: SurfParsing,
         db: SqliteAsyncHandle,
         md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
     ) -> SqlxResult<(Tree<NoteTaskItemTerm>, HashSet<Note>)> {
         let mut tree = Tree::new(NoteTaskItemTerm::Note(self.clone()));
         all_reachable.insert(self.clone());
@@ -162,7 +166,7 @@ impl Note {
         let trees = NoteTaskItemTerm::parse(&tasks, true, false);
         if trees.len() > 0 {
             if level > 1 {
-                tree.push(NoteTaskItemTerm::TaskHint(trees.len()));
+                tree.push(NoteTaskItemTerm::TaskHint(trees.len(), color_scheme));
             } else {
                 for task in trees {
                     tree.push(task);
@@ -173,12 +177,15 @@ impl Note {
         let forward_links = db
             .lock()
             .await
-            .find_links_from(&self.name(), md_static)
+            .find_links_from(&self.name(), md_static, color_scheme)
             .await?;
 
         for next in forward_links.into_iter().rev() {
             if all_reachable.contains(&next) {
-                tree.push(Tree::new(NoteTaskItemTerm::Cycle(next.name())));
+                tree.push(Tree::new(NoteTaskItemTerm::Cycle(
+                    next.name(),
+                    color_scheme,
+                )));
             } else {
                 let (next_tree, roundtrip_reachable) = next
                     .construct_task_item_term_tree(
@@ -187,6 +194,7 @@ impl Note {
                         surf_parsing.clone(),
                         db.clone(),
                         md_static,
+                        color_scheme,
                     )
                     .await?;
                 all_reachable = roundtrip_reachable;

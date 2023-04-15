@@ -5,6 +5,7 @@ use std::io::Write;
 use std::{fs::File, io, path::PathBuf};
 use syntect::easy::HighlightLines;
 
+use crate::config::color::ColorScheme;
 use crate::config::Open as OpenCfg;
 use crate::config::{ExternalCommands, SurfParsing};
 use crate::database::SqliteAsyncHandle;
@@ -58,10 +59,12 @@ pub enum Note {
         file_path: PathBuf,
         resources: Option<DynResources>,
         name_markdown: Option<String>,
+        color_scheme: ColorScheme,
     },
     Tag {
         name: String,
         resources: Option<DynResources>,
+        color_scheme: ColorScheme,
     },
 }
 
@@ -85,11 +88,20 @@ impl Display for Note {
                 write!(f, "{}", md)
             }
 
-            Self::Tag { name, .. } => {
+            Self::Tag {
+                name, color_scheme, ..
+            } => {
                 if name == "METATAG" || name == "root" {
-                    write!(f, "{}", name.truecolor(255, 0, 0).to_string())
+                    let special_tag = color_scheme.notes.special_tag;
+                    write!(
+                        f,
+                        "{}",
+                        name.truecolor(special_tag.r, special_tag.g, special_tag.b)
+                            .to_string()
+                    )
                 } else {
-                    write!(f, "{}", name.truecolor(0, 255, 255).to_string())
+                    let tag = color_scheme.notes.tag;
+                    write!(f, "{}", name.truecolor(tag.r, tag.g, tag.b).to_string())
                 }
             }
         }
@@ -113,17 +125,19 @@ impl Open for Note {
 impl Eq for Note {}
 
 impl Note {
-    pub(crate) fn new(name: String, file_path: Option<PathBuf>) -> Self {
+    pub(crate) fn new(name: String, file_path: Option<PathBuf>, color_scheme: ColorScheme) -> Self {
         match file_path {
             Some(file_path) => Self::MdFile {
                 name,
                 file_path,
                 resources: None,
                 name_markdown: None,
+                color_scheme,
             },
             None => Self::Tag {
                 name,
                 resources: None,
+                color_scheme,
             },
         }
     }
@@ -158,7 +172,7 @@ impl Note {
                 let markdown = format!(
                     "{} {}",
                     highlight(name, highlighter, md_static),
-                    " ".black().to_string()
+                    " ".truecolor(0, 0, 0).to_string()
                 );
                 *name_markdown = Some(markdown);
             }
@@ -173,13 +187,15 @@ impl Note {
         is_tag: bool,
         highlighter: &mut HighlightLines,
         md_static: MarkdownStatic,
+
+        color_scheme: ColorScheme,
     ) -> Self {
         let time_str = chrono::Utc::now().naive_utc().timestamp().to_string();
         let suffix = random::rand_suffix();
         let fname = format!("{}_{}.md", time_str, suffix);
 
         let file_path = (!is_tag).then_some(PathBuf::from("./").join(fname));
-        let mut note = Self::new(name, file_path);
+        let mut note = Self::new(name, file_path, color_scheme);
         note.set_markdown(highlighter, md_static);
         note
     }
@@ -236,10 +252,11 @@ impl Note {
         &self,
         db: &SqliteAsyncHandle,
         md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
     ) -> SqlxResult<Vec<Note>> {
         db.lock()
             .await
-            .find_links_from(&self.name(), md_static)
+            .find_links_from(&self.name(), md_static, color_scheme)
             .await
     }
 
@@ -247,7 +264,11 @@ impl Note {
         &self,
         db: &SqliteAsyncHandle,
         md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
     ) -> SqlxResult<Vec<Note>> {
-        db.lock().await.find_links_to(&self.name(), md_static).await
+        db.lock()
+            .await
+            .find_links_to(&self.name(), md_static, color_scheme)
+            .await
     }
 }

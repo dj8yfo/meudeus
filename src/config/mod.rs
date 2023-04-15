@@ -6,9 +6,10 @@ use regex::Regex;
 use crate::print::format_two_tokens;
 use anyhow::anyhow;
 
-use self::cmd_template::CmdTemplate;
+use self::{cmd_template::CmdTemplate, color::ColorScheme};
 
 pub mod cmd_template;
+pub mod color;
 
 static PROGRAM_NAME: &str = "mds";
 #[derive(Debug)]
@@ -49,6 +50,7 @@ pub struct Open {
 #[derive(Debug, Clone)]
 pub struct Color {
     pub theme: PathBuf,
+    pub elements: ColorScheme,
 }
 
 impl TryFrom<&KdlNode> for Open {
@@ -215,8 +217,17 @@ impl TryFrom<&KdlNode> for Color {
             .ok_or(anyhow!("should be string"))?
             .to_string();
 
+        let elements = value
+            .children()
+            .ok_or(anyhow!("`color` should have children"))?
+            .get("elements")
+            .ok_or(anyhow!("no `elements` in config"))?;
+
+        let elements = elements.try_into()?;
+
         Ok(Self {
             theme: PathBuf::from(string),
+            elements,
         })
     }
 }

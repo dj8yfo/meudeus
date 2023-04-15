@@ -1,10 +1,10 @@
+use colored::Colorize;
 use std::borrow::Cow;
 
-use colored::Colorize;
 use skim::{AnsiString, DisplayContext, ItemPreview, PreviewContext, SkimItem};
 
 use crate::{
-    config::Preview,
+    config::{color::ColorScheme, Preview},
     external_commands::{fetch_content, list_dir},
     highlight::{highlight_code_block, MarkdownStatic},
 };
@@ -15,22 +15,33 @@ impl super::Link {
         self.display_item = Some(AnsiString::parse(&input));
     }
 
-    pub fn compute_preview(&self, preview_cmds: &Preview, md_static: MarkdownStatic) -> String {
+    pub fn compute_preview(
+        &self,
+        preview_cmds: &Preview,
+        md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
+    ) -> String {
         match &self.link {
-            super::Destination::URL(url) => url.cyan().to_string(),
+            super::Destination::URL(url) => {
+                let c = color_scheme.links.url;
+                url.truecolor(c.r, c.g, c.b).to_string()
+            }
             super::Destination::File { file } => {
                 fetch_content(preview_cmds.file_cmd.clone(), Some(file)).unwrap()
             }
             super::Destination::Dir { dir } => list_dir(preview_cmds.dir_cmd.clone(), dir),
-            super::Destination::Broken(broken) => format!(
-                "{}: {}",
-                "Broken path",
-                broken
-                    .to_str()
-                    .unwrap_or("not valid unicode")
-                    .red()
-                    .to_string(),
-            ),
+            super::Destination::Broken(broken) => {
+                let c = color_scheme.links.broken;
+                format!(
+                    "{}: {}",
+                    "Broken path",
+                    broken
+                        .to_str()
+                        .unwrap_or("not valid unicode")
+                        .truecolor(c.r, c.g, c.b)
+                        .to_string(),
+                )
+            }
 
             super::Destination::CodeBlock {
                 code_block,
@@ -40,8 +51,13 @@ impl super::Link {
         }
     }
 
-    pub fn prepare_preview(&mut self, preview_cmds: &Preview, md_static: MarkdownStatic) {
-        let result = self.compute_preview(preview_cmds, md_static);
+    pub fn prepare_preview(
+        &mut self,
+        preview_cmds: &Preview,
+        md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
+    ) {
+        let result = self.compute_preview(preview_cmds, md_static, color_scheme);
         self.preview_item = Some(result);
     }
 }

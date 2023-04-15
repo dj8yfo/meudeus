@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use crate::{
-    config::{ExternalCommands, SurfParsing},
+    config::{color::ColorScheme, ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
     print::format_two_tokens,
@@ -15,13 +15,14 @@ pub(crate) async fn exec(
     surf_parsing: SurfParsing,
     name: Option<String>,
     md_static: MarkdownStatic,
+    color_scheme: ColorScheme,
 ) -> Result<String, anyhow::Error> {
     let note = {
         if let Some(name) = name {
-            let note = db.lock().await.get(&name, md_static).await?;
+            let note = db.lock().await.get(&name, md_static, color_scheme).await?;
             note
         } else {
-            let list = db.lock().await.list(md_static).await?;
+            let list = db.lock().await.list(md_static, color_scheme).await?;
             let multi = false;
             crate::skim::open::Iteration::new(
                 "print".to_string(),
@@ -31,6 +32,7 @@ pub(crate) async fn exec(
                 external_commands.clone(),
                 surf_parsing.clone(),
                 md_static,
+                color_scheme,
             )
             .run()
             .await?
@@ -45,6 +47,7 @@ pub(crate) async fn exec(
             surf_parsing,
             db,
             md_static,
+            color_scheme,
         )
         .await?;
 
@@ -54,5 +57,5 @@ pub(crate) async fn exec(
         "{}",
         format_two_tokens("printed", &format!("{}", note.name()))
     );
-    Ok("success".cyan().to_string())
+    Ok("success".truecolor(0, 255, 255).to_string())
 }

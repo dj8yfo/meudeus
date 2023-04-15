@@ -1,5 +1,6 @@
 use colored::Colorize;
 
+use crate::config::color::ColorScheme;
 use crate::database::SqliteAsyncHandle;
 use crate::highlight::MarkdownStatic;
 use crate::note::Note;
@@ -42,7 +43,7 @@ fn map_db_result(received: Result<Vec<Note>, Error>) -> String {
                 String::new()
             }
         }
-        Err(err) => return format!("db err {:?}", err).red().to_string(),
+        Err(err) => return format!("db err {:?}", err).truecolor(255, 0, 0).to_string(),
     }
 }
 
@@ -60,9 +61,14 @@ fn map_result(query_result: Result<Vec<Note>, Error>, tag: String) -> String {
 }
 
 impl Note {
-    pub async fn details(&self, db: &SqliteAsyncHandle, md_static: MarkdownStatic) -> String {
-        let result_from = self.fetch_forward_links(db, md_static).await;
-        let result_to = self.fetch_backlinks(db, md_static).await;
+    pub async fn details(
+        &self,
+        db: &SqliteAsyncHandle,
+        md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
+    ) -> String {
+        let result_from = self.fetch_forward_links(db, md_static, color_scheme).await;
+        let result_to = self.fetch_backlinks(db, md_static, color_scheme).await;
         let links_to = map_result(result_from, "Links to:".to_string());
         let linked_by = map_result(result_to, "Linked by:".to_string());
         let mut string = String::new();

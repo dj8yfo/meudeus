@@ -3,7 +3,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 
 use crate::{
-    config::{ExternalCommands, SurfParsing},
+    config::{color::ColorScheme, ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
     link::Link,
@@ -22,8 +22,9 @@ pub(crate) async fn exec(
     surf: SurfParsing,
     external_commands: ExternalCommands,
     md_static: MarkdownStatic,
+    color_scheme: ColorScheme,
 ) -> Result<String, anyhow::Error> {
-    let mut list = db.lock().await.list(md_static).await?;
+    let mut list = db.lock().await.list(md_static, color_scheme).await?;
 
     let mut preview_type = PreviewType::default();
     let note = loop {
@@ -34,6 +35,7 @@ pub(crate) async fn exec(
             &surf,
             preview_type,
             md_static,
+            color_scheme,
         )
         .await?;
         preview_type = preview_type_after;
@@ -44,7 +46,8 @@ pub(crate) async fn exec(
         }
     };
 
-    let _exit_note = surf_note(note, db, &external_commands, &surf, md_static).await?;
+    let _exit_note =
+        surf_note(note, db, &external_commands, &surf, md_static, color_scheme).await?;
 
     Ok("success".to_string())
 }
@@ -55,12 +58,15 @@ pub(crate) async fn surf_note(
     external_commands: &ExternalCommands,
     surf: &SurfParsing,
     md_static: MarkdownStatic,
+    color_scheme: ColorScheme,
 ) -> Result<Note, anyhow::Error> {
     loop {
-        let all_vec = note.reachable_notes(db.clone(), md_static).await?;
+        let all_vec = note
+            .reachable_notes(db.clone(), md_static, color_scheme)
+            .await?;
         let links: std::io::Result<Vec<_>> = all_vec
             .into_iter()
-            .map(|v| Link::parse(&v, &surf))
+            .map(|v| Link::parse(&v, &surf, color_scheme))
             .collect();
         let links: Vec<_> = links?.into_iter().flat_map(|v| v).collect();
         let action = SurfIteration::new(
@@ -69,6 +75,7 @@ pub(crate) async fn surf_note(
             external_commands.clone(),
             note.clone(),
             md_static,
+            color_scheme,
         )
         .run()
         .await?;

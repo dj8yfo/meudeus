@@ -6,7 +6,12 @@ use duct::cmd;
 use regex::Regex;
 use skim::AnsiString;
 
-use crate::{config::Open as OpenCfg, lines::EditorPosition, print::format_two_tokens, Jump, Open};
+use crate::{
+    config::{color::ColorScheme, Open as OpenCfg},
+    lines::EditorPosition,
+    print::format_two_tokens,
+    Jump, Open,
+};
 mod parse;
 mod skim_item;
 
@@ -111,6 +116,7 @@ pub struct Link {
     pub preview_item: Option<String>,
 
     pub start: EditorPosition,
+    color_scheme: ColorScheme,
 }
 
 impl Display for Link {
@@ -121,13 +127,42 @@ impl Display for Link {
 
 impl Link {
     pub fn skim_display(&self) -> String {
-        let parent_name = self.parent_name.truecolor(242, 242, 223).to_string();
+        let parent_rgb = self.color_scheme.links.parent_name;
+        let parent_name = self
+            .parent_name
+            .truecolor(parent_rgb.r, parent_rgb.g, parent_rgb.b)
+            .to_string();
         let description = match self.link {
-            Destination::URL(..) => self.description.green().to_string(),
-            Destination::File { .. } => self.description.cyan().to_string(),
-            Destination::Dir { .. } => self.description.magenta().to_string(),
-            Destination::Broken(..) => self.description.red().to_string(),
-            Destination::CodeBlock { .. } => self.description.blue().to_string(),
+            Destination::URL(..) => {
+                let url_rgb = self.color_scheme.links.url;
+                self.description
+                    .truecolor(url_rgb.r, url_rgb.g, url_rgb.b)
+                    .to_string()
+            }
+            Destination::File { .. } => {
+                let file_rgb = self.color_scheme.links.file;
+                self.description
+                    .truecolor(file_rgb.r, file_rgb.g, file_rgb.b)
+                    .to_string()
+            }
+            Destination::Dir { .. } => {
+                let dir_rgb = self.color_scheme.links.dir;
+                self.description
+                    .truecolor(dir_rgb.r, dir_rgb.g, dir_rgb.b)
+                    .to_string()
+            }
+            Destination::Broken(..) => {
+                let broken_rgb = self.color_scheme.links.broken;
+                self.description
+                    .truecolor(broken_rgb.r, broken_rgb.g, broken_rgb.b)
+                    .to_string()
+            }
+            Destination::CodeBlock { .. } => {
+                let code_block_rgb = self.color_scheme.links.code_block;
+                self.description
+                    .truecolor(code_block_rgb.r, code_block_rgb.g, code_block_rgb.b)
+                    .to_string()
+            }
         };
 
         let input = format!("{} -> [{}]", parent_name, description);
@@ -140,6 +175,7 @@ impl Link {
         code_block: String,
         syntax_label: String,
         source_position: Sourcepos,
+        color_scheme: ColorScheme,
     ) -> Self {
         Self {
             parent_name,
@@ -155,6 +191,7 @@ impl Link {
                 column: source_position.start.column,
             },
             containing_file_name: parent_note,
+            color_scheme,
         }
     }
     pub fn new(
@@ -164,6 +201,7 @@ impl Link {
         parent_name: String,
         url: &Regex,
         start: EditorPosition,
+        color_scheme: ColorScheme,
     ) -> Self {
         if url.is_match(&link) {
             Self {
@@ -174,6 +212,7 @@ impl Link {
                 display_item: None,
                 start,
                 containing_file_name: parent_note,
+                color_scheme,
             }
         } else {
             let mut link = PathBuf::from(&link);
@@ -189,6 +228,7 @@ impl Link {
                     display_item: None,
                     start,
                     containing_file_name: parent_note,
+                    color_scheme,
                 }
             } else if link.is_dir() {
                 Self {
@@ -199,6 +239,7 @@ impl Link {
                     display_item: None,
                     start,
                     containing_file_name: parent_note,
+                    color_scheme,
                 }
             } else {
                 Self {
@@ -209,6 +250,7 @@ impl Link {
                     display_item: None,
                     start,
                     containing_file_name: parent_note,
+                    color_scheme,
                 }
             }
         }

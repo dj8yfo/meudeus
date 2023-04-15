@@ -6,7 +6,7 @@ use skim::{
 };
 
 use crate::{
-    config::{ExternalCommands, SurfParsing},
+    config::{color::ColorScheme, ExternalCommands, SurfParsing},
     database::SqliteAsyncHandle,
     highlight::MarkdownStatic,
     note::{DynResources, Note, PreviewType},
@@ -19,6 +19,7 @@ pub(crate) struct Iteration {
     surf_parsing: SurfParsing,
     preview_type: PreviewType,
     md_static: MarkdownStatic,
+    color_scheme: ColorScheme,
 }
 
 pub enum Action {
@@ -49,6 +50,7 @@ impl Iteration {
         surf_parsing: SurfParsing,
         preview_type: PreviewType,
         md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
     ) -> Self {
         Self {
             items: Some(items),
@@ -57,9 +59,9 @@ impl Iteration {
             surf_parsing,
             preview_type,
             md_static,
+            color_scheme,
         }
     }
-
     pub(crate) async fn run(mut self) -> anyhow::Result<Out> {
         let items = self.items.take().unwrap();
 
@@ -80,7 +82,8 @@ impl Iteration {
                     preview_type: self.preview_type,
                     preview_result: None,
                 });
-                note.prepare_preview(&db_double, self.md_static).await;
+                note.prepare_preview(&db_double, self.md_static, self.color_scheme)
+                    .await;
 
                 let result = tx_double.send(Arc::new(note));
                 if result.is_err() {
@@ -153,7 +156,9 @@ impl Iteration {
 
                 Key::Ctrl('h') => {
                     if let Some(item) = selected_items.first() {
-                        let mut next = item.fetch_backlinks(&self.db, self.md_static).await?;
+                        let mut next = item
+                            .fetch_backlinks(&self.db, self.md_static, self.color_scheme)
+                            .await?;
                         if next.is_empty() {
                             next = items;
                         }
@@ -168,7 +173,9 @@ impl Iteration {
 
                 Key::Ctrl('l') => {
                     if let Some(item) = selected_items.first() {
-                        let mut next = item.fetch_forward_links(&self.db, self.md_static).await?;
+                        let mut next = item
+                            .fetch_forward_links(&self.db, self.md_static, self.color_scheme)
+                            .await?;
                         if next.is_empty() {
                             next = vec![item.clone()];
                         }

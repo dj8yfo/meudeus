@@ -33,5 +33,22 @@ world {
 		// used for notes' name, task items' titles and code snippets
 		// 
 		theme "/home/user/Downloads/file.tmTheme"
+		elements {
+		    links {
+				parent_name r#" {"r":242,"g":242,"b":223} "#
+				url r#" {"r":144,"g":238,"b":144} "#
+				file r#" {"r":216,"g":191,"b":216} "#
+				dir r#" {"r":147,"g":112,"b":219} "#
+				broken r#" {"r":255,"g":0,"b":0} "#
+				code_block r#" {"r":135,"g":206,"b":250} "#
+				unlisted  r#" {"r":242,"g":242,"b":223} "#
+				cycle r#" {"r":210,"g":180,"b":140} "#
+			}
+			notes {
+				tag  r#" {"r":0,"g":255,"b":255} "#
+				// `root` and 1 more special tag
+				special_tag  r#" {"r":255,"g":0,"b":0} "#
+			}
+		}
 	}
 }

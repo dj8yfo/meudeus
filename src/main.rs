@@ -54,8 +54,8 @@ fn load_theme(color: Color) -> Option<&'static Theme> {
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .version("v0.14.0")
-        .about("meudeus v0.14.0\na skim shredder for plain-text papers")
+        .version("v0.14.1")
+        .about("meudeus v0.14.1\na skim shredder for plain-text papers")
         .bin_name("mds")
         .arg(clap::arg!(-c --color  "whether color output should be forced"))
         .subcommand_required(true)
@@ -138,7 +138,7 @@ async fn main() {
     match result {
         Ok(print) => println!("{}", print),
         Err(err) => {
-            eprintln!("{}", format!("{:?}", err).red());
+            eprintln!("{}", format!("{:?}", err).truecolor(255, 0, 0));
             exit(121)
         }
     }
@@ -176,7 +176,8 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         .get_one::<String>("title")
                         .ok_or(anyhow::anyhow!("empty title"))?;
 
-                    commands::create::exec(title, db, is_tag, md_static).await
+                    commands::create::exec(title, db, is_tag, md_static, config.color.elements)
+                        .await
                 }
                 "explore" => {
                     commands::explore::exec(
@@ -184,6 +185,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         config.external_commands,
                         config.surf_parsing,
                         md_static,
+                        config.color.elements,
                     )
                     .await
                 }
@@ -193,6 +195,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         config.external_commands,
                         config.surf_parsing,
                         md_static,
+                        config.color.elements,
                     )
                     .await
                 }
@@ -202,6 +205,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         config.surf_parsing,
                         config.external_commands,
                         md_static,
+                        config.color.elements,
                     )
                     .await
                 }
@@ -211,6 +215,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         config.external_commands,
                         config.surf_parsing,
                         md_static,
+                        config.color.elements,
                     )
                     .await
                 }
@@ -220,6 +225,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         config.external_commands,
                         config.surf_parsing,
                         md_static,
+                        config.color.elements,
                     )
                     .await
                 }
@@ -229,6 +235,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         config.external_commands,
                         config.surf_parsing,
                         md_static,
+                        config.color.elements,
                     )
                     .await
                 }
@@ -240,6 +247,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         config.surf_parsing,
                         name,
                         md_static,
+                        config.color.elements,
                     )
                     .await
                 }
@@ -249,6 +257,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         config.external_commands,
                         config.surf_parsing,
                         md_static,
+                        config.color.elements,
                     )
                     .await
                 }
@@ -258,6 +267,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         config.surf_parsing,
                         config.external_commands,
                         md_static,
+                        config.color.elements,
                     )
                     .await
                 }

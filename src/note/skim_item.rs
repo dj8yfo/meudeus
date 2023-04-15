@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use skim::{AnsiString, DisplayContext, ItemPreview, PreviewContext, SkimItem};
 
-use crate::{database::SqliteAsyncHandle, highlight::MarkdownStatic};
+use crate::{config::color::ColorScheme, database::SqliteAsyncHandle, highlight::MarkdownStatic};
 
 use super::PreviewType;
 
@@ -13,21 +13,31 @@ impl super::Note {
         &self,
         db: &SqliteAsyncHandle,
         md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
     ) -> Option<String> {
         match self.resources() {
             Some(resources) => {
                 let result = match resources.preview_type {
-                    PreviewType::Details => self.details(db, md_static).await,
-                    PreviewType::LinkStructure => self.link_structure(db, md_static).await,
-                    PreviewType::TaskStructure => self.task_structure(db, md_static).await,
+                    PreviewType::Details => self.details(db, md_static, color_scheme).await,
+                    PreviewType::LinkStructure => {
+                        self.link_structure(db, md_static, color_scheme).await
+                    }
+                    PreviewType::TaskStructure => {
+                        self.task_structure(db, md_static, color_scheme).await
+                    }
                 };
                 Some(result)
             }
             None => None,
         }
     }
-    pub async fn prepare_preview(&mut self, db: &SqliteAsyncHandle, md_static: MarkdownStatic) {
-        let result = self.compute_preview(db, md_static).await;
+    pub async fn prepare_preview(
+        &mut self,
+        db: &SqliteAsyncHandle,
+        md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
+    ) {
+        let result = self.compute_preview(db, md_static, color_scheme).await;
         match self.resources_mut() {
             Some(resources) => {
                 resources.preview_result = result;

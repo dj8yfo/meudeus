@@ -2,7 +2,7 @@ use futures::future::join_all;
 use syntect::easy::HighlightLines;
 
 use crate::{
-    config::{ExternalCommands, SurfParsing},
+    config::{color::ColorScheme, ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
     note::{Note, NoteTaskItemTerm, PreviewType},
@@ -20,8 +20,9 @@ pub(crate) async fn exec(
     surf: SurfParsing,
     external_commands: ExternalCommands,
     md_static: MarkdownStatic,
+    color_scheme: ColorScheme,
 ) -> Result<String, anyhow::Error> {
-    let mut list = db.lock().await.list(md_static).await?;
+    let mut list = db.lock().await.list(md_static, color_scheme).await?;
 
     let mut preview_type = PreviewType::TaskStructure;
     let note = loop {
@@ -32,6 +33,7 @@ pub(crate) async fn exec(
             &surf,
             preview_type,
             md_static,
+            color_scheme,
         )
         .await?;
         preview_type = preview_type_after;

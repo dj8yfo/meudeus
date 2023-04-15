@@ -1,5 +1,6 @@
 use std::{fs, path::PathBuf};
 
+use crate::config::color::ColorScheme;
 use crate::lines::find_position;
 use crate::{config::SurfParsing, note::Note};
 
@@ -18,8 +19,26 @@ where
     }
 }
 
-impl From<(regex::Captures<'_>, PathBuf, String, &'_ regex::Regex, &str)> for Link {
-    fn from(value: (regex::Captures<'_>, PathBuf, String, &'_ regex::Regex, &str)) -> Self {
+impl
+    From<(
+        regex::Captures<'_>,
+        PathBuf,
+        String,
+        &'_ regex::Regex,
+        &str,
+        ColorScheme,
+    )> for Link
+{
+    fn from(
+        value: (
+            regex::Captures<'_>,
+            PathBuf,
+            String,
+            &'_ regex::Regex,
+            &str,
+            ColorScheme,
+        ),
+    ) -> Self {
         let captures = value.0;
         let start = captures.name("description").unwrap();
         let start = start.start();
@@ -31,6 +50,7 @@ impl From<(regex::Captures<'_>, PathBuf, String, &'_ regex::Regex, &str)> for Li
             value.2,
             value.3,
             start,
+            value.5,
         )
     }
 }
@@ -42,6 +62,7 @@ impl Link {
         surf: &SurfParsing,
         file_path: &PathBuf,
         file_content: &str,
+        color_scheme: ColorScheme,
     ) {
         for link in surf
             .markdown_reference_link_regex
@@ -54,6 +75,7 @@ impl Link {
                     note.name(),
                     &surf.url_regex,
                     file_content,
+                    color_scheme,
                 )
                     .into(),
             );
@@ -65,6 +87,7 @@ impl Link {
         result: &mut Vec<Link>,
         file_path: &PathBuf,
         file_content: &str,
+        color_scheme: ColorScheme,
     ) {
         let arena = Arena::new();
 
@@ -89,6 +112,7 @@ impl Link {
                         code_block,
                         syntax_label,
                         source_position,
+                        color_scheme,
                     ));
                     *counter += 1;
                 }
@@ -96,13 +120,24 @@ impl Link {
             }
         });
     }
-    pub fn parse(note: &Note, surf: &SurfParsing) -> std::io::Result<Vec<Link>> {
+    pub fn parse(
+        note: &Note,
+        surf: &SurfParsing,
+        color_scheme: ColorScheme,
+    ) -> std::io::Result<Vec<Link>> {
         if let Some(file_path) = note.file_path() {
             let mut result = vec![];
             let file_content = fs::read_to_string(file_path)?;
 
-            Self::reference_link_parse(note, &mut result, surf, file_path, &file_content);
-            Self::ast_parse_code_blocks(note, &mut result, file_path, &file_content);
+            Self::reference_link_parse(
+                note,
+                &mut result,
+                surf,
+                file_path,
+                &file_content,
+                color_scheme,
+            );
+            Self::ast_parse_code_blocks(note, &mut result, file_path, &file_content, color_scheme);
 
             Ok(result)
         } else {

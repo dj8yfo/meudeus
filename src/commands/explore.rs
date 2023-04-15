@@ -1,6 +1,6 @@
 use crate::{
     commands::link::{link, link_noninteractive},
-    config::{ExternalCommands, SurfParsing},
+    config::{color::ColorScheme, ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
     note::{Note, PreviewType},
@@ -21,8 +21,9 @@ pub(crate) async fn exec(
     external_commands: ExternalCommands,
     surf_parsing: SurfParsing,
     md_static: MarkdownStatic,
+    color_scheme: ColorScheme,
 ) -> Result<String, anyhow::Error> {
-    let mut list = db.lock().await.list(md_static).await?;
+    let mut list = db.lock().await.list(md_static, color_scheme).await?;
 
     let mut preview_type = PreviewType::default();
     loop {
@@ -33,6 +34,7 @@ pub(crate) async fn exec(
             &surf_parsing,
             preview_type,
             md_static,
+            color_scheme,
         )
         .await?;
         preview_type = preview_type_after;
@@ -50,6 +52,7 @@ pub(crate) async fn exec(
                     &external_commands,
                     &surf_parsing,
                     md_static,
+                    color_scheme,
                 )
                 .await
                 {
@@ -76,6 +79,7 @@ pub(crate) async fn exec(
                     &external_commands,
                     &surf_parsing,
                     md_static,
+                    color_scheme,
                 )
                 .await
                 {
@@ -91,6 +95,7 @@ pub(crate) async fn exec(
                     &external_commands,
                     &surf_parsing,
                     md_static,
+                    color_scheme,
                 )
                 .await
                 {
@@ -117,7 +122,8 @@ pub(crate) async fn exec(
                 let is_tag = note_type == "tag";
 
                 let new_name = Text::new("Enter name of a new note:").prompt()?;
-                let to = create::create(&new_name, db.clone(), is_tag, md_static).await?;
+                let to =
+                    create::create(&new_name, db.clone(), is_tag, md_static, color_scheme).await?;
 
                 link_noninteractive(linked_from.clone(), to, db.clone()).await?;
                 list = vec![linked_from];
@@ -134,6 +140,7 @@ pub async fn iteration(
     surf_parsing: &SurfParsing,
     preview_type: PreviewType,
     md_static: MarkdownStatic,
+    color_scheme: ColorScheme,
 ) -> Result<(Vec<Note>, Option<Action>, PreviewType), anyhow::Error> {
     let out = Iteration::new(
         list.clone(),
@@ -142,13 +149,18 @@ pub async fn iteration(
         surf_parsing.clone(),
         preview_type,
         md_static,
+        color_scheme,
     )
     .run()
     .await?;
 
     let res = match out.action {
         Action::Back | Action::Forward => (out.next_items, None, preview_type),
-        Action::Widen => (db.lock().await.list(md_static).await?, None, preview_type),
+        Action::Widen => (
+            db.lock().await.list(md_static, color_scheme).await?,
+            None,
+            preview_type,
+        ),
         action @ Action::Open(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Rename(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Link(..) => (out.next_items, Some(action), preview_type),

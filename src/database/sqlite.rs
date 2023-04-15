@@ -9,7 +9,7 @@ use sqlx::{
 };
 use syntect::easy::HighlightLines;
 
-use crate::{highlight::MarkdownStatic, note::Note};
+use crate::{config::color::ColorScheme, highlight::MarkdownStatic, note::Note};
 
 use super::Database;
 
@@ -127,9 +127,9 @@ impl Sqlite {
         Ok(())
     }
 
-    fn query_note(row: SqliteRow) -> Note {
+    fn query_note(row: SqliteRow, color_scheme: ColorScheme) -> Note {
         let file_path: Option<String> = row.get("filename");
-        Note::new(row.get("name"), file_path.map(|c| c.into()))
+        Note::new(row.get("name"), file_path.map(|c| c.into()), color_scheme)
     }
 }
 
@@ -156,7 +156,11 @@ impl Database for Sqlite {
         Ok(())
     }
 
-    async fn list(&self, md_static: MarkdownStatic) -> Result<Vec<Note>> {
+    async fn list(
+        &self,
+        md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
+    ) -> Result<Vec<Note>> {
         log::debug!("listing notes");
 
         let mut query = SqlBuilder::select_from(SqlName::new("notes").alias("n").baquoted());
@@ -165,7 +169,7 @@ impl Database for Sqlite {
         let query = query.sql().expect("bug in list query. please report");
 
         let res = sqlx::query(&query)
-            .map(Self::query_note)
+            .map(|row| Self::query_note(row, color_scheme))
             .fetch_all(&self.pool)
             .await?;
         let res = parse_names(res, md_static).await;
@@ -173,7 +177,12 @@ impl Database for Sqlite {
         Ok(res)
     }
 
-    async fn get(&self, name: &str, md_static: MarkdownStatic) -> Result<Note> {
+    async fn get(
+        &self,
+        name: &str,
+        md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
+    ) -> Result<Note> {
         log::debug!("listing notes");
 
         let mut query = SqlBuilder::select_from(SqlName::new("notes").alias("n").baquoted());
@@ -182,7 +191,7 @@ impl Database for Sqlite {
         let query = query.sql().expect("bug in list query. please report");
 
         let mut res = sqlx::query(&query)
-            .map(Self::query_note)
+            .map(|row| Self::query_note(row, color_scheme))
             .fetch_one(&self.pool)
             .await?;
         let mut highlighter = HighlightLines::new(md_static.1, md_static.2);
@@ -191,7 +200,12 @@ impl Database for Sqlite {
         Ok(res)
     }
 
-    async fn find_links_from(&self, from: &str, md_static: MarkdownStatic) -> Result<Vec<Note>> {
+    async fn find_links_from(
+        &self,
+        from: &str,
+        md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
+    ) -> Result<Vec<Note>> {
         log::debug!("listing notes, linked by current");
 
         let sql = SqlBuilder::select_from(name!("linkx"; "l"))
@@ -207,7 +221,7 @@ impl Database for Sqlite {
         log::debug!("sql: {}", sql);
 
         let res = sqlx::query(&sql)
-            .map(Self::query_note)
+            .map(|row| Self::query_note(row, color_scheme))
             .fetch_all(&self.pool)
             .await?;
         let res = parse_names(res, md_static).await;
@@ -215,7 +229,12 @@ impl Database for Sqlite {
         Ok(res)
     }
 
-    async fn find_links_to(&self, to: &str, md_static: MarkdownStatic) -> Result<Vec<Note>> {
+    async fn find_links_to(
+        &self,
+        to: &str,
+        md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
+    ) -> Result<Vec<Note>> {
         log::debug!("listing notes, linked by current");
 
         let sql = SqlBuilder::select_from(name!("linkx"; "l"))
@@ -231,7 +250,7 @@ impl Database for Sqlite {
         log::debug!("sql: {}", sql);
 
         let res = sqlx::query(&sql)
-            .map(Self::query_note)
+            .map(|row| Self::query_note(row, color_scheme))
             .fetch_all(&self.pool)
             .await?;
         let res = parse_names(res, md_static).await;

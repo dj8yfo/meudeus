@@ -45,7 +45,7 @@ impl TaskItem {
         let title_markdown = format!(
             "{} {}",
             highlight(title.as_str(), highlighter, md_static),
-            " ".black().to_string()
+            " ".truecolor(0, 0, 0).to_string()
         );
         Self {
             file_name: value.0,
@@ -111,7 +111,7 @@ impl TaskItem {
             "".to_string()
         };
         let symbol = if self.completed {
-            "✓".green().to_string()
+            "✓".truecolor(0, 255, 0).to_string()
         } else {
             " ".to_string()
         };
@@ -179,7 +179,7 @@ mod tests {
             Regex::new(r#"(?P<whitespace>(  )*)- \[(?P<checkmark>[x ])\]\s+(?P<task_text>.+)"#)
                 .unwrap();
 
-        let md_static = static_markdown_syntax();
+        let md_static = static_markdown_syntax(None);
         let mut highlighter = HighlightLines::new(md_static.1, md_static.2);
         let list = TaskItem::parse_string(
             &PathBuf::from("./tmp.rs"),

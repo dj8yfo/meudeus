@@ -1,5 +1,5 @@
 use crate::{
-    config::{ExternalCommands, SurfParsing},
+    config::{color::ColorScheme, ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
 };
@@ -9,8 +9,9 @@ pub(crate) async fn exec(
     external_commands: ExternalCommands,
     surf_parsing: SurfParsing,
     md_static: MarkdownStatic,
+    color_scheme: ColorScheme,
 ) -> Result<String, anyhow::Error> {
-    let list = db.lock().await.list(md_static).await?;
+    let list = db.lock().await.list(md_static, color_scheme).await?;
     let multi = false;
     let note = crate::skim::open::Iteration::new(
         "select".to_string(),
@@ -20,6 +21,7 @@ pub(crate) async fn exec(
         external_commands.clone(),
         surf_parsing,
         md_static,
+        color_scheme,
     )
     .run()
     .await?;

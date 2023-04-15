@@ -1,7 +1,7 @@
 use colored::Colorize;
 
 use crate::{
-    config::{ExternalCommands, SurfParsing},
+    config::{color::ColorScheme, ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
     note::Note,
@@ -14,8 +14,9 @@ pub(crate) async fn exec(
     external_commands: ExternalCommands,
     surf_parsing: SurfParsing,
     md_static: MarkdownStatic,
+    color_scheme: ColorScheme,
 ) -> Result<String, anyhow::Error> {
-    let list = db.lock().await.list(md_static).await?;
+    let list = db.lock().await.list(md_static, color_scheme).await?;
 
     let multi = false;
 
@@ -27,13 +28,22 @@ pub(crate) async fn exec(
         external_commands.clone(),
         surf_parsing.clone(),
         md_static,
+        color_scheme,
     )
     .run()
     .await?;
 
-    link(from, db, &external_commands, &surf_parsing, md_static).await?;
+    link(
+        from,
+        db,
+        &external_commands,
+        &surf_parsing,
+        md_static,
+        color_scheme,
+    )
+    .await?;
 
-    Ok("success".cyan().to_string())
+    Ok("success".truecolor(0, 255, 255).to_string())
 }
 
 pub(crate) async fn link(
@@ -42,11 +52,12 @@ pub(crate) async fn link(
     external_commands: &ExternalCommands,
     surf_parsing: &SurfParsing,
     md_static: MarkdownStatic,
+    color_scheme: ColorScheme,
 ) -> Result<(), anyhow::Error> {
     let name: String = from.name().chars().take(40).collect();
 
     let hint = format!("link from {}", name);
-    let list = db.lock().await.list(md_static).await?;
+    let list = db.lock().await.list(md_static, color_scheme).await?;
     let to = Iteration::new(
         hint,
         list,
@@ -55,6 +66,7 @@ pub(crate) async fn link(
         external_commands.clone(),
         surf_parsing.clone(),
         md_static,
+        color_scheme,
     )
     .run()
     .await?;

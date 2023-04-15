@@ -7,7 +7,7 @@ use termtree::Tree;
 use sqlx::Result as SqlxResult;
 
 use crate::{
-    config::{ExternalCommands, SurfParsing},
+    config::{color::ColorScheme, ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
     link::Link,
@@ -19,8 +19,8 @@ use super::Note;
 pub enum NoteLinkTerm {
     Note(Note),
     Link(Link),
-    LinkHint(usize),
-    Cycle(String),
+    LinkHint(usize, ColorScheme),
+    Cycle(String, ColorScheme),
 }
 
 impl Display for NoteLinkTerm {
@@ -34,15 +34,17 @@ impl Display for NoteLinkTerm {
                 write!(f, "{}", link.skim_display())
             }
 
-            Self::LinkHint(num) => {
+            Self::LinkHint(num, color) => {
+                let c = color.links.unlisted;
                 write!(
                     f,
                     "{}",
-                    format!("[ has {num} links ]").truecolor(170, 170, 170)
+                    format!("[ has {num} links ]").truecolor(c.r, c.g, c.b)
                 )
             }
-            Self::Cycle(cycle) => {
-                write!(f, "⟳ {}", cycle.truecolor(150, 75, 0).to_string())
+            Self::Cycle(cycle, color) => {
+                let c = color.links.cycle;
+                write!(f, "⟳ {}", cycle.truecolor(c.r, c.g, c.b).to_string())
             }
         }
     }
@@ -58,6 +60,7 @@ impl Note {
         surf_parsing: SurfParsing,
         db: SqliteAsyncHandle,
         md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
     ) -> SqlxResult<(Tree<NoteLinkTerm>, HashSet<Note>)> {
         let mut tree = Tree::new(NoteLinkTerm::Note(self.clone()));
         all_reachable.insert(self.clone());
@@ -65,12 +68,12 @@ impl Note {
         let forward_links = db
             .lock()
             .await
-            .find_links_from(&self.name(), md_static)
+            .find_links_from(&self.name(), md_static, color_scheme)
             .await?;
 
         for next in forward_links.into_iter().rev() {
             if all_reachable.contains(&next) {
-                tree.push(Tree::new(NoteLinkTerm::Cycle(next.name())));
+                tree.push(Tree::new(NoteLinkTerm::Cycle(next.name(), color_scheme)));
             } else {
                 let (next_tree, roundtrip_reachable) = next
                     .construct_link_term_tree(
@@ -80,17 +83,18 @@ impl Note {
                         surf_parsing.clone(),
                         db.clone(),
                         md_static,
+                        color_scheme,
                     )
                     .await?;
                 all_reachable = roundtrip_reachable;
                 tree.push(next_tree);
             }
         }
-        let links = Link::parse(self, &surf_parsing)?;
+        let links = Link::parse(self, &surf_parsing, color_scheme)?;
 
         if links.len() > 0 {
             if level > 1 {
-                tree.push(NoteLinkTerm::LinkHint(links.len()));
+                tree.push(NoteLinkTerm::LinkHint(links.len(), color_scheme));
             } else {
                 for link in links {
                     tree.push(NoteLinkTerm::Link(link));

@@ -1,6 +1,8 @@
 use colored::Colorize;
 
-use crate::{database::SqliteAsyncHandle, highlight::MarkdownStatic, note::Note};
+use crate::{
+    config::color::ColorScheme, database::SqliteAsyncHandle, highlight::MarkdownStatic, note::Note,
+};
 
 use std::collections::HashSet;
 
@@ -9,6 +11,7 @@ impl Note {
         &self,
         db: &SqliteAsyncHandle,
         md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
     ) -> String {
         let rs = self.resources().unwrap();
 
@@ -20,12 +23,13 @@ impl Note {
                 rs.surf_parsing.clone(),
                 db.clone(),
                 md_static,
+                color_scheme,
             )
             .await;
 
         match result {
             Ok((tree, _)) => format!("{}", tree),
-            Err(err) => format!("db err {:?}", err).red().to_string(),
+            Err(err) => format!("db err {:?}", err).truecolor(255, 0, 0).to_string(),
         }
     }
 
@@ -33,6 +37,7 @@ impl Note {
         &self,
         db: &SqliteAsyncHandle,
         md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
     ) -> String {
         let rs = self.resources().unwrap();
         let result = self
@@ -42,12 +47,13 @@ impl Note {
                 rs.surf_parsing.clone(),
                 db.clone(),
                 md_static,
+                color_scheme,
             )
             .await;
 
         match result {
             Ok((tree, _)) => format!("{}", tree),
-            Err(err) => format!("db err {:?}", err).red().to_string(),
+            Err(err) => format!("db err {:?}", err).truecolor(255, 0, 0).to_string(),
         }
     }
 }

@@ -28,7 +28,6 @@ pub(crate) async fn create(
     is_tag: bool,
 
     md_static: MarkdownStatic,
-    
 ) -> Result<Note, anyhow::Error> {
     let mut highlighter = HighlightLines::new(md_static.1, md_static.2);
     let note = Note::init(title.clone(), is_tag, &mut highlighter, md_static);
@@ -36,5 +35,4 @@ pub(crate) async fn create(
     db.lock().await.save(&note).await?;
     note.persist()?;
     Ok(note)
-    
 }

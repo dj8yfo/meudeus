@@ -5,7 +5,10 @@ use skim::{
     Skim, SkimItemReceiver, SkimItemSender,
 };
 
-use crate::{note::{NoteTaskItemTerm, Note}, task_item::TaskTreeWrapper};
+use crate::{
+    note::{Note, NoteTaskItemTerm},
+    task_item::TaskTreeWrapper,
+};
 
 pub enum Action {
     Toggle(Vec<TaskTreeWrapper>),
@@ -22,7 +25,10 @@ pub(crate) struct Iteration {
 }
 impl Iteration {
     pub(crate) fn new(items: Vec<TaskTreeWrapper>, return_note: Note) -> Self {
-        Self { items: Some(items), return_note }
+        Self {
+            items: Some(items),
+            return_note,
+        }
     }
 
     pub(crate) fn run(mut self) -> anyhow::Result<Action> {

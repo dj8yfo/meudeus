@@ -9,7 +9,10 @@ use crate::{
     Open,
 };
 
-use super::{create, remove::remove, rename::rename, surf::surf_note, unlink::unlink, checkmark::checkmark_note};
+use super::{
+    checkmark::checkmark_note, create, remove::remove, rename::rename, surf::surf_note,
+    unlink::unlink,
+};
 use inquire::Select;
 use inquire::Text;
 
@@ -55,13 +58,8 @@ pub(crate) async fn exec(
             }
 
             Some(Action::Checkmark(surfed)) => {
-                if let Err(err) = checkmark_note(
-                    surfed,
-                    &external_commands,
-                    &surf_parsing,
-                    md_static,
-                )
-                .await
+                if let Err(err) =
+                    checkmark_note(surfed, &external_commands, &surf_parsing, md_static).await
                 {
                     eprintln!("checkmark error: {:?}", err);
                 }

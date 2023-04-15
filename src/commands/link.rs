@@ -63,7 +63,11 @@ pub(crate) async fn link(
     Ok(())
 }
 
-pub(crate) async fn link_noninteractive(from: Note, to: Note, db: SqliteAsyncHandle) -> Result<(), anyhow::Error> {
+pub(crate) async fn link_noninteractive(
+    from: Note,
+    to: Note,
+    db: SqliteAsyncHandle,
+) -> Result<(), anyhow::Error> {
     db.lock()
         .await
         .insert_link(&from.name(), &to.name())
@@ -76,5 +80,4 @@ pub(crate) async fn link_noninteractive(from: Note, to: Note, db: SqliteAsyncHan
         )
     );
     Ok(())
-    
 }

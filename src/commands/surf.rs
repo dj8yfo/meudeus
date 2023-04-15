@@ -63,9 +63,15 @@ pub(crate) async fn surf_note(
             .map(|v| Link::parse(&v, &surf))
             .collect();
         let links: Vec<_> = links?.into_iter().flat_map(|v| v).collect();
-        let action = SurfIteration::new(links, false, external_commands.clone(), note.clone())
-            .run()
-            .await?;
+        let action = SurfIteration::new(
+            links,
+            false,
+            external_commands.clone(),
+            note.clone(),
+            md_static,
+        )
+        .run()
+        .await?;
         eprintln!("{}", action);
         match action {
             SurfAction::Open(ref link) => {

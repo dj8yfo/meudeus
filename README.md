@@ -6,10 +6,7 @@
 
 # [Installation](./INSTALLATION.md)
 
-# Enjoy
-
-
-1. Enjoy ([fast gif tutorial is here](./tutorial.gif)):
+# Help
 
   All of `explore`, `surf` and `checkmark` are equipped with `<Ctrl-h>` and `<Ctrl-l>` keybindings to follow 
   backlinks and forward links respectively.
@@ -23,7 +20,7 @@
   ```
 
   ```
-  meudeus v0.13.7
+  meudeus v0.14.0
   a skim shredder for plain-text papers
 
   Usage: mds [OPTIONS] <COMMAND>
@@ -49,6 +46,14 @@
     -h, --help     Print help
     -V, --version  Print version
   ```
+
+# Colors 
+
+- Some color themes for markdown elements can be found at [rainglow/sublime](https://github.com/rainglow/sublime)
+and previewed at this awesome website [rainglow.io](https://rainglow.io/preview/).
+- if the patchwork in markdown irritates you, please remember, that `settings.background` value in a theme 
+is editable
+
 # Changelog
 
 ![Alt](./changelog.jpeg "Concentrate by means of relaxation")

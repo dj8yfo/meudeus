@@ -6,7 +6,7 @@ use skim::{AnsiString, DisplayContext, ItemPreview, PreviewContext, SkimItem};
 use crate::{
     config::Preview,
     external_commands::{fetch_content, list_dir},
-    highlight::highlight_code_block,
+    highlight::{highlight_code_block, MarkdownStatic},
 };
 
 impl super::Link {
@@ -15,7 +15,7 @@ impl super::Link {
         self.display_item = Some(AnsiString::parse(&input));
     }
 
-    pub fn compute_preview(&self, preview_cmds: &Preview) -> String {
+    pub fn compute_preview(&self, preview_cmds: &Preview, md_static: MarkdownStatic) -> String {
         match &self.link {
             super::Destination::URL(url) => url.cyan().to_string(),
             super::Destination::File { file } => {
@@ -36,12 +36,12 @@ impl super::Link {
                 code_block,
                 syntax_label,
                 ..
-            } => highlight_code_block(code_block, syntax_label),
+            } => highlight_code_block(code_block, syntax_label, md_static),
         }
     }
 
-    pub fn prepare_preview(&mut self, preview_cmds: &Preview) {
-        let result = self.compute_preview(preview_cmds);
+    pub fn prepare_preview(&mut self, preview_cmds: &Preview, md_static: MarkdownStatic) {
+        let result = self.compute_preview(preview_cmds, md_static);
         self.preview_item = Some(result);
     }
 }

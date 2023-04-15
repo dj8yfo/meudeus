@@ -5,7 +5,7 @@ use skim::{
     Skim, SkimItemReceiver, SkimItemSender,
 };
 
-use crate::{config::ExternalCommands, link::Link, note::Note};
+use crate::{config::ExternalCommands, highlight::MarkdownStatic, link::Link, note::Note};
 
 #[derive(Debug)]
 pub enum Action {
@@ -28,14 +28,22 @@ pub(crate) struct Iteration {
     multi: bool,
     external_commands: ExternalCommands,
     return_note: Note,
+    md_static: MarkdownStatic,
 }
 impl Iteration {
-    pub(crate) fn new(items: Vec<Link>, multi: bool, external_commands: ExternalCommands, return_note: Note) -> Self {
+    pub(crate) fn new(
+        items: Vec<Link>,
+        multi: bool,
+        external_commands: ExternalCommands,
+        return_note: Note,
+        md_static: MarkdownStatic,
+    ) -> Self {
         Self {
             items: Some(items),
             multi,
             external_commands,
             return_note,
+            md_static,
         }
     }
 
@@ -49,7 +57,7 @@ impl Iteration {
             let ext_cmds_double = self.external_commands.clone();
             tokio::task::spawn(async move {
                 link.prepare_display();
-                link.prepare_preview(&ext_cmds_double.preview);
+                link.prepare_preview(&ext_cmds_double.preview, self.md_static);
                 let _result = tx_double.send(Arc::new(link));
                 // if result.is_err() {
                 //     eprintln!("{}", format!("{:?}", result).red());

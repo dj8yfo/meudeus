@@ -89,7 +89,7 @@ impl Display for Note {
                 if name == "METATAG" || name == "root" {
                     write!(f, "{}", name.truecolor(255, 0, 0).to_string())
                 } else {
-                    write!(f, "{}", name.truecolor(0,255,255) .to_string())
+                    write!(f, "{}", name.truecolor(0, 255, 255).to_string())
                 }
             }
         }

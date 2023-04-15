@@ -4,13 +4,14 @@ extern crate sql_builder;
 use clap::ArgMatches;
 
 use colored::Colorize;
-use config::Open as OpenCfg;
+use config::{Color, Open as OpenCfg};
 use highlight::static_markdown_syntax;
 use std::{
     env, io,
     path::PathBuf,
     process::{exit, ExitStatus},
 };
+use syntect::highlighting::{Theme, ThemeSet};
 
 mod commands;
 mod config;
@@ -38,11 +39,23 @@ trait Yank {
     fn yank(&self, cfg: OpenCfg) -> io::Result<Option<ExitStatus>>;
 }
 
+fn load_theme(color: Color) -> Option<&'static Theme> {
+    let theme = ThemeSet::get_theme(color.theme).ok();
+    match theme {
+        Some(theme) => {
+            let boxed_theme = Box::new(theme);
+            let static_theme: &'static Theme = Box::leak(boxed_theme);
+            Some(static_theme)
+        }
+        None => None,
+    }
+}
+
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .version("v0.13.7")
-        .about("meudeus v0.13.7\na skim shredder for plain-text papers")
+        .version("v0.14.0")
+        .about("meudeus v0.14.0\na skim shredder for plain-text papers")
         .bin_name("mds")
         .arg(clap::arg!(-c --color  "whether color output should be forced"))
         .subcommand_required(true)
@@ -133,6 +146,7 @@ async fn main() {
 
 async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
     let config = config::Config::parse()?;
+    let loaded_theme = load_theme(config.color.clone());
 
     if let Err(err) = env::set_current_dir(&config.work_dir) {
         eprintln!(
@@ -145,7 +159,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
     }
 
     let db_dir = PathBuf::from("./.sqlite");
-    let md_static = static_markdown_syntax();
+    let md_static = static_markdown_syntax(loaded_theme);
 
     let result = match matches.subcommand() {
         Some(("init", _matches)) => commands::init_db::exec(db_dir).await,

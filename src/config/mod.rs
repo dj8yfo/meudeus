@@ -16,6 +16,7 @@ pub struct Config {
     pub work_dir: PathBuf,
     pub surf_parsing: SurfParsing,
     pub external_commands: ExternalCommands,
+    pub color: Color,
 }
 
 #[derive(Debug, Clone)]
@@ -43,6 +44,11 @@ pub struct Open {
     pub url_cmd: CmdTemplate,
     pub dir_cmd: CmdTemplate,
     pub pipe_text_snippet_cmd: CmdTemplate,
+}
+
+#[derive(Debug, Clone)]
+pub struct Color {
+    pub theme: PathBuf,
 }
 
 impl TryFrom<&KdlNode> for Open {
@@ -191,6 +197,29 @@ impl TryFrom<&KdlNode> for SurfParsing {
     }
 }
 
+impl TryFrom<&KdlNode> for Color {
+    type Error = anyhow::Error;
+
+    fn try_from(value: &KdlNode) -> Result<Self, Self::Error> {
+        let theme = value
+            .children()
+            .ok_or(anyhow!("`color` should have children"))?
+            .get("theme")
+            .ok_or(anyhow!("no `color.theme` node in config"))?;
+
+        let string = theme
+            .get(0)
+            .ok_or(anyhow!("arg not found"))?
+            .value()
+            .as_string()
+            .ok_or(anyhow!("should be string"))?
+            .to_string();
+
+        Ok(Self {
+            theme: PathBuf::from(string),
+        })
+    }
+}
 impl Config {
     pub fn get_work_dir(doc: &KdlDocument) -> anyhow::Result<PathBuf> {
         let work_dir = doc
@@ -244,12 +273,23 @@ impl Config {
             .get("external-commands")
             .ok_or(anyhow!("no `world.external-commands` node in config"))?;
 
+        let color = doc
+            .get("world")
+            .ok_or(anyhow!("no `world` node in config"))?
+            .children()
+            .ok_or(anyhow!("`world` should have children"))?
+            .get("color")
+            .ok_or(anyhow!("no `world.color` node in config"))?;
+
         let surf_parsing = surf_parsing.try_into()?;
         let external_commands = external_commands.try_into()?;
+
+        let color = color.try_into()?;
         Ok(Self {
             surf_parsing,
             work_dir,
             external_commands,
+            color,
         })
     }
 }

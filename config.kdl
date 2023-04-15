@@ -36,4 +36,10 @@ world {
 
 	notes-work-dir "/home/user/notes"
 
+	color {
+		// used for notes' name, task items' titles and code snippets
+		// 
+		theme "/home/user/Downloads/file.tmTheme"
+	}
+
 }

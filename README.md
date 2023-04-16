@@ -6,18 +6,32 @@
 
 # [Installation](./INSTALLATION.md)
 
+# Overview
+
+1. All of `explore`, `surf` and `checkmark` commands start in `explore` mode.
+2. In `explore` mode `< Ctrl-t >`, `< Ctrl-h >` (backlinks) and `< Ctrl-l >` (forwardlinks) bindings are available.
+3. Any note can be linked to any number of other notes via a directed `->` link. 
+4. Note names are rendered as markdown in skim picker/preview.
+5. A note having only a name, but devoid of earthly file body is also considered a note, but is called a tag instead.
+6. `< Ctrl-t >` keybinding may be used to toggle 
+  between **structural links** -> **structural task** -> **details** -> **(cycle)** preview of current note or 
+  note subgraph respectively. This rendered `p/print` command somewhat redundant. 
+7. `explore` command can switch to `surf` or `checkmark` mode and then back to `explore` mode. `explore` command includes the functinality of most of other commands (`rename`, `delete`, `surf`, etc).
+8. `surf` command/mode may be used for searching for all `[description](url/file_path/dir_path)` markdown links and `'''code_block'''` found downwards from a note S, selected for `surf`.
+9. `'''code_block'''` description is parsed as the first line of `'''code_block'''`, comments `# bash comment` or `// C comment` may be used for informative descriptions.
+10. `checkmark` command/mode may be used to parse out trees of `- [ ] description` task items and allows navigating/toggling them into `- [x] description` state.
+11. More details are available from help/keybindings below and rigorous practice.
+
 # Help
 
-  All of `explore`, `surf` and `checkmark` are equipped with `< Ctrl-t >` keyding to toggle 
-  between **structural links** -> **structural task** -> **details** -> **(cycle)** preview of current note or 
-  note subgraph respectively. This rendered `p/print` command somewhat redundant.
+  
 
   ```
   mds -h
   ```
 
   ```
-  meudeus v0.14.2
+  meudeus v0.14.3
   a skim shredder for plain-text papers
 
   Usage: mds [OPTIONS] <COMMAND>
@@ -72,7 +86,7 @@
  | Ctrl-c  | Abort                                                                                |
  | ESC | Abort                                                                                    |
  | Enter | Open selected `[markdown link]()` with a command, depending on [markdown link]()'s type|
- | Ctrl-j  |  Jump to selected [markdown link]()'s position in editor                             |
+ | Ctrl-j  |  Jump to selected `[markdown link]()`'s position in editor                             |
  | Ctrl-e  |  Return to `explore` mode (in `explore` command) or abort `surf` command             |
 
 - `checkmark` mode

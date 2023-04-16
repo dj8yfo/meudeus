@@ -16,11 +16,13 @@
 6. `< Ctrl-t >` keybinding may be used to toggle 
   between **structural links** -> **structural task** -> **details** -> **(cycle)** preview of current note or 
   note subgraph respectively. This rendered `p/print` command somewhat redundant. 
-7. `explore` command can switch to `surf` or `checkmark` mode and then back to `explore` mode. `explore` command includes the functinality of most of other commands (`rename`, `delete`, `surf`, etc).
+7. `explore` command can switch to `surf` or `checkmark` mode and then back to `explore` mode. `explore` command includes the functionality of most of other commands (`rename`, `delete`, `surf`, etc).
 8. `surf` command/mode may be used for searching for all `[description](url/file_path/dir_path)` markdown links and `'''code_block'''` found downwards from a note S, selected for `surf`.
-9. `'''code_block'''` description is parsed as the first line of `'''code_block'''`, comments `# bash comment` or `// C comment` may be used for informative descriptions.
-10. `checkmark` command/mode may be used to parse out trees of `- [ ] description` task items and allows navigating/toggling them into `- [x] description` state.
-11. More details are available from help/keybindings below and rigorous practice.
+9. Destination in `[description](destination)` markdown links is matched against `world.surf-parsing.url-regex` regex in [config](./config.kdl). If it matches, it's considered a url link. Otherwise, it's considered local filesystem link, either absolute or relative (no `file://` protocol prefix required).   
+10. `'''code_block'''` description is parsed as the first line of `'''code_block'''`, comments `# bash comment` or `// C comment` may be used for informative descriptions.
+11. Syntax in `'''code_block'''`can be hinted for highlight in preview by specifying tag \`\`\`syntax_tag, e.g. \`\`\`bash or \`\`\`javascript.
+11. `checkmark` command/mode may be used to parse out trees of `- [ ] description` task items and allows navigating/toggling them into `- [x] description` state.
+12. More details are available from help/keybindings below and rigorous practice.
 
 # Help
 
@@ -104,10 +106,12 @@
  | Ctrl-l  |  Narrown context of task items to subtree of selected task item               |
  | Ctrl-e  |  Return to `explore` mode (in `explore` command) or abort `checkmark` command |
 
-- common less obvious keybindings from vanilla skim
+- common more and less obvious keybindings from vanilla skim
 
  | Binding   | Effect                                                                      |
  |---------|-------------------------------------------------------------------------------|
+ | Ctrl-p| Move up by one in skim selection                                                                  |
+ | Ctrl-n| Move down by one in skim selection                                         |
  | PageUp| Move up by many items in skim selection                                         |
  | PageDown|Move down by many items in skim selection                                      |
  | Shift-ArrowUp| Scroll preview port up (without mouse)                                   |

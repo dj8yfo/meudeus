@@ -871,6 +871,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5320ae4c3782150d900b79807611a59a99fc9a1d61d686faafc24b93fc8d7ca"
 
 [[package]]
+name = "env-substitute"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "02110a7e40e45d3b8df107a85b0f640f0371f71f4e20fee3d52bbbfd59543970"
+
+[[package]]
 name = "env_logger"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1403,7 +1409,7 @@ dependencies = [
 
 [[package]]
 name = "mds"
-version = "0.14.3"
+version = "0.14.4"
 dependencies = [
  "anyhow",
  "async-recursion",
@@ -1415,6 +1421,7 @@ dependencies = [
  "comfy-table",
  "comrak",
  "duct",
+ "env-substitute",
  "futures",
  "inquire",
  "kdl",

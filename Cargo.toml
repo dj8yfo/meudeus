@@ -1,6 +1,6 @@
 [package]
 name = "mds"
-version = "0.14.3"
+version = "0.14.4"
 author = ["dj8yf0μl"]
 description = "A skim-based `*.md` explore and surf note-taking tool"
 repository = "https://github.com/dj8yfo/meudeus"
@@ -50,3 +50,4 @@ futures = "0.3.28"
 
 serde_json = "1.0.96"
 rgb = { version = "0.8", features = ["serde"] }
+env-substitute = "0.1.0"

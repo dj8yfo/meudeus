@@ -215,7 +215,8 @@ impl Link {
                 color_scheme,
             }
         } else {
-            let mut link = PathBuf::from(&link);
+            let link = PathBuf::from(&link);
+            let mut link = env_substitute::substitute(link);
             if link.is_relative() {
                 link = parent_note.as_path().parent().unwrap().join(link);
             }

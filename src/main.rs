@@ -54,8 +54,8 @@ fn load_theme(color: Color) -> Option<&'static Theme> {
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
     let cmd = clap::Command::new("mds")
-        .version("v0.15.0")
-        .about("meudeus v0.15.0\na skim shredder for plain-text papers")
+        .version("v0.15.1")
+        .about("meudeus v0.15.1\na skim shredder for plain-text papers")
         .bin_name("mds")
         .arg(clap::arg!(-c --color  "whether color output should be forced"))
         .subcommand_required(true)

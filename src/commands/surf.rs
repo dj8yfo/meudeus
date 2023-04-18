@@ -73,7 +73,7 @@ pub(crate) async fn surf_note(
 ) -> Result<Note, anyhow::Error> {
     loop {
         let all_vec = note
-            .reachable_notes(db.clone(), md_static, color_scheme, straight)
+            .reachable_notes(db.clone(), md_static, color_scheme, straight, true)
             .await?;
         let links: std::io::Result<Vec<_>> = all_vec
             .into_iter()

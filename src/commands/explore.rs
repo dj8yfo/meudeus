@@ -181,6 +181,7 @@ pub async fn iteration(
         action @ Action::Surf(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Checkmark(..) => (out.next_items, Some(action), preview_type),
         action @ Action::InvertLinks => (out.next_items, Some(action), preview_type),
+        action @ Action::Splice => (out.next_items, Some(action), preview_type),
         Action::TogglePreview => (out.next_items, None, preview_type.toggle()),
     };
     Ok(res)

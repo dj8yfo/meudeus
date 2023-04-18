@@ -17,6 +17,7 @@ impl super::Note {
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
         straight: bool,
+        include_self: bool,
     ) -> SqlxResult<Vec<Self>> {
         let mut reachable_all: HashSet<Note> = HashSet::new();
         let mut current_layer: HashSet<Note> = HashSet::new();
@@ -39,6 +40,9 @@ impl super::Note {
             }
 
             current_layer = next_layer;
+        }
+        if !include_self {
+            reachable_all.remove(self);
         }
         let all_vec: Vec<_> = reachable_all.into_iter().collect();
         Ok(all_vec)

@@ -37,6 +37,7 @@ pub enum Action {
     Checkmark(Note),
     TogglePreview,
     InvertLinks,
+    Splice,
 }
 
 pub struct Out {
@@ -123,6 +124,7 @@ impl Iteration {
                     "alt-d:accept",
                     "alt-c:accept",
                     "alt-f:accept",
+                    "alt-s:accept",
                 ])
                 .build()
                 .unwrap();
@@ -294,6 +296,20 @@ impl Iteration {
                         return Ok(Out {
                             action: Action::InvertLinks,
                             next_items: vec![item.clone()],
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+
+                Key::Alt('s') => {
+                    if let Some(item) = selected_items.first() {
+                        let next = item
+                            .reachable_notes(db, self.md_static, self.color_scheme, self.straight, false)
+                            .await?;
+                        return Ok(Out {
+                            action: Action::Splice,
+                            next_items: next,
                         });
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));

@@ -22,6 +22,7 @@ pub(crate) struct Iteration {
     md_static: MarkdownStatic,
 
     color_scheme: ColorScheme,
+    straight: bool,
 }
 
 impl Iteration {
@@ -34,6 +35,7 @@ impl Iteration {
         surf_parsing: SurfParsing,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) -> Self {
         Self {
             items: Some(items),
@@ -44,6 +46,7 @@ impl Iteration {
             hint,
             md_static,
             color_scheme,
+            straight,
         }
     }
 
@@ -66,7 +69,7 @@ impl Iteration {
                     preview_type: PreviewType::Details,
                     preview_result: None,
                 });
-                note.prepare_preview(&db_double, self.md_static, self.color_scheme)
+                note.prepare_preview(&db_double, self.md_static, self.color_scheme, self.straight)
                     .await;
                 let result = tx_double.send(Arc::new(note));
                 if result.is_err() {

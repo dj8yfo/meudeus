@@ -20,6 +20,7 @@ pub(crate) struct Iteration {
     preview_type: PreviewType,
     md_static: MarkdownStatic,
     color_scheme: ColorScheme,
+    straight: bool,
 }
 
 pub enum Action {
@@ -35,6 +36,7 @@ pub enum Action {
     Surf(Note),
     Checkmark(Note),
     TogglePreview,
+    InvertLinks,
 }
 
 pub struct Out {
@@ -51,6 +53,7 @@ impl Iteration {
         preview_type: PreviewType,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) -> Self {
         Self {
             items: Some(items),
@@ -60,6 +63,7 @@ impl Iteration {
             preview_type,
             md_static,
             color_scheme,
+            straight,
         }
     }
     pub(crate) async fn run(mut self) -> anyhow::Result<Out> {
@@ -82,7 +86,7 @@ impl Iteration {
                     preview_type: self.preview_type,
                     preview_result: None,
                 });
-                note.prepare_preview(&db_double, self.md_static, self.color_scheme)
+                note.prepare_preview(&db_double, self.md_static, self.color_scheme, self.straight)
                     .await;
 
                 let result = tx_double.send(Arc::new(note));
@@ -94,12 +98,14 @@ impl Iteration {
         }
         drop(tx);
 
+        let dir = if self.straight { "forward" } else { "backward" };
+        let hint = format!("(explore; {}) > ", dir);
         let out = tokio::task::spawn_blocking(move || {
             let options = SkimOptionsBuilder::default()
                 .height(Some("100%"))
                 .preview_window(Some("up:70%"))
                 .preview(Some(""))
-                .prompt(Some("(explore) > "))
+                .prompt(Some(&hint))
                 .multi(false)
                 .bind(vec![
                     "ctrl-c:abort",
@@ -116,6 +122,7 @@ impl Iteration {
                     "alt-u:accept",
                     "alt-d:accept",
                     "alt-c:accept",
+                    "alt-f:accept",
                 ])
                 .build()
                 .unwrap();
@@ -157,7 +164,12 @@ impl Iteration {
                 Key::Ctrl('h') => {
                     if let Some(item) = selected_items.first() {
                         let mut next = item
-                            .fetch_backlinks(&self.db, self.md_static, self.color_scheme)
+                            .fetch_backlinks(
+                                &self.db,
+                                self.md_static,
+                                self.color_scheme,
+                                self.straight,
+                            )
                             .await?;
                         if next.is_empty() {
                             next = items;
@@ -174,7 +186,12 @@ impl Iteration {
                 Key::Ctrl('l') => {
                     if let Some(item) = selected_items.first() {
                         let mut next = item
-                            .fetch_forward_links(&self.db, self.md_static, self.color_scheme)
+                            .fetch_forward_links(
+                                &self.db,
+                                self.md_static,
+                                self.color_scheme,
+                                self.straight,
+                            )
                             .await?;
                         if next.is_empty() {
                             next = vec![item.clone()];
@@ -265,6 +282,17 @@ impl Iteration {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::Surf(item.clone()),
+                            next_items: vec![item.clone()],
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+
+                Key::Alt('f') => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Out {
+                            action: Action::InvertLinks,
                             next_items: vec![item.clone()],
                         });
                     } else {

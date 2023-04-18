@@ -21,6 +21,7 @@ pub(crate) async fn exec(
 ) -> Result<String, anyhow::Error> {
     let list = db.lock().await.list(md_static, color_scheme).await?;
 
+    let straight = true;
     let multi = false;
     let note = Iteration::new(
         "remove".to_string(),
@@ -31,6 +32,7 @@ pub(crate) async fn exec(
         surf_parsing,
         md_static,
         color_scheme,
+        straight,
     )
     .run()
     .await?;

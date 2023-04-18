@@ -33,7 +33,7 @@
   ```
 
   ```
-  meudeus v0.14.4
+  meudeus v0.15.0
   a skim shredder for plain-text papers
 
   Usage: mds [OPTIONS] <COMMAND>
@@ -80,6 +80,7 @@
  | Alt-u  |  Remove a link from selected note to one of its forward links                 |
  | Alt-d  |  Remove selected note                                                         |
  | Alt-c  |  Create a new note/tag, which will become one of selected note's forward links|
+ | Alt-f  |  Toggle/invert the direction of links. Backlinks become forward links         |
 
 - `surf` mode
 

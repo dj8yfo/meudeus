@@ -16,6 +16,7 @@ impl super::Note {
         db: SqliteAsyncHandle,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) -> SqlxResult<Vec<Self>> {
         let mut reachable_all: HashSet<Note> = HashSet::new();
         let mut current_layer: HashSet<Note> = HashSet::new();
@@ -27,7 +28,7 @@ impl super::Note {
             let lock = db.lock().await;
             for note in &current_layer {
                 let forward_links = lock
-                    .find_links_from(&note.name(), md_static, color_scheme)
+                    .find_links_from(&note.name(), md_static, color_scheme, straight)
                     .await?;
                 next_layer.extend(forward_links);
             }

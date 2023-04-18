@@ -131,6 +131,84 @@ impl Sqlite {
         let file_path: Option<String> = row.get("filename");
         Note::new(row.get("name"), file_path.map(|c| c.into()), color_scheme)
     }
+
+    async fn find_links_from_inner(
+        &self,
+        from: &str,
+        md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
+    ) -> Result<Vec<Note>> {
+        log::debug!("listing notes, linked by current");
+
+        let sql = SqlBuilder::select_from(name!("linkx"; "l"))
+            .field(name!("l", "_to"; "name"))
+            .field(name!("n", "filename"; "filename"))
+            .left()
+            .join(name!("notes"; "n"))
+            .on("l._to = n.name")
+            .and_where_eq("l._from", quote(from))
+            .order_desc("l._to")
+            .sql()
+            .map_err(|err| Error::Protocol(format!("{:?}", err)))?;
+        log::debug!("sql: {}", sql);
+
+        let res = sqlx::query(&sql)
+            .map(|row| Self::query_note(row, color_scheme))
+            .fetch_all(&self.pool)
+            .await?;
+        let res = parse_names(res, md_static).await;
+
+        Ok(res)
+    }
+
+    async fn find_links_to_inner(
+        &self,
+        to: &str,
+        md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
+    ) -> Result<Vec<Note>> {
+        log::debug!("listing notes, linked by current");
+
+        let sql = SqlBuilder::select_from(name!("linkx"; "l"))
+            .field(name!("l", "_from"; "name"))
+            .field(name!("n", "filename"; "filename"))
+            .left()
+            .join(name!("notes"; "n"))
+            .on("l._from = n.name")
+            .and_where_eq("l._to", quote(to))
+            .order_desc("l._from")
+            .sql()
+            .map_err(|err| Error::Protocol(format!("{:?}", err)))?;
+        log::debug!("sql: {}", sql);
+
+        let res = sqlx::query(&sql)
+            .map(|row| Self::query_note(row, color_scheme))
+            .fetch_all(&self.pool)
+            .await?;
+        let res = parse_names(res, md_static).await;
+
+        Ok(res)
+    }
+
+    async fn insert_link_inner(&mut self, from: &str, to: &str) -> Result<()> {
+        log::debug!("saving link {} -> {} ", from, to);
+
+        let mut tx = self.pool.begin().await?;
+        Self::insert_link(&mut tx, from, to).await?;
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    async fn remove_link_inner(&mut self, from: &str, to: &str) -> Result<()> {
+        log::debug!("removing link {} -> {} ", from, to);
+
+        let mut tx = self.pool.begin().await?;
+        Self::remove_link(&mut tx, from, to).await?;
+        tx.commit().await?;
+
+        Ok(())
+    }
 }
 
 async fn parse_names(notes: Vec<Note>, md_static: MarkdownStatic) -> Vec<Note> {
@@ -205,28 +283,15 @@ impl Database for Sqlite {
         from: &str,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) -> Result<Vec<Note>> {
-        log::debug!("listing notes, linked by current");
-
-        let sql = SqlBuilder::select_from(name!("linkx"; "l"))
-            .field(name!("l", "_to"; "name"))
-            .field(name!("n", "filename"; "filename"))
-            .left()
-            .join(name!("notes"; "n"))
-            .on("l._to = n.name")
-            .and_where_eq("l._from", quote(from))
-            .order_desc("l._to")
-            .sql()
-            .map_err(|err| Error::Protocol(format!("{:?}", err)))?;
-        log::debug!("sql: {}", sql);
-
-        let res = sqlx::query(&sql)
-            .map(|row| Self::query_note(row, color_scheme))
-            .fetch_all(&self.pool)
-            .await?;
-        let res = parse_names(res, md_static).await;
-
-        Ok(res)
+        if straight {
+            self.find_links_from_inner(from, md_static, color_scheme)
+                .await
+        } else {
+            self.find_links_to_inner(from, md_static, color_scheme)
+                .await
+        }
     }
 
     async fn find_links_to(
@@ -234,47 +299,32 @@ impl Database for Sqlite {
         to: &str,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) -> Result<Vec<Note>> {
-        log::debug!("listing notes, linked by current");
-
-        let sql = SqlBuilder::select_from(name!("linkx"; "l"))
-            .field(name!("l", "_from"; "name"))
-            .field(name!("n", "filename"; "filename"))
-            .left()
-            .join(name!("notes"; "n"))
-            .on("l._from = n.name")
-            .and_where_eq("l._to", quote(to))
-            .order_desc("l._from")
-            .sql()
-            .map_err(|err| Error::Protocol(format!("{:?}", err)))?;
-        log::debug!("sql: {}", sql);
-
-        let res = sqlx::query(&sql)
-            .map(|row| Self::query_note(row, color_scheme))
-            .fetch_all(&self.pool)
-            .await?;
-        let res = parse_names(res, md_static).await;
-
-        Ok(res)
-    }
-    async fn insert_link(&mut self, from: &str, to: &str) -> Result<()> {
-        log::debug!("saving link {} -> {} ", from, to);
-
-        let mut tx = self.pool.begin().await?;
-        Self::insert_link(&mut tx, from, to).await?;
-        tx.commit().await?;
-
-        Ok(())
+        if straight {
+            self.find_links_to_inner(to, md_static, color_scheme).await
+        } else {
+            self.find_links_from_inner(to, md_static, color_scheme)
+                .await
+        }
     }
 
-    async fn remove_link(&mut self, from: &str, to: &str) -> Result<()> {
-        log::debug!("removing link {} -> {} ", from, to);
+    async fn insert_link(&mut self, mut from: &str, mut to: &str, straight: bool) -> Result<()> {
+        if !straight {
+            let tmp = from;
+            from = to;
+            to = tmp;
+        }
+        self.insert_link_inner(from, to).await
+    }
 
-        let mut tx = self.pool.begin().await?;
-        Self::remove_link(&mut tx, from, to).await?;
-        tx.commit().await?;
-
-        Ok(())
+    async fn remove_link(&mut self, mut from: &str, mut to: &str, straight: bool) -> Result<()> {
+        if !straight {
+            let tmp = from;
+            from = to;
+            to = tmp;
+        }
+        self.remove_link_inner(from, to).await
     }
 
     async fn remove_note(&mut self, note: &Note) -> Result<()> {

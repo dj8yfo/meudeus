@@ -34,6 +34,7 @@ pub(crate) async fn exec(
             preview_type,
             md_static,
             color_scheme,
+            true,
         )
         .await?;
         preview_type = preview_type_after;

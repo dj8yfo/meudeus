@@ -66,9 +66,14 @@ impl Note {
         db: &SqliteAsyncHandle,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) -> String {
-        let result_from = self.fetch_forward_links(db, md_static, color_scheme).await;
-        let result_to = self.fetch_backlinks(db, md_static, color_scheme).await;
+        let result_from = self
+            .fetch_forward_links(db, md_static, color_scheme, straight)
+            .await;
+        let result_to = self
+            .fetch_backlinks(db, md_static, color_scheme, straight)
+            .await;
         let links_to = map_result(result_from, "Links to:".to_string());
         let linked_by = map_result(result_to, "Linked by:".to_string());
         let mut string = String::new();

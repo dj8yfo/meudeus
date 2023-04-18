@@ -19,18 +19,20 @@ pub trait Database: Send + Sync {
     ) -> Result<Note>;
     async fn remove_note(&mut self, note: &Note) -> Result<()>;
     async fn rename_note(&mut self, note: &Note, new_name: &str) -> Result<()>;
-    async fn insert_link(&mut self, from: &str, to: &str) -> Result<()>;
-    async fn remove_link(&mut self, from: &str, to: &str) -> Result<()>;
+    async fn insert_link(&mut self, from: &str, to: &str, straight: bool) -> Result<()>;
+    async fn remove_link(&mut self, from: &str, to: &str, straight: bool) -> Result<()>;
     async fn find_links_from(
         &self,
         from: &str,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) -> Result<Vec<Note>>;
     async fn find_links_to(
         &self,
         to: &str,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) -> Result<Vec<Note>>;
 }

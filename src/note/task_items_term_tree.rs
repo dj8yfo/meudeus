@@ -154,6 +154,7 @@ impl Note {
         db: SqliteAsyncHandle,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) -> SqlxResult<(Tree<NoteTaskItemTerm>, HashSet<Note>)> {
         let mut tree = Tree::new(NoteTaskItemTerm::Note(self.clone()));
         all_reachable.insert(self.clone());
@@ -177,7 +178,7 @@ impl Note {
         let forward_links = db
             .lock()
             .await
-            .find_links_from(&self.name(), md_static, color_scheme)
+            .find_links_from(&self.name(), md_static, color_scheme, straight)
             .await?;
 
         for next in forward_links.into_iter().rev() {
@@ -195,6 +196,7 @@ impl Note {
                         db.clone(),
                         md_static,
                         color_scheme,
+                        straight,
                     )
                     .await?;
                 all_reachable = roundtrip_reachable;

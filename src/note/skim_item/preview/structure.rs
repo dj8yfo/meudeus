@@ -12,6 +12,7 @@ impl Note {
         db: &SqliteAsyncHandle,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) -> String {
         let rs = self.resources().unwrap();
 
@@ -24,6 +25,7 @@ impl Note {
                 db.clone(),
                 md_static,
                 color_scheme,
+                straight,
             )
             .await;
 
@@ -38,6 +40,7 @@ impl Note {
         db: &SqliteAsyncHandle,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) -> String {
         let rs = self.resources().unwrap();
         let result = self
@@ -48,6 +51,7 @@ impl Note {
                 db.clone(),
                 md_static,
                 color_scheme,
+                straight,
             )
             .await;
 

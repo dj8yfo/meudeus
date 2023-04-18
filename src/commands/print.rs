@@ -33,12 +33,14 @@ pub(crate) async fn exec(
                 surf_parsing.clone(),
                 md_static,
                 color_scheme,
+                true,
             )
             .run()
             .await?
         }
     };
 
+    let straight = true;
     let (tree, _) = note
         .construct_link_term_tree(
             0,
@@ -48,6 +50,7 @@ pub(crate) async fn exec(
             db,
             md_static,
             color_scheme,
+            straight,
         )
         .await?;
 

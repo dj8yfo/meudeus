@@ -253,10 +253,11 @@ impl Note {
         db: &SqliteAsyncHandle,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) -> SqlxResult<Vec<Note>> {
         db.lock()
             .await
-            .find_links_from(&self.name(), md_static, color_scheme)
+            .find_links_from(&self.name(), md_static, color_scheme, straight)
             .await
     }
 
@@ -265,10 +266,11 @@ impl Note {
         db: &SqliteAsyncHandle,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) -> SqlxResult<Vec<Note>> {
         db.lock()
             .await
-            .find_links_to(&self.name(), md_static, color_scheme)
+            .find_links_to(&self.name(), md_static, color_scheme, straight)
             .await
     }
 }

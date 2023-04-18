@@ -14,16 +14,21 @@ impl super::Note {
         db: &SqliteAsyncHandle,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) -> Option<String> {
         match self.resources() {
             Some(resources) => {
                 let result = match resources.preview_type {
-                    PreviewType::Details => self.details(db, md_static, color_scheme).await,
+                    PreviewType::Details => {
+                        self.details(db, md_static, color_scheme, straight).await
+                    }
                     PreviewType::LinkStructure => {
-                        self.link_structure(db, md_static, color_scheme).await
+                        self.link_structure(db, md_static, color_scheme, straight)
+                            .await
                     }
                     PreviewType::TaskStructure => {
-                        self.task_structure(db, md_static, color_scheme).await
+                        self.task_structure(db, md_static, color_scheme, straight)
+                            .await
                     }
                 };
                 Some(result)
@@ -36,8 +41,11 @@ impl super::Note {
         db: &SqliteAsyncHandle,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        straight: bool,
     ) {
-        let result = self.compute_preview(db, md_static, color_scheme).await;
+        let result = self
+            .compute_preview(db, md_static, color_scheme, straight)
+            .await;
         match self.resources_mut() {
             Some(resources) => {
                 resources.preview_result = result;

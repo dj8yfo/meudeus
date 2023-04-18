@@ -24,6 +24,7 @@ pub(crate) async fn exec(
     color_scheme: ColorScheme,
 ) -> Result<String, anyhow::Error> {
     let mut list = db.lock().await.list(md_static, color_scheme).await?;
+    let mut straight = true;
 
     let mut preview_type = PreviewType::default();
     loop {
@@ -35,6 +36,7 @@ pub(crate) async fn exec(
             preview_type,
             md_static,
             color_scheme,
+            straight,
         )
         .await?;
         preview_type = preview_type_after;
@@ -53,6 +55,7 @@ pub(crate) async fn exec(
                     &surf_parsing,
                     md_static,
                     color_scheme,
+                    straight,
                 )
                 .await
                 {
@@ -80,6 +83,7 @@ pub(crate) async fn exec(
                     &surf_parsing,
                     md_static,
                     color_scheme,
+                    straight,
                 )
                 .await
                 {
@@ -96,6 +100,7 @@ pub(crate) async fn exec(
                     &surf_parsing,
                     md_static,
                     color_scheme,
+                    straight,
                 )
                 .await
                 {
@@ -125,8 +130,12 @@ pub(crate) async fn exec(
                 let to =
                     create::create(&new_name, db.clone(), is_tag, md_static, color_scheme).await?;
 
-                link_noninteractive(linked_from.clone(), to, db.clone()).await?;
+                link_noninteractive(linked_from.clone(), to, db.clone(), straight).await?;
                 list = vec![linked_from];
+            }
+
+            Some(Action::InvertLinks) => {
+                straight = !straight;
             }
             _ => {}
         }
@@ -141,6 +150,7 @@ pub async fn iteration(
     preview_type: PreviewType,
     md_static: MarkdownStatic,
     color_scheme: ColorScheme,
+    straight: bool,
 ) -> Result<(Vec<Note>, Option<Action>, PreviewType), anyhow::Error> {
     let out = Iteration::new(
         list.clone(),
@@ -150,6 +160,7 @@ pub async fn iteration(
         preview_type,
         md_static,
         color_scheme,
+        straight,
     )
     .run()
     .await?;
@@ -169,6 +180,7 @@ pub async fn iteration(
         action @ Action::CreateLinkedFrom(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Surf(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Checkmark(..) => (out.next_items, Some(action), preview_type),
+        action @ Action::InvertLinks => (out.next_items, Some(action), preview_type),
         Action::TogglePreview => (out.next_items, None, preview_type.toggle()),
     };
     Ok(res)

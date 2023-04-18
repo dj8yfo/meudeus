@@ -27,6 +27,7 @@ pub(crate) async fn exec(
     let mut list = db.lock().await.list(md_static, color_scheme).await?;
 
     let mut preview_type = PreviewType::default();
+    let straight = true;
     let note = loop {
         let (next_items, opened, preview_type_after) = iteration(
             db.clone(),
@@ -36,6 +37,7 @@ pub(crate) async fn exec(
             preview_type,
             md_static,
             color_scheme,
+            straight,
         )
         .await?;
         preview_type = preview_type_after;
@@ -46,8 +48,16 @@ pub(crate) async fn exec(
         }
     };
 
-    let _exit_note =
-        surf_note(note, db, &external_commands, &surf, md_static, color_scheme).await?;
+    let _exit_note = surf_note(
+        note,
+        db,
+        &external_commands,
+        &surf,
+        md_static,
+        color_scheme,
+        straight,
+    )
+    .await?;
 
     Ok("success".to_string())
 }
@@ -59,10 +69,11 @@ pub(crate) async fn surf_note(
     surf: &SurfParsing,
     md_static: MarkdownStatic,
     color_scheme: ColorScheme,
+    straight: bool,
 ) -> Result<Note, anyhow::Error> {
     loop {
         let all_vec = note
-            .reachable_notes(db.clone(), md_static, color_scheme)
+            .reachable_notes(db.clone(), md_static, color_scheme, straight)
             .await?;
         let links: std::io::Result<Vec<_>> = all_vec
             .into_iter()

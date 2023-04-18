@@ -38,6 +38,7 @@ pub enum Action {
     TogglePreview,
     InvertLinks,
     Splice,
+    Narrow,
 }
 
 pub struct Out {
@@ -107,7 +108,7 @@ impl Iteration {
                 .preview_window(Some("up:70%"))
                 .preview(Some(""))
                 .prompt(Some(&hint))
-                .multi(false)
+                .multi(true)
                 .bind(vec![
                     "ctrl-c:abort",
                     "Enter:accept",
@@ -125,6 +126,7 @@ impl Iteration {
                     "alt-c:accept",
                     "alt-f:accept",
                     "alt-s:accept",
+                    "alt-n:accept",
                 ])
                 .build()
                 .unwrap();
@@ -314,6 +316,13 @@ impl Iteration {
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
+                }
+
+                Key::Alt('n') => {
+                    return Ok(Out {
+                        action: Action::Narrow,
+                        next_items: selected_items,
+                    });
                 }
                 Key::Ctrl('k') => {
                     if let Some(item) = selected_items.first() {

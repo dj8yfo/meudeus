@@ -22,7 +22,7 @@ pub enum NoteTaskItemTerm {
     Note(Note),
     Task(TaskItem),
     TaskMono(TaskItem),
-    TaskHint(usize, ColorScheme),
+    TaskHint(bool, usize, ColorScheme),
     Cycle(String, ColorScheme),
 }
 
@@ -36,14 +36,24 @@ impl Display for NoteTaskItemTerm {
             Self::Task(task) => {
                 write!(f, "{}", task.skim_display(false))
             }
-            Self::TaskHint(num, color) => {
-                let c = color.links.unlisted;
+            Self::TaskHint(only_hint, num, color) => {
+                if *only_hint {
+                    let c = color.links.unlisted;
 
-                write!(
-                    f,
-                    "{}",
-                    format!("[ has {num} task items ]").truecolor(c.r, c.g, c.b)
-                )
+                    write!(
+                        f,
+                        "{}",
+                        format!("{num} task items unlisted").truecolor(c.r, c.g, c.b)
+                    )
+                } else {
+                    let c = color.links.unlisted;
+
+                    write!(
+                        f,
+                        "{}",
+                        format!("{num} task items ").truecolor(c.r, c.g, c.b)
+                    )
+                }
             }
             Self::TaskMono(task) => {
                 write!(f, "{}", task.skim_display_mono(false))
@@ -57,6 +67,23 @@ impl Display for NoteTaskItemTerm {
 }
 
 impl NoteTaskItemTerm {
+    pub fn len_task_items(&self) -> usize {
+        match self {
+            Self::Task(item) | Self::TaskMono(item) => {
+                let start = item.self_index;
+                let next = match item.next_index {
+                    Some(next) => next,
+                    None => start + 1,
+
+                    
+                };
+                next - start
+                
+            }
+            _ => 0,
+        }
+        
+    }
     pub fn parse(input: &[TaskItem], group_by_top_level: bool, mono: bool) -> Vec<Tree<Self>> {
         let mut result = vec![];
         let mut subrange_end = 0;
@@ -149,6 +176,7 @@ impl Note {
     pub async fn construct_task_item_term_tree(
         &self,
         level: usize,
+        nested_threshold: usize,
         mut all_reachable: HashSet<Note>,
         surf_parsing: SurfParsing,
         db: SqliteAsyncHandle,
@@ -164,14 +192,20 @@ impl Note {
             TaskItem::parse(self, &surf_parsing, &mut highlighter, md_static)?
         };
 
-        let trees = NoteTaskItemTerm::parse(&tasks, true, false);
-        if trees.len() > 0 {
-            if level > 1 {
-                tree.push(NoteTaskItemTerm::TaskHint(trees.len(), color_scheme));
+        let task_trees = NoteTaskItemTerm::parse(&tasks, true, false);
+        if task_trees.len() > 0 {
+            let sum_len= task_trees.iter().fold(0, |acc, element| {
+                acc + element.root.len_task_items()
+            });
+            if level >= nested_threshold {
+                tree.push(NoteTaskItemTerm::TaskHint(true, sum_len, color_scheme));
             } else {
-                for task in trees {
-                    tree.push(task);
+                let hint =  NoteTaskItemTerm::TaskHint(false, sum_len, color_scheme);
+                let mut hint_tree = Tree::new(hint);
+                for task in task_trees {
+                    hint_tree.push(task);
                 }
+                tree.push(hint_tree);
             }
         }
 
@@ -191,6 +225,7 @@ impl Note {
                 let (next_tree, roundtrip_reachable) = next
                     .construct_task_item_term_tree(
                         level + 1,
+                        nested_threshold,
                         all_reachable,
                         surf_parsing.clone(),
                         db.clone(),

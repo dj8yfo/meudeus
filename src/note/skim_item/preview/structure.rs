@@ -16,9 +16,11 @@ impl Note {
     ) -> String {
         let rs = self.resources().unwrap();
 
+        let nested_threshold = 2;
         let result = self
             .construct_link_term_tree(
                 0,
+                nested_threshold,
                 HashSet::new(),
                 rs.external_commands.clone(),
                 rs.surf_parsing.clone(),
@@ -43,9 +45,11 @@ impl Note {
         straight: bool,
     ) -> String {
         let rs = self.resources().unwrap();
+        let nested_threshold = 2;
         let result = self
             .construct_task_item_term_tree(
                 0,
+                nested_threshold,
                 HashSet::new(),
                 rs.surf_parsing.clone(),
                 db.clone(),

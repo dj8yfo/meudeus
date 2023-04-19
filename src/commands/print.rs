@@ -41,9 +41,12 @@ pub(crate) async fn exec(
     };
 
     let straight = true;
+
+    let nested_threshold = 2;
     let (tree, _) = note
         .construct_link_term_tree(
             0,
+            nested_threshold,
             HashSet::new(),
             external_commands,
             surf_parsing,

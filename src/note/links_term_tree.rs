@@ -19,7 +19,7 @@ use super::Note;
 pub enum NoteLinkTerm {
     Note(Note),
     Link(Link),
-    LinkHint(usize, ColorScheme),
+    LinkHint(bool, usize, ColorScheme),
     Cycle(String, ColorScheme),
 }
 
@@ -34,13 +34,23 @@ impl Display for NoteLinkTerm {
                 write!(f, "{}", link.skim_display())
             }
 
-            Self::LinkHint(num, color) => {
-                let c = color.links.unlisted;
-                write!(
-                    f,
-                    "{}",
-                    format!("[ has {num} links ]").truecolor(c.r, c.g, c.b)
-                )
+            Self::LinkHint(only_hint, num, color) => {
+                if *only_hint {
+                    let c = color.links.unlisted;
+                    write!(
+                        f,
+                        "{}",
+                        format!("{num} links unlisted ").truecolor(c.r, c.g, c.b)
+                    )
+                } else {
+                    let c = color.links.unlisted;
+                    write!(
+                        f,
+                        "{}",
+                        format!("{num} links ").truecolor(c.r, c.g, c.b)
+                    )
+                    
+                }
             }
             Self::Cycle(cycle, color) => {
                 let c = color.links.cycle;
@@ -55,6 +65,7 @@ impl Note {
     pub async fn construct_link_term_tree(
         &self,
         level: usize,
+        nested_threshold: usize,
         mut all_reachable: HashSet<Note>,
         external_commands: ExternalCommands,
         surf_parsing: SurfParsing,
@@ -65,6 +76,21 @@ impl Note {
     ) -> SqlxResult<(Tree<NoteLinkTerm>, HashSet<Note>)> {
         let mut tree = Tree::new(NoteLinkTerm::Note(self.clone()));
         all_reachable.insert(self.clone());
+
+        let links = Link::parse(self, &surf_parsing, color_scheme)?;
+
+        if links.len() > 0 {
+            if level >= nested_threshold {
+                tree.push(NoteLinkTerm::LinkHint(true, links.len(), color_scheme));
+            } else {
+                let hint =  NoteLinkTerm::LinkHint(false, links.len(), color_scheme);
+                let mut hint_tree = Tree::new(hint);
+                for link in links {
+                    hint_tree.push(NoteLinkTerm::Link(link));
+                }
+                tree.push(hint_tree);
+            }
+        }
 
         let forward_links = db
             .lock()
@@ -79,6 +105,7 @@ impl Note {
                 let (next_tree, roundtrip_reachable) = next
                     .construct_link_term_tree(
                         level + 1,
+                        nested_threshold,
                         all_reachable,
                         external_commands.clone(),
                         surf_parsing.clone(),
@@ -90,17 +117,6 @@ impl Note {
                     .await?;
                 all_reachable = roundtrip_reachable;
                 tree.push(next_tree);
-            }
-        }
-        let links = Link::parse(self, &surf_parsing, color_scheme)?;
-
-        if links.len() > 0 {
-            if level > 1 {
-                tree.push(NoteLinkTerm::LinkHint(links.len(), color_scheme));
-            } else {
-                for link in links {
-                    tree.push(NoteLinkTerm::Link(link));
-                }
             }
         }
 

@@ -22,6 +22,8 @@ pub(crate) async fn exec(
 
     let straight = true;
     let multi = false;
+    let nested_threshold = 1;
+
     let note = Iteration::new(
         "rename".to_string(),
         list,
@@ -32,6 +34,7 @@ pub(crate) async fn exec(
         md_static,
         color_scheme,
         straight,
+        nested_threshold,
     )
     .run()
     .await?;

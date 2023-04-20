@@ -27,6 +27,8 @@ pub(crate) async fn exec(
     let mut straight = true;
 
     let mut preview_type = PreviewType::default();
+
+    let mut nested_threshold = 1;
     loop {
         let (next_items, opened, preview_type_after) = iteration(
             db.clone(),
@@ -37,6 +39,7 @@ pub(crate) async fn exec(
             md_static,
             color_scheme,
             straight,
+            nested_threshold,
         )
         .await?;
         preview_type = preview_type_after;
@@ -84,6 +87,7 @@ pub(crate) async fn exec(
                     md_static,
                     color_scheme,
                     straight,
+                    nested_threshold,
                 )
                 .await
                 {
@@ -137,6 +141,16 @@ pub(crate) async fn exec(
             Some(Action::InvertLinks) => {
                 straight = !straight;
             }
+
+            Some(Action::IncreaseUnlistedThreshold) => {
+                nested_threshold += 1;
+            }
+
+            Some(Action::DecreaseUnlistedThreshold) => {
+                if nested_threshold > 0 {
+                    nested_threshold -= 1;
+                }
+            }
             _ => {}
         }
     }
@@ -151,6 +165,7 @@ pub async fn iteration(
     md_static: MarkdownStatic,
     color_scheme: ColorScheme,
     straight: bool,
+    nested_threshold: usize,
 ) -> Result<(Vec<Note>, Option<Action>, PreviewType), anyhow::Error> {
     let out = Iteration::new(
         list.clone(),
@@ -161,6 +176,7 @@ pub async fn iteration(
         md_static,
         color_scheme,
         straight,
+        nested_threshold,
     )
     .run()
     .await?;
@@ -183,6 +199,8 @@ pub async fn iteration(
         action @ Action::InvertLinks => (out.next_items, Some(action), preview_type),
         action @ Action::Splice => (out.next_items, Some(action), preview_type),
         action @ Action::Narrow => (out.next_items, Some(action), preview_type),
+        action @ Action::IncreaseUnlistedThreshold => (out.next_items, Some(action), preview_type),
+        action @ Action::DecreaseUnlistedThreshold=> (out.next_items, Some(action), preview_type),
         Action::TogglePreview => (out.next_items, None, preview_type.toggle()),
     };
     Ok(res)

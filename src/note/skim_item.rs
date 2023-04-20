@@ -15,6 +15,7 @@ impl super::Note {
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
         straight: bool,
+        nested_threshold: usize,
     ) -> Option<String> {
         match self.resources() {
             Some(resources) => {
@@ -23,11 +24,11 @@ impl super::Note {
                         self.details(db, md_static, color_scheme, straight).await
                     }
                     PreviewType::LinkStructure => {
-                        self.link_structure(db, md_static, color_scheme, straight)
+                        self.link_structure(db, md_static, color_scheme, straight, nested_threshold)
                             .await
                     }
                     PreviewType::TaskStructure => {
-                        self.task_structure(db, md_static, color_scheme, straight)
+                        self.task_structure(db, md_static, color_scheme, straight, nested_threshold)
                             .await
                     }
                 };
@@ -42,9 +43,10 @@ impl super::Note {
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
         straight: bool,
+        nested_threshold: usize,
     ) {
         let result = self
-            .compute_preview(db, md_static, color_scheme, straight)
+            .compute_preview(db, md_static, color_scheme, straight, nested_threshold)
             .await;
         match self.resources_mut() {
             Some(resources) => {

@@ -13,10 +13,10 @@ impl Note {
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
         straight: bool,
+        nested_threshold: usize,
     ) -> String {
         let rs = self.resources().unwrap();
 
-        let nested_threshold = 2;
         let result = self
             .construct_link_term_tree(
                 0,
@@ -43,9 +43,9 @@ impl Note {
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
         straight: bool,
+        nested_threshold: usize,
     ) -> String {
         let rs = self.resources().unwrap();
-        let nested_threshold = 2;
         let result = self
             .construct_task_item_term_tree(
                 0,

@@ -20,6 +20,7 @@ pub(crate) async fn exec(
     let straight = true;
 
     let multi = false;
+    let nested_threshold = 1;
 
     let from = Iteration::new(
         "link from".to_string(),
@@ -31,6 +32,7 @@ pub(crate) async fn exec(
         md_static,
         color_scheme,
         straight,
+        nested_threshold,
     )
     .run()
     .await?;
@@ -43,6 +45,7 @@ pub(crate) async fn exec(
         md_static,
         color_scheme,
         straight,
+        nested_threshold,
     )
     .await?;
 
@@ -57,6 +60,7 @@ pub(crate) async fn link(
     md_static: MarkdownStatic,
     color_scheme: ColorScheme,
     straight: bool,
+    nested_threshold: usize,
 ) -> Result<(), anyhow::Error> {
     let name: String = from.name().chars().take(40).collect();
 
@@ -72,6 +76,7 @@ pub(crate) async fn link(
         md_static,
         color_scheme,
         straight,
+        nested_threshold,
     )
     .run()
     .await?;

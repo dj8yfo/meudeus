@@ -21,6 +21,7 @@ pub(crate) async fn exec(
     let straight = true;
 
     let multi = false;
+    let nested_threshold = 1;
     let from = Iteration::new(
         "unlink from".to_string(),
         list,
@@ -31,6 +32,7 @@ pub(crate) async fn exec(
         md_static,
         color_scheme,
         straight,
+        nested_threshold,
     )
     .run()
     .await?;
@@ -61,6 +63,7 @@ pub(crate) async fn unlink(
     let name: String = from.name().chars().take(40).collect();
 
     let hint = format!("unlink from {}", name);
+    let nested_threshold = 1;
 
     let forward_links = db
         .lock()
@@ -77,6 +80,7 @@ pub(crate) async fn unlink(
         md_static,
         color_scheme,
         straight,
+        nested_threshold,
     )
     .run()
     .await?;

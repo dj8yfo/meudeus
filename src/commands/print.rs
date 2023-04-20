@@ -17,6 +17,7 @@ pub(crate) async fn exec(
     md_static: MarkdownStatic,
     color_scheme: ColorScheme,
 ) -> Result<String, anyhow::Error> {
+    let nested_threshold = 1;
     let note = {
         if let Some(name) = name {
             let note = db.lock().await.get(&name, md_static, color_scheme).await?;
@@ -34,6 +35,7 @@ pub(crate) async fn exec(
                 md_static,
                 color_scheme,
                 true,
+                nested_threshold,
             )
             .run()
             .await?
@@ -42,7 +44,6 @@ pub(crate) async fn exec(
 
     let straight = true;
 
-    let nested_threshold = 2;
     let (tree, _) = note
         .construct_link_term_tree(
             0,

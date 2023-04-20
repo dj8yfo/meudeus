@@ -23,6 +23,7 @@ pub(crate) struct Iteration {
 
     color_scheme: ColorScheme,
     straight: bool,
+    nested_threshold: usize,
 }
 
 impl Iteration {
@@ -36,6 +37,7 @@ impl Iteration {
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
         straight: bool,
+        nested_threshold: usize,
     ) -> Self {
         Self {
             items: Some(items),
@@ -47,6 +49,7 @@ impl Iteration {
             md_static,
             color_scheme,
             straight,
+            nested_threshold,
         }
     }
 
@@ -69,7 +72,7 @@ impl Iteration {
                     preview_type: PreviewType::Details,
                     preview_result: None,
                 });
-                note.prepare_preview(&db_double, self.md_static, self.color_scheme, self.straight)
+                note.prepare_preview(&db_double, self.md_static, self.color_scheme, self.straight, self.nested_threshold)
                     .await;
                 let result = tx_double.send(Arc::new(note));
                 if result.is_err() {

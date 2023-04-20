@@ -21,6 +21,7 @@ pub(crate) struct Iteration {
     md_static: MarkdownStatic,
     color_scheme: ColorScheme,
     straight: bool,
+    nested_threshold: usize,
 }
 
 pub enum Action {
@@ -39,6 +40,8 @@ pub enum Action {
     InvertLinks,
     Splice,
     Narrow,
+    IncreaseUnlistedThreshold,
+    DecreaseUnlistedThreshold,
 }
 
 pub struct Out {
@@ -56,6 +59,7 @@ impl Iteration {
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
         straight: bool,
+        nested_threshold: usize,
     ) -> Self {
         Self {
             items: Some(items),
@@ -66,6 +70,7 @@ impl Iteration {
             md_static,
             color_scheme,
             straight,
+            nested_threshold,
         }
     }
     pub(crate) async fn run(mut self) -> anyhow::Result<Out> {
@@ -88,8 +93,14 @@ impl Iteration {
                     preview_type: self.preview_type,
                     preview_result: None,
                 });
-                note.prepare_preview(&db_double, self.md_static, self.color_scheme, self.straight)
-                    .await;
+                note.prepare_preview(
+                    &db_double,
+                    self.md_static,
+                    self.color_scheme,
+                    self.straight,
+                    self.nested_threshold,
+                )
+                .await;
 
                 let result = tx_double.send(Arc::new(note));
                 if result.is_err() {
@@ -127,6 +138,8 @@ impl Iteration {
                     "alt-f:accept",
                     "alt-s:accept",
                     "alt-n:accept",
+                    "alt-o:accept",
+                    "alt-p:accept",
                 ])
                 .build()
                 .unwrap();
@@ -307,7 +320,13 @@ impl Iteration {
                 Key::Alt('s') => {
                     if let Some(item) = selected_items.first() {
                         let next = item
-                            .reachable_notes(db, self.md_static, self.color_scheme, self.straight, false)
+                            .reachable_notes(
+                                db,
+                                self.md_static,
+                                self.color_scheme,
+                                self.straight,
+                                false,
+                            )
                             .await?;
                         return Ok(Out {
                             action: Action::Splice,
@@ -323,6 +342,28 @@ impl Iteration {
                         action: Action::Narrow,
                         next_items: selected_items,
                     });
+                }
+
+                Key::Alt('p') => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Out {
+                            action: Action::IncreaseUnlistedThreshold,
+                            next_items: vec![item.clone()],
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+
+                Key::Alt('o') => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Out {
+                            action: Action::DecreaseUnlistedThreshold,
+                            next_items: vec![item.clone()],
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
                 }
                 Key::Ctrl('k') => {
                     if let Some(item) = selected_items.first() {

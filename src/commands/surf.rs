@@ -27,6 +27,7 @@ pub(crate) async fn exec(
     let mut list = db.lock().await.list(md_static, color_scheme).await?;
 
     let mut preview_type = PreviewType::default();
+    let nested_threshold = 1;
     let straight = true;
     let note = loop {
         let (next_items, opened, preview_type_after) = iteration(
@@ -38,6 +39,7 @@ pub(crate) async fn exec(
             md_static,
             color_scheme,
             straight,
+            nested_threshold,
         )
         .await?;
         preview_type = preview_type_after;

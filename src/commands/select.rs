@@ -14,6 +14,7 @@ pub(crate) async fn exec(
     let list = db.lock().await.list(md_static, color_scheme).await?;
     let straight = true;
     let multi = false;
+    let nested_threshold = 1;
     let note = crate::skim::open::Iteration::new(
         "select".to_string(),
         list,
@@ -24,6 +25,7 @@ pub(crate) async fn exec(
         md_static,
         color_scheme,
         straight,
+        nested_threshold,
     )
     .run()
     .await?;

@@ -33,7 +33,7 @@
   ```
 
   ```
-  meudeus v0.15.3
+  meudeus v0.15.4
   a skim shredder for plain-text papers
 
   Usage: mds [OPTIONS] <COMMAND>
@@ -83,6 +83,8 @@
  | Alt-f  |  Toggle/invert the direction of links. Backlinks become forward links         |
  | Alt-s  |  Splice note: populate selection list with its children, reachable by forward links|
  | Alt-n  |  Narrow selection to single or multiple selected notes|
+ | Alt-o  |  Decrease threshold of nested level for unlisted inner items (links, task items) |
+ | Alt-p  |  Increase threshold of nested level for unlisted inner items (links, task items) |
 
 - `surf` mode
 

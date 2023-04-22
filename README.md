@@ -140,11 +140,10 @@
 
 # Colors 
 
-- Some color themes for markdown elements can be found at [rainglow/sublime](https://github.com/rainglow/sublime)
+- Some color themes for markdown elements in `world.color.theme` field of [config](./config.kdl) can be found at [rainglow/sublime](https://github.com/rainglow/sublime)
 and previewed at this awesome website [rainglow.io](https://rainglow.io/preview/).
 - if the patchwork in markdown irritates you, please remember, that `settings.background` value in a theme 
 is editable
+- `world.color.elements` field of [config](./config.kdl) specifies colors of most of other displayed objects.
 
-# Changelog
-
-![Alt](./changelog.jpeg "Concentrate by means of relaxation")
+# [Changelog](./CHANGELOG.md)

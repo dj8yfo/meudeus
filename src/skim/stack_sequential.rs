@@ -11,6 +11,12 @@ use crate::{
     highlight::MarkdownStatic,
     note::{DynResources, Note, PreviewType},
 };
+pub enum Action {
+    Select(Note),
+    TogglePreview,
+    Pop(Note),
+    MoveTopmost(Note),
+}
 
 pub(crate) struct Iteration {
     db: SqliteAsyncHandle,
@@ -56,19 +62,20 @@ impl Iteration {
         }
     }
 
-    pub(crate) async fn run(mut self) -> anyhow::Result<Note> {
+    pub(crate) async fn run(mut self) -> anyhow::Result<Action> {
         let items = self.items.take().unwrap();
 
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
         let db = self.db;
-        for mut note in items {
-            let db_double = db.clone();
-            let ext_double = self.external_commands.clone();
-            let surf_parsing = self.surf_parsing.clone();
-            let tx_double = tx.clone();
+        let db_double = db.clone();
+        let ext_double = self.external_commands.clone();
+        let surf_parsing = self.surf_parsing.clone();
 
-            tokio::task::spawn(async move {
+        tokio::task::spawn(async move {
+            for mut note in items {
+                let ext_double = ext_double.clone();
+                let surf_parsing = surf_parsing.clone();
                 note.set_resources(DynResources {
                     external_commands: ext_double,
                     surf_parsing,
@@ -83,13 +90,12 @@ impl Iteration {
                     self.nested_threshold,
                 )
                 .await;
-                let result = tx_double.send(Arc::new(note));
+                let result = tx.send(Arc::new(note));
                 if result.is_err() {
                     // eprintln!("{}",format!("{:?}", result).red());
                 }
-            });
-        }
-        drop(tx);
+            }
+        });
 
         let hint = self.hint;
         let out = tokio::task::spawn_blocking(move || {
@@ -98,9 +104,16 @@ impl Iteration {
                 .height(Some("100%"))
                 .preview(Some(""))
                 .prompt(Some(&hint))
-                .preview_window(Some("up:80%"))
+                .preview_window(Some("up:60%"))
                 .multi(self.multi)
-                .bind(vec!["ctrl-c:abort", "Enter:accept", "ESC:abort"])
+                .bind(vec![
+                    "ctrl-t:accept",
+                    "ctrl-c:abort",
+                    "alt-p:accept",
+                    "alt-t:accept",
+                    "Enter:accept",
+                    "ESC:abort",
+                ])
                 .build()
                 .unwrap();
 
@@ -125,7 +138,28 @@ impl Iteration {
             match out.final_key {
                 Key::Enter => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(item.clone());
+                        return Ok(Action::Select(item.clone()));
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+                Key::Ctrl('t') => {
+                    if let Some(_item) = selected_items.first() {
+                        return Ok(Action::TogglePreview);
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+                Key::Alt('p') => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Action::Pop(item.clone()));
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+                Key::Alt('t') => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Action::MoveTopmost(item.clone()));
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));
                     }

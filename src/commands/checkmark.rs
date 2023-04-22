@@ -37,7 +37,6 @@ pub(crate) async fn exec(
             color_scheme,
             true,
             nested_threshold,
-
         )
         .await?;
         preview_type = preview_type_after;

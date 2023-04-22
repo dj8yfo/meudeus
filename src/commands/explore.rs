@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::{
     commands::link::{link, link_noninteractive},
     config::{color::ColorScheme, ExternalCommands, SurfParsing},
@@ -10,11 +12,14 @@ use crate::{
 };
 
 use super::{
-    checkmark::checkmark_note, create, remove::remove, rename::rename, surf::surf_note,
-    unlink::unlink,
+    checkmark::checkmark_note, create, remove::remove, rename::rename, stack::stack_select,
+    surf::surf_note, unlink::unlink,
 };
 use inquire::Select;
 use inquire::Text;
+use tokio::time::sleep;
+
+pub static GLOBAL_STACK: &str = "GLOBAL";
 
 pub(crate) async fn exec(
     db: SqliteAsyncHandle,
@@ -151,6 +156,35 @@ pub(crate) async fn exec(
                     nested_threshold -= 1;
                 }
             }
+
+            Some(Action::PushToStack(note)) => {
+                let name = &note.name();
+                if let Err(err) = db
+                    .lock()
+                    .await
+                    .push_note_to_stack(GLOBAL_STACK, &note.name())
+                    .await
+                {
+                    eprintln!("push to stack error: {:?}", err);
+                } else {
+                    println!(
+                        "{}",
+                        format_two_tokens("pushed ", &format!("{name} to {GLOBAL_STACK}"))
+                    );
+                }
+                sleep(Duration::new(1, 0)).await;
+            }
+            Some(Action::SwitchToStack) => {
+                let note = stack_select(
+                    db.clone(),
+                    external_commands.clone(),
+                    surf_parsing.clone(),
+                    md_static,
+                    color_scheme,
+                )
+                .await?;
+                list = vec![note];
+            }
             _ => {}
         }
     }
@@ -200,7 +234,9 @@ pub async fn iteration(
         action @ Action::Splice => (out.next_items, Some(action), preview_type),
         action @ Action::Narrow => (out.next_items, Some(action), preview_type),
         action @ Action::IncreaseUnlistedThreshold => (out.next_items, Some(action), preview_type),
-        action @ Action::DecreaseUnlistedThreshold=> (out.next_items, Some(action), preview_type),
+        action @ Action::DecreaseUnlistedThreshold => (out.next_items, Some(action), preview_type),
+        action @ Action::PushToStack(..) => (out.next_items, Some(action), preview_type),
+        action @ Action::SwitchToStack => (out.next_items, Some(action), preview_type),
         Action::TogglePreview => (out.next_items, None, preview_type.toggle()),
     };
     Ok(res)

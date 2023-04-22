@@ -33,11 +33,11 @@ impl Iteration {
 
     pub(crate) fn run(mut self) -> anyhow::Result<Action> {
         let items = self.items.take().unwrap();
-
+        let note_hint = format!("(checkmark: {}) > ", self.return_note.name());
         let options = SkimOptionsBuilder::default()
             .height(Some("100%"))
             .preview(Some(""))
-            .prompt(Some("(checkmark) > "))
+            .prompt(Some(&note_hint))
             .preview_window(Some("right:65%"))
             .multi(true)
             .bind(vec![

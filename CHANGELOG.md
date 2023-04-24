@@ -2,11 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [0.16.0] - 2023-04-24
+
+### Features
+
+- Implement pushing notes to `GLOBAL` stack and switching to viewing it
 
 ### Miscellaneous Tasks
 
 - Remove reduntant file
+- Replace changelog image with text
+- Replace changelog image with text
+- Update readme with short description of `stack` mode
 
 ## [0.15.4] - 2023-04-20
 

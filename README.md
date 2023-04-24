@@ -138,6 +138,15 @@
  | Shift-ArrowUp| Scroll preview port up (without mouse)                                   |
  | Shirt-ArrowDown| Scroll preview port down (without mouse)                               |
 
+# Stack 
+- `stack` mode is a simple way to manage priorities of notes. 
+- A note can be pushed to stack by *Alt-a* from `explore` mode of `explore` command. 
+- A switch to `stack` mode from `explore` mode of `explore` command can be made by *Ctrl-a*.
+- By selecting a note with `Enter` in `stack` mode one returns to `explore` mode with the note selected.
+- In `stack` mode a note can be popped off stack with *Alt-p*.
+- Selected note can be moved to top of stack by *Alt-t*.
+- Currently only single `GLOBAL` stack is supported. It may be extended to multiple stacks in a future.
+
 # Colors 
 
 - Some color themes for markdown elements in `world.color.theme` field of [config](./config.kdl) can be found at [rainglow/sublime](https://github.com/rainglow/sublime)

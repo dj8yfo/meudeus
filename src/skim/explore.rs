@@ -42,6 +42,8 @@ pub enum Action {
     Narrow,
     IncreaseUnlistedThreshold,
     DecreaseUnlistedThreshold,
+    PushToStack(Note),
+    SwitchToStack,
 }
 
 pub struct Out {
@@ -140,6 +142,8 @@ impl Iteration {
                     "alt-n:accept",
                     "alt-o:accept",
                     "alt-p:accept",
+                    "alt-a:accept",
+                    "ctrl-a:accept",
                 ])
                 .build()
                 .unwrap();
@@ -360,6 +364,27 @@ impl Iteration {
                         return Ok(Out {
                             action: Action::DecreaseUnlistedThreshold,
                             next_items: vec![item.clone()],
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+
+                Key::Alt('a') => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Out {
+                            action: Action::PushToStack(item.clone()),
+                            next_items: items,
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+                Key::Ctrl('a') => {
+                    if let Some(_item) = selected_items.first() {
+                        return Ok(Out {
+                            action: Action::SwitchToStack,
+                            next_items: vec![],
                         });
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));

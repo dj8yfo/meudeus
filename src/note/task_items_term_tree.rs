@@ -74,15 +74,11 @@ impl NoteTaskItemTerm {
                 let next = match item.next_index {
                     Some(next) => next,
                     None => start + 1,
-
-                    
                 };
                 next - start
-                
             }
             _ => 0,
         }
-        
     }
     pub fn parse(input: &[TaskItem], group_by_top_level: bool, mono: bool) -> Vec<Tree<Self>> {
         let mut result = vec![];
@@ -194,13 +190,13 @@ impl Note {
 
         let task_trees = NoteTaskItemTerm::parse(&tasks, true, false);
         if task_trees.len() > 0 {
-            let sum_len= task_trees.iter().fold(0, |acc, element| {
-                acc + element.root.len_task_items()
-            });
+            let sum_len = task_trees
+                .iter()
+                .fold(0, |acc, element| acc + element.root.len_task_items());
             if level >= nested_threshold {
                 tree.push(NoteTaskItemTerm::TaskHint(true, sum_len, color_scheme));
             } else {
-                let hint =  NoteTaskItemTerm::TaskHint(false, sum_len, color_scheme);
+                let hint = NoteTaskItemTerm::TaskHint(false, sum_len, color_scheme);
                 let mut hint_tree = Tree::new(hint);
                 for task in task_trees {
                     hint_tree.push(task);

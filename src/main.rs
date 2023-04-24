@@ -53,9 +53,10 @@ fn load_theme(color: Color) -> Option<&'static Theme> {
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
+    env_logger::init();
     let cmd = clap::Command::new("mds")
-        .version("v0.15.4")
-        .about("meudeus v0.15.4\na skim shredder for plain-text papers")
+        .version("v0.16.0")
+        .about("meudeus v0.16.0\na skim shredder for plain-text papers")
         .bin_name("mds")
         .arg(clap::arg!(-c --color  "whether color output should be forced"))
         .subcommand_required(true)
@@ -124,6 +125,11 @@ async fn main() {
             clap::command!("surf").visible_alias("s").about(
                 "surf through all links and code snippets found downwards from selected note S",
             ),
+        )
+        .subcommand(
+            clap::command!("stack")
+                .visible_alias("st")
+                .about("browse GLOBAL stack of notes"),
         )
         .subcommand(clap::command!("checkmark").visible_alias("k").about(
             "checkmark, toggle state TODO/DONE of multiple task items, found in a selected note C",
@@ -266,6 +272,16 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         db,
                         config.surf_parsing,
                         config.external_commands,
+                        md_static,
+                        config.color.elements,
+                    )
+                    .await
+                }
+                "stack" => {
+                    commands::stack::exec(
+                        db,
+                        config.external_commands,
+                        config.surf_parsing,
                         md_static,
                         config.color.elements,
                     )

@@ -35,4 +35,13 @@ pub trait Database: Send + Sync {
         color_scheme: ColorScheme,
         straight: bool,
     ) -> Result<Vec<Note>>;
+    async fn push_note_to_stack(&mut self, stack: &str, note: &str) -> Result<()>;
+    async fn select_from_stack(
+        &mut self,
+        stack: &str,
+        md_static: MarkdownStatic,
+        color_scheme: ColorScheme,
+    ) -> Result<Vec<Note>>;
+    async fn pop_note_from_stack(&mut self, stack: &str, note: &str) -> Result<()>;
+    async fn move_to_topmost(&mut self, stack: &str, note: &str) -> Result<()>;
 }

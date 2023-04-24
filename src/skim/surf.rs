@@ -59,7 +59,7 @@ impl Iteration {
         let items = self.items.take().unwrap();
 
         let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
-
+        let note_hint = self.return_note.name();
         for mut link in items {
             let tx_double = tx.clone();
             let ext_cmds_double = self.external_commands.clone();
@@ -75,23 +75,26 @@ impl Iteration {
 
         drop(tx);
 
-        let out = tokio::task::spawn_blocking(move || {
-            let options = SkimOptionsBuilder::default()
-                .height(Some("100%"))
-                .preview(Some(""))
-                .prompt(Some("(surf) > "))
-                .preview_window(Some("up:50%"))
-                .multi(self.multi)
-                .bind(vec![
-                    "ctrl-j:accept",
-                    "ctrl-c:abort",
-                    "ctrl-e:abort",
-                    "Enter:accept",
-                    "ESC:abort",
-                ])
-                .build()
-                .unwrap();
-            Skim::run_with(&options, Some(rx))
+        let out = tokio::task::spawn_blocking({
+            let note_hint = format!("(surf: {}) > ", note_hint);
+            move || {
+                let options = SkimOptionsBuilder::default()
+                    .height(Some("100%"))
+                    .preview(Some(""))
+                    .prompt(Some(&note_hint))
+                    .preview_window(Some("up:50%"))
+                    .multi(self.multi)
+                    .bind(vec![
+                        "ctrl-j:accept",
+                        "ctrl-c:abort",
+                        "ctrl-e:abort",
+                        "Enter:accept",
+                        "ESC:abort",
+                    ])
+                    .build()
+                    .unwrap();
+                Skim::run_with(&options, Some(rx))
+            }
         })
         .await
         .unwrap();

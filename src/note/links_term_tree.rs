@@ -44,12 +44,7 @@ impl Display for NoteLinkTerm {
                     )
                 } else {
                     let c = color.links.unlisted;
-                    write!(
-                        f,
-                        "{}",
-                        format!("{num} links ").truecolor(c.r, c.g, c.b)
-                    )
-                    
+                    write!(f, "{}", format!("{num} links ").truecolor(c.r, c.g, c.b))
                 }
             }
             Self::Cycle(cycle, color) => {
@@ -83,7 +78,7 @@ impl Note {
             if level >= nested_threshold {
                 tree.push(NoteLinkTerm::LinkHint(true, links.len(), color_scheme));
             } else {
-                let hint =  NoteLinkTerm::LinkHint(false, links.len(), color_scheme);
+                let hint = NoteLinkTerm::LinkHint(false, links.len(), color_scheme);
                 let mut hint_tree = Tree::new(hint);
                 for link in links {
                     hint_tree.push(NoteLinkTerm::Link(link));

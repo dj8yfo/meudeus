@@ -33,7 +33,7 @@
   ```
 
   ```
-  meudeus v0.15.4
+  meudeus v0.16.0
   a skim shredder for plain-text papers
 
   Usage: mds [OPTIONS] <COMMAND>
@@ -50,8 +50,11 @@
     rename     rename note R, selected in skim interface [aliases: mv]
     print      print subgraph of notes and links reachable downwards from selected note P [aliases: p]
     explore    explore notes by <c-h> (backlinks) , <c-l> (links forward) [aliases: ex]
-    surf       surf through all links and code snippets found downwards from selected note S [aliases: s]
-    checkmark  checkmark, toggle state TODO/DONE of multiple task items, found in a selected note C [aliases: k]
+    surf       surf through all links and code snippets found downwards from selected note S
+                   [aliases: s]
+    stack      browse GLOBAL stack of notes [aliases: st]
+    checkmark  checkmark, toggle state TODO/DONE of multiple task items, found in a selected note C
+                   [aliases: k]
     help       Print this message or the help of the given subcommand(s)
 
   Options:
@@ -85,6 +88,8 @@
  | Alt-n  |  Narrow selection to single or multiple selected notes|
  | Alt-o  |  Decrease threshold of nested level for unlisted inner items (links, task items) |
  | Alt-p  |  Increase threshold of nested level for unlisted inner items (links, task items) |
+ | Alt-a  |  Push selected note to `GLOBAL` stack|
+ | Ctrl-a |  Switch mode to `stack` (viewing `GLOBAL` stack)|
 
 - `surf` mode
 
@@ -111,6 +116,17 @@
  | Ctrl-l  |  Narrown context of task items to subtree of selected task item               |
  | Ctrl-e  |  Return to `explore` mode (in `explore` command) or abort `checkmark` command |
 
+- `stack` mode
+
+ | Binding   | Effect                                                                             |
+ |---------|--------------------------------------------------------------------------------------|
+ | Ctrl-c  | Abort                                                                                |
+ | ESC | Abort                                                                                    |
+ | Enter | If called from withing `explore` command switch mode back to `explore` with selected note. From `stack` command print note's name and exit.|
+ | Ctrl-t  |  Toggle preview type of notes                                                |
+ | Alt-p  |  Pop note from `GLOBAL` stack|
+ | Alt-t  |  Move note to top of `GLOBAL` stack|
+
 - common more and less obvious keybindings from vanilla skim
 
  | Binding   | Effect                                                                      |
@@ -121,6 +137,15 @@
  | PageDown|Move down by many items in skim selection                                      |
  | Shift-ArrowUp| Scroll preview port up (without mouse)                                   |
  | Shirt-ArrowDown| Scroll preview port down (without mouse)                               |
+
+# Stack 
+- `stack` mode is a simple way to manage priorities of notes. 
+- A note can be pushed to stack by *Alt-a* from `explore` mode of `explore` command. 
+- A switch to `stack` mode from `explore` mode of `explore` command can be made by *Ctrl-a*.
+- By selecting a note with `Enter` in `stack` mode one returns to `explore` mode with the note selected.
+- In `stack` mode a note can be popped off stack with *Alt-p*.
+- Selected note can be moved to top of stack by *Alt-t*.
+- Currently only single `GLOBAL` stack is supported. It may be extended to multiple stacks in a future.
 
 # Colors 
 

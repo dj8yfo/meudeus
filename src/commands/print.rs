@@ -4,6 +4,7 @@ use crate::{
     config::{color::ColorScheme, ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
+    note::PreviewType,
     print::format_two_tokens,
 };
 
@@ -30,6 +31,7 @@ pub(crate) async fn exec(
                 list,
                 db.clone(),
                 multi,
+                PreviewType::Details,
                 external_commands.clone(),
                 surf_parsing.clone(),
                 md_static,

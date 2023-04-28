@@ -3,6 +3,7 @@ world {
 		preview {
 			dir "exa" "-l" "--all" "--color=always" "--group-directories-first" "--git" "$DIR"
 			file "bat" "--color=always" "$FILE"
+			file-line "bat" "--color=always" "--line-range" "$FIRST:$LAST" "-H" "$LINE" "$FILE"
 		}
 		open {
 			file "hx" "$FILE"
@@ -19,6 +20,8 @@ world {
 		// must exist, otherwise panics will entail
 		markdown-reference-link-regex  r#"\[(?P<description>[^\]]+)\]\((?P<url>[^\)]+)\)"#	
 		url-regex  r#"^https?://\S+"#		
+
+		file-dest-has-line-regex r#".*:[0-9]+$"#		
 		// regex can be arbitrary, but the named groups `whitespace`, `checkmark`, `task_text`
 		// must exist, otherwise panics will entail.
 		// checkmark must be one char, either ' ' or 'x', otherwise the behaviour is hard

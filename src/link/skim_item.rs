@@ -5,7 +5,7 @@ use skim::{AnsiString, DisplayContext, ItemPreview, PreviewContext, SkimItem};
 
 use crate::{
     config::{color::ColorScheme, Preview},
-    external_commands::{fetch_content, list_dir},
+    external_commands::{fetch_content, fetch_content_range, list_dir},
     highlight::{highlight_code_block, MarkdownStatic},
 };
 
@@ -29,17 +29,27 @@ impl super::Link {
             super::Destination::File { file } => {
                 fetch_content(preview_cmds.file_cmd.clone(), Some(file)).unwrap()
             }
+            super::Destination::FileLine { file, line_number } => {
+                fetch_content_range(preview_cmds.file_line_cmd.clone(), Some(file), *line_number)
+                    .unwrap()
+            }
             super::Destination::Dir { dir } => list_dir(preview_cmds.dir_cmd.clone(), dir),
-            super::Destination::Broken(broken) => {
+            super::Destination::Broken(broken, line) => {
+                let line = if let Some(line) = line {
+                    format!("<line:{}>", line)
+                } else {
+                    format!("")
+                };
                 let c = color_scheme.links.broken;
                 format!(
-                    "{}: {}",
+                    "{}: {} {}",
                     "Broken path",
                     broken
                         .to_str()
                         .unwrap_or("not valid unicode")
                         .truecolor(c.r, c.g, c.b)
                         .to_string(),
+                    line,
                 )
             }
 

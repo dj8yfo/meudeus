@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [unreleased]
+
+### Features
+
+- [**breaking**] Parse $FILE:$LINE destinations of [description](destination) links; change in config
+
+### Miscellaneous Tasks
+
+- V0.16.0 change mentioned
+
 ## [0.16.0] - 2023-04-24
 
 ### Features

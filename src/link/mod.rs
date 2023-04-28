@@ -24,10 +24,14 @@ pub enum Destination {
     Dir {
         dir: PathBuf,
     },
-    Broken(PathBuf),
+    Broken(PathBuf, Option<u64>),
     CodeBlock {
         code_block: String,
         syntax_label: String,
+    },
+    FileLine {
+        file: PathBuf,
+        line_number: u64,
     },
 }
 
@@ -48,6 +52,30 @@ impl Open for Link {
                     cmd(cfg.file_cmd.command, cfg.file_cmd.args).run()?.status,
                 ))
             }
+
+            Destination::FileLine { file, line_number } => {
+                let prev_dir = std::env::current_dir()?;
+
+                let next_dir = file.parent();
+                if let Some(next_dir) = next_dir {
+                    std::env::set_current_dir(next_dir)?;
+                }
+
+                cfg.file_jump_cmd
+                    .replace_in_matching_element("$FILE", file.to_str().unwrap_or("bad utf path"));
+
+                cfg.file_jump_cmd
+                    .replace_in_matching_element("$LINE", &format!("{}", line_number));
+
+                cfg.file_jump_cmd
+                    .replace_in_matching_element("$COLUMN", &format!("{}", 1));
+                let status = cmd(cfg.file_jump_cmd.command, cfg.file_jump_cmd.args)
+                    .run()?
+                    .status;
+                std::env::set_current_dir(prev_dir)?;
+
+                Ok(Some(status))
+            }
             Destination::Dir { dir, .. } => {
                 cfg.dir_cmd
                     .replace_matching_element("$DIR", dir.to_str().unwrap_or("bad utf path"));
@@ -55,7 +83,7 @@ impl Open for Link {
                     cmd(cfg.dir_cmd.command, cfg.dir_cmd.args).run()?.status,
                 ))
             }
-            Destination::Broken(broken) => {
+            Destination::Broken(broken, _line) => {
                 eprintln!(
                     "{}",
                     format_two_tokens(
@@ -139,7 +167,7 @@ impl Link {
                     .truecolor(url_rgb.r, url_rgb.g, url_rgb.b)
                     .to_string()
             }
-            Destination::File { .. } => {
+            Destination::File { .. } | Destination::FileLine { .. } => {
                 let file_rgb = self.color_scheme.links.file;
                 self.description
                     .truecolor(file_rgb.r, file_rgb.g, file_rgb.b)
@@ -194,12 +222,91 @@ impl Link {
             color_scheme,
         }
     }
+
+    fn fs_link(
+        description: String,
+        link: String,
+        parent_note: PathBuf,
+        parent_name: String,
+        has_line_suffix: &Regex,
+        start: EditorPosition,
+        color_scheme: ColorScheme,
+    ) -> Self {
+        let (link, line_suffix) = if has_line_suffix.is_match(&link) {
+            let (link, suffix) = link.rsplit_once(':').unwrap();
+            let suffix = suffix.parse::<u64>().ok();
+            (link.to_string(), suffix)
+        } else {
+            (link, None)
+        };
+        let link = PathBuf::from(&link);
+        let mut link = env_substitute::substitute(link);
+        if link.is_relative() {
+            link = parent_note.as_path().parent().unwrap().join(link);
+        }
+        match (link.is_file(), link.is_dir(), line_suffix) {
+            (true, false, None) => Self {
+                parent_name,
+                description,
+                link: Destination::File { file: link },
+                preview_item: None,
+                display_item: None,
+                start,
+                containing_file_name: parent_note,
+                color_scheme,
+            },
+            (true, false, Some(line_suffix)) => Self {
+                parent_name,
+                description,
+                link: Destination::FileLine {
+                    file: link,
+                    line_number: line_suffix,
+                },
+                preview_item: None,
+                display_item: None,
+                start,
+                containing_file_name: parent_note,
+                color_scheme,
+            },
+            (false, true, None) => Self {
+                parent_name,
+                description,
+                link: Destination::Dir { dir: link },
+                preview_item: None,
+                display_item: None,
+                start,
+                containing_file_name: parent_note,
+                color_scheme,
+            },
+            (false, true, Some(line)) => Self {
+                parent_name,
+                description,
+                link: Destination::Broken(link, Some(line)),
+                preview_item: None,
+                display_item: None,
+                start,
+                containing_file_name: parent_note,
+                color_scheme,
+            },
+            _ => Self {
+                parent_name,
+                description,
+                link: Destination::Broken(link, None),
+                preview_item: None,
+                display_item: None,
+                start,
+                containing_file_name: parent_note,
+                color_scheme,
+            },
+        }
+    }
     pub fn new(
         description: String,
         link: String,
         parent_note: PathBuf,
         parent_name: String,
         url: &Regex,
+        has_line_suffix: &Regex,
         start: EditorPosition,
         color_scheme: ColorScheme,
     ) -> Self {
@@ -215,45 +322,15 @@ impl Link {
                 color_scheme,
             }
         } else {
-            let link = PathBuf::from(&link);
-            let mut link = env_substitute::substitute(link);
-            if link.is_relative() {
-                link = parent_note.as_path().parent().unwrap().join(link);
-            }
-            if link.is_file() {
-                Self {
-                    parent_name,
-                    description,
-                    link: Destination::File { file: link },
-                    preview_item: None,
-                    display_item: None,
-                    start,
-                    containing_file_name: parent_note,
-                    color_scheme,
-                }
-            } else if link.is_dir() {
-                Self {
-                    parent_name,
-                    description,
-                    link: Destination::Dir { dir: link },
-                    preview_item: None,
-                    display_item: None,
-                    start,
-                    containing_file_name: parent_note,
-                    color_scheme,
-                }
-            } else {
-                Self {
-                    parent_name,
-                    description,
-                    link: Destination::Broken(link),
-                    preview_item: None,
-                    display_item: None,
-                    start,
-                    containing_file_name: parent_note,
-                    color_scheme,
-                }
-            }
+            Self::fs_link(
+                description,
+                link,
+                parent_note,
+                parent_name,
+                has_line_suffix,
+                start,
+                color_scheme,
+            )
         }
     }
 }

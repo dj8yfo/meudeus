@@ -67,7 +67,10 @@ pub(crate) async fn stack_select(
             }
             Action::Pop(note) => {
                 let name = note.name();
-                db.lock().await.pop_note_from_stack(GLOBAL_STACK, &name).await?;
+                db.lock()
+                    .await
+                    .pop_note_from_stack(GLOBAL_STACK, &name)
+                    .await?;
                 println!(
                     "{}",
                     format_two_tokens("popped ", &format!("{name} from {GLOBAL_STACK}"))

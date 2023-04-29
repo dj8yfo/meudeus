@@ -11,7 +11,7 @@ use crate::{
 use async_recursion::async_recursion;
 use colored::Colorize;
 use syntect::easy::HighlightLines;
-use termtree::Tree;
+use bidir_termtree::{Tree, Down};
 
 use super::Note;
 use duct::cmd;
@@ -80,7 +80,7 @@ impl NoteTaskItemTerm {
             _ => 0,
         }
     }
-    pub fn parse(input: &[TaskItem], group_by_top_level: bool, mono: bool) -> Vec<Tree<Self>> {
+    pub fn parse(input: &[TaskItem], group_by_top_level: bool, mono: bool) -> Vec<Tree<Self, Down>> {
         let mut result = vec![];
         let mut subrange_end = 0;
         let mut index = 0;
@@ -179,7 +179,7 @@ impl Note {
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
         straight: bool,
-    ) -> SqlxResult<(Tree<NoteTaskItemTerm>, HashSet<Note>)> {
+    ) -> SqlxResult<(Tree<NoteTaskItemTerm, Down>, HashSet<Note>)> {
         let mut tree = Tree::new(NoteTaskItemTerm::Note(self.clone()));
         all_reachable.insert(self.clone());
 

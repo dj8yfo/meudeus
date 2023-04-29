@@ -2,13 +2,13 @@ use std::{borrow::Cow, fmt::Display};
 
 use duct::cmd;
 use skim::{AnsiString, DisplayContext, ItemPreview, PreviewContext, SkimItem};
-use termtree::Tree;
+use bidir_termtree::{Tree, Down};
 
 use crate::{note::NoteTaskItemTerm, Yank};
 
 #[derive(Clone)]
 pub struct TaskTreeWrapper {
-    pub data: (Tree<NoteTaskItemTerm>, Tree<NoteTaskItemTerm>),
+    pub data: (Tree<NoteTaskItemTerm, Down>, Tree<NoteTaskItemTerm, Down>),
     pub display_item: Option<AnsiString<'static>>,
     pub preview_item: Option<String>,
     pub mono_preview_item: Option<String>,

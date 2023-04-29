@@ -49,7 +49,7 @@ It links to external tools, such as `bat` via [config](./config.kdl).
   ```
 
   ```
-  meudeus v0.17.0
+  meudeus v0.17.1
   a skim shredder for plain-text papers
 
   Usage: mds [OPTIONS] <COMMAND>

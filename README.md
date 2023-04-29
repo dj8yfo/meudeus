@@ -6,6 +6,19 @@
 
 # [Installation](./INSTALLATION.md)
 
+# About
+
+`mds` is a cli tool for
+1. navigating a collection of markdown notes
+2. creating new notes and linking them together. Notes' metadata and inter-note links are stored outside of them in .sqlite database.
+3. opening `[description](links)` found inside of markdown notes
+4. jumping to these `[description](links)`' location in markdown in editor (if one needs to change them)
+5. etc.
+
+It links to external tools, such as `bat` via [config](./config.kdl). 
+
+`mds` works with any *dumb* editor.  It doesn't require editor to have any kind of rich plugin system.
+
 # Overview
 
 1. All of `explore`, `surf` and `checkmark` commands start in `explore` mode.
@@ -18,7 +31,10 @@
   note subgraph respectively. This rendered `p/print` command somewhat redundant. 
 7. `explore` command can switch to `surf` or `checkmark` mode and then back to `explore` mode. `explore` command includes the functionality of most of other commands (`rename`, `delete`, `surf`, etc).
 8. `surf` command/mode may be used for searching for all `[description](url/file_path/dir_path)` markdown links and `'''code_block'''` found downwards from a note S, selected for `surf`.
-9. Destination in `[description](destination)` markdown links is matched against `world.surf-parsing.url-regex` regex in [config](./config.kdl). If it matches, it's considered a url link. Otherwise, it's considered local filesystem link, either absolute or relative (no `file://` protocol prefix required).   
+9. Destination in `[description](destination)` markdown links is matched against `world.surf-parsing.url-regex` regex in [config](./config.kdl). 
+  - If it matches, it's considered a url link. 
+  - Otherwise, it's considered local filesystem link, either absolute or relative (no `file://` protocol prefix required).   
+  - If `filesystem_link:37` matches `world.surf-parsing.file-dest-has-line-regex` regex in [config](./config.kdl) it's considered a `$FILE:$LINE` link. 
 10. `'''code_block'''` description is parsed as the first line of `'''code_block'''`, comments `# bash comment` or `// C comment` may be used for informative descriptions.
 11. Syntax in `'''code_block'''`can be hinted for highlight in preview by specifying tag \`\`\`syntax_tag, e.g. \`\`\`bash or \`\`\`javascript.
 11. `checkmark` command/mode may be used to parse out trees of `- [ ] description` task items and allows navigating/toggling them into `- [x] description` state.
@@ -33,7 +49,7 @@
   ```
 
   ```
-  meudeus v0.16.0
+  meudeus v0.17.0
   a skim shredder for plain-text papers
 
   Usage: mds [OPTIONS] <COMMAND>

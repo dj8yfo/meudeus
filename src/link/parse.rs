@@ -27,6 +27,7 @@ impl
         &'_ regex::Regex,
         &str,
         ColorScheme,
+        &'_ regex::Regex,
     )> for Link
 {
     fn from(
@@ -37,6 +38,7 @@ impl
             &'_ regex::Regex,
             &str,
             ColorScheme,
+            &'_ regex::Regex,
         ),
     ) -> Self {
         let captures = value.0;
@@ -49,6 +51,7 @@ impl
             value.1,
             value.2,
             value.3,
+            value.6,
             start,
             value.5,
         )
@@ -76,6 +79,7 @@ impl Link {
                     &surf.url_regex,
                     file_content,
                     color_scheme,
+                    &surf.has_line_regex,
                 )
                     .into(),
             );

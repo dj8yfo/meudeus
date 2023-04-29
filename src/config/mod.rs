@@ -25,6 +25,7 @@ pub struct SurfParsing {
     pub url_regex: Regex,
     pub markdown_reference_link_regex: Regex,
     pub task_item_regex: Regex,
+    pub has_line_regex: Regex,
 }
 
 #[derive(Debug, Clone)]
@@ -36,6 +37,7 @@ pub struct ExternalCommands {
 pub struct Preview {
     pub dir_cmd: CmdTemplate,
     pub file_cmd: CmdTemplate,
+    pub file_line_cmd: CmdTemplate,
 }
 
 #[derive(Debug, Clone)]
@@ -118,9 +120,22 @@ impl TryFrom<&KdlNode> for Preview {
 
         let file = file.try_into()?;
 
+        let file_line = value
+            .children()
+            .ok_or(anyhow!("`preview` should have children"))?
+            .get_args("file-line");
+
+        let file_line = file_line.try_into().map_err(|err| {
+            anyhow!(
+                "`world.external-commands.preview.file-line` config field problem: {}",
+                err
+            )
+        })?;
+
         Ok(Self {
             dir_cmd: dir,
             file_cmd: file,
+            file_line_cmd: file_line,
         })
     }
 }
@@ -187,14 +202,28 @@ impl TryFrom<&KdlNode> for SurfParsing {
             .ok_or(anyhow!("should be string"))?
             .to_string();
 
+        let file_dest_has_line_regex = value
+            .children()
+            .ok_or(anyhow!("`surf-parsing` should have children"))?
+            .get("file-dest-has-line-regex")
+            .ok_or(anyhow!("no `file-dest-has-line-regex` in config"))?
+            .get(0)
+            .ok_or(anyhow!("arg not found"))?
+            .value()
+            .as_string()
+            .ok_or(anyhow!("should be string"))?
+            .to_string();
+
         let url_regex = Regex::new(&url_regex)?;
         let markdown_reference_link_regex = Regex::new(&markdown_reference_link_regex)?;
         let task_item_regex = Regex::new(&task_item_regex)?;
+        let file_dest_has_line_regex = Regex::new(&file_dest_has_line_regex)?;
 
         Ok(Self {
             url_regex,
             markdown_reference_link_regex,
             task_item_regex,
+            has_line_regex: file_dest_has_line_regex,
         })
     }
 }

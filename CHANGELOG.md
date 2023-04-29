@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.17.1] - 2023-04-29
+
+### Features
+
+- Change direction of tree printed on toggling direction of links
+
+### Miscellaneous Tasks
+
+- Tag
+
 ## [0.17.0] - 2023-04-29
 
 ### Features

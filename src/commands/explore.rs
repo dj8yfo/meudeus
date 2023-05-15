@@ -55,6 +55,10 @@ pub(crate) async fn exec(
                 opened.open(external_commands.open.clone())?;
                 eprintln!("{}", format_two_tokens("viewed", &opened.name()));
             }
+            Some(Action::OpenXDG(opened)) => {
+                opened.open_xdg()?;
+                eprintln!("{}", format_two_tokens("viewed xdg", &opened.name()));
+            }
             Some(Action::Surf(surfed)) => {
                 if let Err(err) = surf_note(
                     surfed,
@@ -223,6 +227,7 @@ pub async fn iteration(
             preview_type,
         ),
         action @ Action::Open(..) => (out.next_items, Some(action), preview_type),
+        action @ Action::OpenXDG(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Rename(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Link(..) => (out.next_items, Some(action), preview_type),
         action @ Action::Unlink(..) => (out.next_items, Some(action), preview_type),

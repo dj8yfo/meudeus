@@ -1,8 +1,8 @@
 use std::{collections::HashSet, fmt::Display};
 
 use async_recursion::async_recursion;
+use bidir_termtree::{Down, Tree, Up};
 use colored::Colorize;
-use bidir_termtree::{Tree, Up, Down};
 
 use sqlx::Result as SqlxResult;
 
@@ -117,7 +117,7 @@ impl Note {
         Ok((tree, all_reachable))
     }
 
-#[async_recursion]
+    #[async_recursion]
     pub async fn construct_link_term_tree_up(
         &self,
         level: usize,

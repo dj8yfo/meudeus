@@ -16,6 +16,7 @@ use crate::{
 pub enum Action {
     Jump(Link),
     Open(Link),
+    OpenXDG(Link),
     Return(Note),
 }
 
@@ -24,6 +25,7 @@ impl Display for Action {
         match self {
             Self::Jump(link) => write!(f, "{} : {}", "jump", link),
             Self::Open(link) => write!(f, "{} : {}", "open", link),
+            Self::OpenXDG(link) => write!(f, "{} : {}", "open xdg", link),
             Self::Return(note) => write!(f, "{} : {}", "return to explore", note),
         }
     }
@@ -88,6 +90,7 @@ impl Iteration {
                         "ctrl-j:accept",
                         "ctrl-c:abort",
                         "ctrl-e:abort",
+                        "ctrl-o:accept",
                         "Enter:accept",
                         "ESC:abort",
                     ])
@@ -116,6 +119,13 @@ impl Iteration {
                 Key::Enter => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Action::Open(item.clone()));
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+                Key::Ctrl('o') => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Action::OpenXDG(item.clone()));
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));
                     }

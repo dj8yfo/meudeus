@@ -120,6 +120,14 @@ impl Open for Note {
             Ok(None)
         }
     }
+
+    fn open_xdg(&self) -> Result<(), opener::OpenError> {
+        if let Some(file_path) = self.file_path() {
+            opener::open(file_path)
+        } else {
+            Ok(())
+        }
+    }
 }
 
 impl Eq for Note {}

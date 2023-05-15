@@ -1,8 +1,8 @@
 use std::{borrow::Cow, fmt::Display};
 
+use bidir_termtree::{Down, Tree};
 use duct::cmd;
 use skim::{AnsiString, DisplayContext, ItemPreview, PreviewContext, SkimItem};
-use bidir_termtree::{Tree, Down};
 
 use crate::{note::NoteTaskItemTerm, Yank};
 

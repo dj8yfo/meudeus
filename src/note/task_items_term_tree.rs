@@ -9,9 +9,9 @@ use crate::{
     Jump,
 };
 use async_recursion::async_recursion;
+use bidir_termtree::{Down, Tree};
 use colored::Colorize;
 use syntect::easy::HighlightLines;
-use bidir_termtree::{Tree, Down};
 
 use super::Note;
 use duct::cmd;
@@ -80,7 +80,11 @@ impl NoteTaskItemTerm {
             _ => 0,
         }
     }
-    pub fn parse(input: &[TaskItem], group_by_top_level: bool, mono: bool) -> Vec<Tree<Self, Down>> {
+    pub fn parse(
+        input: &[TaskItem],
+        group_by_top_level: bool,
+        mono: bool,
+    ) -> Vec<Tree<Self, Down>> {
         let mut result = vec![];
         let mut subrange_end = 0;
         let mut index = 0;

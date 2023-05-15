@@ -26,6 +26,7 @@ pub(crate) struct Iteration {
 
 pub enum Action {
     Open(Note),
+    OpenXDG(Note),
     Link(Note),
     Unlink(Note),
     Back,
@@ -132,6 +133,7 @@ impl Iteration {
                     "ctrl-w:accept",
                     "ctrl-s:accept",
                     "ctrl-k:accept",
+                    "ctrl-o:accept",
                     "alt-r:accept",
                     "alt-l:accept",
                     "alt-u:accept",
@@ -170,6 +172,16 @@ impl Iteration {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::Open(item.clone()),
+                            next_items: vec![item.clone()],
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
+                Key::Ctrl('o') => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Out {
+                            action: Action::OpenXDG(item.clone()),
                             next_items: vec![item.clone()],
                         });
                     } else {

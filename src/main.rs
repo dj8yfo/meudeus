@@ -29,6 +29,8 @@ pub(crate) use database::Sqlite;
 
 trait Open {
     fn open(&self, cfg: OpenCfg) -> io::Result<Option<ExitStatus>>;
+
+    fn open_xdg(&self) -> Result<(), opener::OpenError>;
 }
 
 trait Jump {
@@ -55,8 +57,8 @@ fn load_theme(color: Color) -> Option<&'static Theme> {
 async fn main() {
     env_logger::init();
     let cmd = clap::Command::new("mds")
-        .version("v0.17.1")
-        .about("meudeus v0.17.1\na skim shredder for plain-text papers")
+        .version("v0.17.2")
+        .about("meudeus v0.17.2\na skim shredder for plain-text papers")
         .bin_name("mds")
         .arg(clap::arg!(-c --color  "whether color output should be forced"))
         .subcommand_required(true)

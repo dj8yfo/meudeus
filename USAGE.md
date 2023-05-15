@@ -7,7 +7,7 @@
   ```
 
   ```
-  meudeus v0.17.1
+  meudeus v0.17.2
   a skim shredder for plain-text papers
 
   Usage: mds [OPTIONS] <COMMAND>
@@ -23,7 +23,8 @@
     remove     remove note R, selected in skim interface [aliases: rm]
     rename     rename note R, selected in skim interface [aliases: mv]
     print      print subgraph of notes and links reachable downwards from selected note P [aliases: p]
-    explore    explore notes by <c-h> (backlinks) , <c-l> (links forward) [aliases: ex]
+    explore    explore notes by <c-h> (backlinks) , <c-l> (links forward) 
+                   [aliases: ex]
     surf       surf through all links and code snippets found downwards from selected note S
                    [aliases: s]
     stack      browse GLOBAL stack of notes [aliases: st]
@@ -67,6 +68,7 @@
  | Ctrl-c  | Abort                                                                        |
  | ESC | Abort                                                                            |
  | Enter | Open selected note in editor                                                   |
+ | Ctrl-o| Open selected note with `xdg-open` or `dio`, or its corresponding counterpart in the host operating system|
  | Ctrl-h  |  Populate skim selection with backlinks of selected note                     |
  | Ctrl-l  |  Populate skim selection with forward links of selected note                 |
  | Ctrl-t  |  Toggle preview type of notes                                                |
@@ -93,6 +95,7 @@
  | Ctrl-c  | Abort                                                                                |
  | ESC | Abort                                                                                    |
  | Enter | Open selected `[markdown link]()` with a command, depending on [markdown link]()'s type|
+ | Ctrl-o| Open selected link with `xdg-open` or `dio`, or its corresponding counterpart in the host operating system|
  | Ctrl-j  |  Jump to selected `[markdown link]()`'s position in editor                             |
  | Ctrl-e  |  Return to `explore` mode (in `explore` command) or abort `surf` command             |
 

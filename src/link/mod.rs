@@ -107,6 +107,38 @@ impl Open for Link {
             )),
         }
     }
+
+    fn open_xdg(&self) -> Result<(), opener::OpenError> {
+        match &self.link {
+            Destination::URL(url) => opener::open(url),
+
+            Destination::File { file, .. } | Destination::FileLine { file, .. } => {
+                opener::open(file)
+            }
+
+            Destination::Dir { dir, .. } => opener::open(dir),
+            Destination::Broken(broken, _line) => {
+                eprintln!(
+                    "{}",
+                    format_two_tokens(
+                        "cannot open broken: ",
+                        broken.to_str().unwrap_or("bad utf8")
+                    )
+                );
+                Err(opener::OpenError::Io(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "not possible for broken path",
+                )))
+            }
+            Destination::CodeBlock { .. } => {
+                eprintln!(
+                    "{}",
+                    format_two_tokens("cannot open code_block: ", "code_block")
+                );
+                Ok(())
+            }
+        }
+    }
 }
 
 impl Jump for Link {

@@ -98,6 +98,11 @@ pub(crate) async fn surf_note(
                 link.open(external_commands.clone().open)?;
                 eprintln!("{}", link.preview_item.as_ref().unwrap());
             }
+
+            SurfAction::OpenXDG(ref link) => {
+                link.open_xdg()?;
+                eprintln!("{}", link.preview_item.as_ref().unwrap());
+            }
             SurfAction::Jump(ref link) => {
                 link.jump(external_commands.clone().open)?;
                 eprintln!("{}", link.preview_item.as_ref().unwrap());

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.17.2] - 2023-05-15
+
+### Features
+
+- Implement open with `xdg-open` or `dio` via *C-o* binding from `surf` and `explore`; (`opener` crate)
+
+### Miscellaneous Tasks
+
+- .
+- Update readme
+
 ## [0.17.1] - 2023-04-29
 
 ### Features

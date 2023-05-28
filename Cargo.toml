@@ -1,11 +1,11 @@
 [package]
 name = "mds"
-version = "0.17.2"
+version = "0.18.0"
 author = ["dj8yf0μl"]
 description = "A skim-based `*.md` explore and surf note-taking tool"
 repository = "https://github.com/dj8yfo/meudeus"
 homepage = "https://youtu.be/z4DFN72QVSw"
-keywords = ["note-taking", "cli", "cli-glue", "skim", "markdown"]
+keywords = ["note-taking", "PKM", "cli", "skim", "markdown"]
 readme = "README.md"
 
 exclude = ["tutorial.gif"]
@@ -55,3 +55,6 @@ serde_json = "1.0.96"
 rgb = { version = "0.8", features = ["serde"] }
 env-substitute = "0.1.0"
 opener = "0.6.1"
+
+lazy_static = "1.4.0"
+tuikit = "*"

@@ -1,4 +1,4 @@
-use std::{fmt::Display, sync::Arc};
+use std::{collections::HashMap, fmt::Display, sync::Arc};
 
 use skim::{
     prelude::{unbounded, Key, SkimOptionsBuilder},
@@ -6,7 +6,7 @@ use skim::{
 };
 
 use crate::{
-    config::{color::ColorScheme, ExternalCommands},
+    config::{color::ColorScheme, keymap, ExternalCommands},
     highlight::MarkdownStatic,
     link::Link,
     note::Note,
@@ -37,7 +37,9 @@ pub(crate) struct Iteration {
     return_note: Note,
     md_static: MarkdownStatic,
     color_scheme: ColorScheme,
+    bindings_map: keymap::surf::Bindings,
 }
+
 impl Iteration {
     pub(crate) fn new(
         items: Vec<Link>,
@@ -46,6 +48,7 @@ impl Iteration {
         return_note: Note,
         md_static: MarkdownStatic,
         color_scheme: ColorScheme,
+        bindings_map: keymap::surf::Bindings,
     ) -> Self {
         Self {
             items: Some(items),
@@ -54,6 +57,7 @@ impl Iteration {
             return_note,
             md_static,
             color_scheme,
+            bindings_map,
         }
     }
 
@@ -77,7 +81,14 @@ impl Iteration {
 
         drop(tx);
 
+        let keys_descriptors = self.bindings_map.keys_descriptors();
         let out = tokio::task::spawn_blocking({
+            let mut bindings = vec!["ctrl-c:abort", "ESC:abort", "Enter:accept"];
+            bindings.extend(
+                keys_descriptors
+                    .into_iter()
+                    .map(|element| &*(Box::<str>::leak(element.into_boxed_str()))),
+            );
             let note_hint = format!("(surf: {}) > ", note_hint);
             move || {
                 let options = SkimOptionsBuilder::default()
@@ -86,14 +97,7 @@ impl Iteration {
                     .prompt(Some(&note_hint))
                     .preview_window(Some("up:50%"))
                     .multi(self.multi)
-                    .bind(vec![
-                        "ctrl-j:accept",
-                        "ctrl-c:abort",
-                        "ctrl-e:abort",
-                        "ctrl-o:accept",
-                        "Enter:accept",
-                        "ESC:abort",
-                    ])
+                    .bind(bindings)
                     .build()
                     .unwrap();
                 Skim::run_with(&options, Some(rx))
@@ -102,6 +106,8 @@ impl Iteration {
         .await
         .unwrap();
 
+        let bindings_map: HashMap<tuikit::key::Key, keymap::surf::Action> =
+            (&self.bindings_map).into();
         if let Some(out) = out {
             let selected_items = out
                 .selected_items
@@ -115,7 +121,12 @@ impl Iteration {
                 })
                 .collect::<Vec<Link>>();
 
-            match out.final_key {
+            let action = match out.final_key {
+                Key::Ctrl('c') | Key::ESC => {
+                    return Err(anyhow::anyhow!(
+                        "user chose to abort current iteration of surf cycle"
+                    ))
+                }
                 Key::Enter => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Action::Open(item.clone()));
@@ -123,33 +134,34 @@ impl Iteration {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
                 }
-                Key::Ctrl('o') => {
+                key @ Key::Ctrl(..) | key @ Key::Alt(..) => bindings_map.get(&key).cloned(),
+
+                _ => {
+                    unreachable!();
+                }
+            };
+            let Some(action) = action else {
+                unreachable!("an unspecified keybinding isn't expected to pick None from Hashmap<Key, Action>");
+            };
+            match action {
+                keymap::surf::Action::OpenXDG => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Action::OpenXDG(item.clone()));
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
                 }
-                Key::Ctrl('j') => {
+                keymap::surf::Action::JumpToLinkOrSnippet => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Action::Jump(item.clone()));
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
                 }
-
-                Key::Ctrl('e') => {
+                keymap::surf::Action::ReturnToExplore => {
                     return Ok(Action::Return(self.return_note));
                 }
-                Key::Ctrl('c') | Key::ESC => {
-                    return Err(anyhow::anyhow!(
-                        "user chose to abort current iteration of surf cycle"
-                    ))
-                }
-                _ => {
-                    unreachable!();
-                }
-            };
+            }
         } else {
             return Err(anyhow::anyhow!("skim internal errors"));
         }

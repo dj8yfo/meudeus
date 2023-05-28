@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, collections::HashMap};
 
 use skim::{
     prelude::{unbounded, Key, SkimOptionsBuilder},
@@ -6,7 +6,7 @@ use skim::{
 };
 
 use crate::{
-    config::{color::ColorScheme, ExternalCommands, SurfParsing},
+    config::{color::ColorScheme, ExternalCommands, SurfParsing, keymap},
     database::SqliteAsyncHandle,
     highlight::MarkdownStatic,
     note::{DynResources, Note, PreviewType},
@@ -31,6 +31,7 @@ pub(crate) struct Iteration {
     color_scheme: ColorScheme,
     straight: bool,
     nested_threshold: usize,
+    bindings_map: keymap::stack::Bindings,
 }
 
 impl Iteration {
@@ -46,6 +47,7 @@ impl Iteration {
         color_scheme: ColorScheme,
         straight: bool,
         nested_threshold: usize,
+        bindings_map: keymap::stack::Bindings,
     ) -> Self {
         Self {
             items: Some(items),
@@ -59,6 +61,7 @@ impl Iteration {
             color_scheme,
             straight,
             nested_threshold,
+            bindings_map,
         }
     }
 
@@ -98,7 +101,14 @@ impl Iteration {
         });
 
         let hint = self.hint;
+        let keys_descriptors = self.bindings_map.keys_descriptors();
         let out = tokio::task::spawn_blocking(move || {
+            let mut bindings = vec!["ctrl-c:abort", "ESC:abort", "Enter:accept"];
+            bindings.extend(
+                keys_descriptors
+                    .into_iter()
+                    .map(|element| &*(Box::<str>::leak(element.into_boxed_str()))),
+            );
             let hint = format!("({hint}) > ");
             let options = SkimOptionsBuilder::default()
                 .height(Some("100%"))
@@ -106,14 +116,7 @@ impl Iteration {
                 .prompt(Some(&hint))
                 .preview_window(Some("up:60%"))
                 .multi(self.multi)
-                .bind(vec![
-                    "ctrl-t:accept",
-                    "ctrl-c:abort",
-                    "alt-p:accept",
-                    "alt-t:accept",
-                    "Enter:accept",
-                    "ESC:abort",
-                ])
+                .bind(bindings)
                 .build()
                 .unwrap();
 
@@ -122,6 +125,8 @@ impl Iteration {
         .await
         .unwrap();
 
+        let bindings_map: HashMap<tuikit::key::Key, keymap::stack::Action> =
+            (&self.bindings_map).into();
         if let Some(out) = out {
             let selected_items = out
                 .selected_items
@@ -135,7 +140,12 @@ impl Iteration {
                 })
                 .collect::<Vec<Note>>();
 
-            match out.final_key {
+            let action = match out.final_key {
+                Key::Ctrl('c') | Key::ESC => {
+                    return Err(anyhow::anyhow!(
+                        "user chose to abort current iteration of open cycle"
+                    ))
+                }
                 Key::Enter => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Action::Select(item.clone()));
@@ -143,36 +153,37 @@ impl Iteration {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
                 }
-                Key::Ctrl('t') => {
+                key @ Key::Ctrl(..) | key @ Key::Alt(..) => bindings_map.get(&key).cloned(),
+                _ => {
+                    unreachable!();
+                }
+            };
+            let Some(action) = action else {
+                unreachable!("an unspecified keybinding isn't expected to pick None from Hashmap<Key, Action>");
+            };
+            match action {
+                keymap::stack::Action::TogglePreviewType => {
                     if let Some(_item) = selected_items.first() {
                         return Ok(Action::TogglePreview);
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
                 }
-                Key::Alt('p') => {
+                keymap::stack::Action::PopNoteFromStack => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Action::Pop(item.clone()));
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
                 }
-                Key::Alt('t') => {
+                keymap::stack::Action::MoveNoteToStackTop => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Action::MoveTopmost(item.clone()));
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
                 }
-                Key::Ctrl('c') | Key::ESC => {
-                    return Err(anyhow::anyhow!(
-                        "user chose to abort current iteration of open cycle"
-                    ))
-                }
-                _ => {
-                    unreachable!();
-                }
-            };
+            }
         } else {
             return Err(anyhow::anyhow!("skim internal errors"));
         }

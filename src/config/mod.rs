@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::{fs, path::PathBuf};
 
 use kdl::{KdlDocument, KdlNode};
@@ -6,18 +7,21 @@ use regex::Regex;
 use crate::print::format_two_tokens;
 use anyhow::anyhow;
 
-use self::{cmd_template::CmdTemplate, color::ColorScheme};
+use self::{cmd_template::CmdTemplate, color::ColorScheme, keymap::Keymap};
 
 pub mod cmd_template;
 pub mod color;
+#[macro_use]
+pub mod keymap;
 
 static PROGRAM_NAME: &str = "mds";
 #[derive(Debug)]
 pub struct Config {
-    pub work_dir: PathBuf,
+    pub work_dir: WorkDir,
     pub surf_parsing: SurfParsing,
     pub external_commands: ExternalCommands,
     pub color: Color,
+    pub keymap: Keymap,
 }
 
 #[derive(Debug, Clone)]
@@ -260,17 +264,16 @@ impl TryFrom<&KdlNode> for Color {
         })
     }
 }
-impl Config {
-    pub fn get_work_dir(doc: &KdlDocument) -> anyhow::Result<PathBuf> {
-        let work_dir = doc
-            .get("world")
-            .ok_or(anyhow!("no `world` node in config"))?
-            .children()
-            .ok_or(anyhow!("`world` should have children"))?
-            .get("notes-work-dir")
-            .ok_or(anyhow!("no `world.notes-work-dir` node in config"))?;
 
-        let string = work_dir
+#[derive(Debug, Clone)]
+pub struct WorkDir(pub PathBuf);
+
+impl TryFrom<&KdlNode> for WorkDir {
+    type Error = anyhow::Error;
+
+    fn try_from(value: &KdlNode) -> Result<Self, Self::Error> {
+
+        let string = value
             .get(0)
             .ok_or(anyhow!("arg not found"))?
             .value()
@@ -278,8 +281,12 @@ impl Config {
             .ok_or(anyhow!("should be string"))?
             .to_string();
 
-        Ok(PathBuf::from(string))
+        Ok(Self(PathBuf::from(string)))
     }
+    
+}
+
+impl Config {
 
     pub fn parse() -> anyhow::Result<Self> {
         let xdg_dirs = xdg::BaseDirectories::with_prefix(PROGRAM_NAME)?;
@@ -296,40 +303,51 @@ impl Config {
         let config_file = fs::read_to_string(config_path)?;
 
         let doc: KdlDocument = config_file.parse()?;
-        let work_dir = Self::get_work_dir(&doc)?;
-        let surf_parsing = doc
+        let world_node = doc
             .get("world")
-            .ok_or(anyhow!("no `world` node in config"))?
-            .children()
-            .ok_or(anyhow!("`world` should have children"))?
-            .get("surf-parsing")
-            .ok_or(anyhow!("no `world.surf-parsing` node in config"))?;
+            .ok_or(anyhow!("no `world` node in config"))?;
 
-        let external_commands = doc
-            .get("world")
-            .ok_or(anyhow!("no `world` node in config"))?
-            .children()
-            .ok_or(anyhow!("`world` should have children"))?
-            .get("external-commands")
-            .ok_or(anyhow!("no `world.external-commands` node in config"))?;
-
-        let color = doc
-            .get("world")
-            .ok_or(anyhow!("no `world` node in config"))?
-            .children()
-            .ok_or(anyhow!("`world` should have children"))?
-            .get("color")
-            .ok_or(anyhow!("no `world.color` node in config"))?;
-
-        let surf_parsing = surf_parsing.try_into()?;
-        let external_commands = external_commands.try_into()?;
-
-        let color = color.try_into()?;
-        Ok(Self {
-            surf_parsing,
-            work_dir,
-            external_commands,
-            color,
-        })
+        let result: Self = world_node.try_into()?;
+        Ok(result)
     }
 }
+
+
+macro_rules! impl_try_from_kdl_node_tagged {
+    ($type: ident, $parent: expr, $($tag: expr => $field: ident),+ ) => (
+
+        impl TryFrom<&KdlNode> for $type {
+            type Error = anyhow::Error;
+
+            fn try_from(value: &KdlNode) -> Result<Self, Self::Error> {
+                let result = {
+                    let tags = [$($tag),+];
+                    let mut hashmap: HashMap<&'static str, &'_ KdlNode> = HashMap::new();
+                    for tag in tags {
+
+                        let node = value
+                            .children()
+                            .ok_or(anyhow!("`{}` should have children", $parent))?
+                            .get(tag)
+                            .ok_or(anyhow!(format!("no `{}.{}` in config", $parent, tag)))?;
+                        hashmap.insert(tag, node);
+                    }
+                    $type {
+                        $($field: hashmap[$tag].try_into()?),+
+
+                    }
+                };
+
+                Ok(result)
+
+            }
+        }
+    )
+}
+
+impl_try_from_kdl_node_tagged!(Config, "world", 
+    "surf-parsing" => surf_parsing, 
+    "notes-work-dir" => work_dir, 
+    "external-commands" => external_commands, 
+    "color" => color, 
+    "keymap" => keymap);

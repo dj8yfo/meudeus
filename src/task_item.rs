@@ -193,7 +193,7 @@ mod tests {
             &list[4],
             &TaskItem {
                 title: "in development <Tue Mar 21 08:20:37 PM EET 2023>".to_string(),
-                title_markdown: "\u{1b}[48;2;45;45;45m\u{1b}[38;2;211;208;200min development \u{1b}[48;2;45;45;45m\u{1b}[38;2;211;208;200m<\u{1b}[48;2;45;45;45m\u{1b}[38;2;211;208;200mTue Mar 21 08:20:37 PM EET 2023>  ".to_string(),
+                title_markdown: "\u{1b}[48;2;45;45;45m\u{1b}[38;2;211;208;200min development \u{1b}[48;2;45;45;45m\u{1b}[38;2;211;208;200m<\u{1b}[48;2;45;45;45m\u{1b}[38;2;211;208;200mTue Mar 21 08:20:37 PM EET 2023> \u{1b}[38;2;0;0;0m \u{1b}[0m".to_string(),
 
                 nested_level: 3,
                 completed: true,
@@ -203,8 +203,8 @@ mod tests {
                 next_index: None,
             }
         );
-        for el in list {
-            println!("{:#?}", el);
-        }
+        // for el in list {
+        //     println!("{:#?}", el);
+        // }
     }
 }

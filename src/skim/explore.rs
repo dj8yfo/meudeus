@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, collections::HashMap};
 
 use skim::{
     prelude::{unbounded, Key, SkimOptionsBuilder},
@@ -6,7 +6,7 @@ use skim::{
 };
 
 use crate::{
-    config::{color::ColorScheme, ExternalCommands, SurfParsing},
+    config::{color::ColorScheme, ExternalCommands, SurfParsing, keymap},
     database::SqliteAsyncHandle,
     highlight::MarkdownStatic,
     note::{DynResources, Note, PreviewType},
@@ -22,6 +22,7 @@ pub(crate) struct Iteration {
     color_scheme: ColorScheme,
     straight: bool,
     nested_threshold: usize,
+    bindings_map: keymap::explore::Bindings,
 }
 
 pub enum Action {
@@ -63,6 +64,7 @@ impl Iteration {
         color_scheme: ColorScheme,
         straight: bool,
         nested_threshold: usize,
+        bindings_map: keymap::explore::Bindings,
     ) -> Self {
         Self {
             items: Some(items),
@@ -74,6 +76,7 @@ impl Iteration {
             color_scheme,
             straight,
             nested_threshold,
+            bindings_map,
         }
     }
     pub(crate) async fn run(mut self) -> anyhow::Result<Out> {
@@ -116,37 +119,21 @@ impl Iteration {
 
         let dir = if self.straight { "forward" } else { "backward" };
         let hint = format!("(explore; {}) > ", dir);
+        let keys_descriptors = self.bindings_map.keys_descriptors();
         let out = tokio::task::spawn_blocking(move || {
+            let mut bindings = vec!["ctrl-c:abort", "ESC:abort", "Enter:accept"];
+            bindings.extend(
+                keys_descriptors
+                    .into_iter()
+                    .map(|element| &*(Box::<str>::leak(element.into_boxed_str()))),
+            );
             let options = SkimOptionsBuilder::default()
                 .height(Some("100%"))
                 .preview_window(Some("up:70%"))
                 .preview(Some(""))
                 .prompt(Some(&hint))
                 .multi(true)
-                .bind(vec![
-                    "ctrl-c:abort",
-                    "Enter:accept",
-                    "ESC:abort",
-                    "ctrl-h:accept",
-                    "ctrl-l:accept",
-                    "ctrl-t:accept",
-                    "ctrl-w:accept",
-                    "ctrl-s:accept",
-                    "ctrl-k:accept",
-                    "ctrl-o:accept",
-                    "alt-r:accept",
-                    "alt-l:accept",
-                    "alt-u:accept",
-                    "alt-d:accept",
-                    "alt-c:accept",
-                    "alt-f:accept",
-                    "alt-s:accept",
-                    "alt-n:accept",
-                    "alt-o:accept",
-                    "alt-p:accept",
-                    "alt-a:accept",
-                    "ctrl-a:accept",
-                ])
+                .bind(bindings)
                 .build()
                 .unwrap();
             Skim::run_with(&options, Some(rx))
@@ -154,6 +141,8 @@ impl Iteration {
         .await
         .unwrap();
 
+        let bindings_map: HashMap<tuikit::key::Key, keymap::explore::Action> =
+            (&self.bindings_map).into();
         if let Some(out) = out {
             let selected_items = out
                 .selected_items
@@ -167,21 +156,11 @@ impl Iteration {
                 })
                 .collect::<Vec<Note>>();
 
-            match out.final_key {
+            let action = match out.final_key {
                 Key::Enter => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::Open(item.clone()),
-                            next_items: vec![item.clone()],
-                        });
-                    } else {
-                        return Err(anyhow::anyhow!("no item selected"));
-                    }
-                }
-                Key::Ctrl('o') => {
-                    if let Some(item) = selected_items.first() {
-                        return Ok(Out {
-                            action: Action::OpenXDG(item.clone()),
                             next_items: vec![item.clone()],
                         });
                     } else {
@@ -193,8 +172,27 @@ impl Iteration {
                         "user chose to abort current iteration of explore cycle"
                     ))
                 }
+                key @ Key::Ctrl(..) | key @ Key::Alt(..) => bindings_map.get(&key).cloned(),
+                _ => {
+                    unreachable!();
+                }
+            };
+            let Some(action) = action else {
+                unreachable!("an unspecified keybinding isn't expected to pick None from Hashmap<Key, Action>");
+            };
+            match action {
+                keymap::explore::Action::OpenXDG => {
+                    if let Some(item) = selected_items.first() {
+                        return Ok(Out {
+                            action: Action::OpenXDG(item.clone()),
+                            next_items: vec![item.clone()],
+                        });
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
 
-                Key::Ctrl('h') => {
+                keymap::explore::Action::PopulateSearchWithBacklinks => {
                     if let Some(item) = selected_items.first() {
                         let mut next = item
                             .fetch_backlinks(
@@ -216,7 +214,7 @@ impl Iteration {
                     }
                 }
 
-                Key::Ctrl('l') => {
+                keymap::explore::Action::PopulateSearchWithForwardlinks => {
                     if let Some(item) = selected_items.first() {
                         let mut next = item
                             .fetch_forward_links(
@@ -238,7 +236,7 @@ impl Iteration {
                     }
                 }
 
-                Key::Ctrl('t') => {
+                keymap::explore::Action::TogglePreviewType => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::TogglePreview,
@@ -249,14 +247,14 @@ impl Iteration {
                     }
                 }
 
-                Key::Ctrl('w') => {
+                keymap::explore::Action::WidenToAllNotes => {
                     return Ok(Out {
                         action: Action::Widen,
                         next_items: vec![],
                     });
                 }
 
-                Key::Alt('r') => {
+                keymap::explore::Action::RenameNote => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::Rename(item.clone()),
@@ -267,7 +265,7 @@ impl Iteration {
                     }
                 }
 
-                Key::Alt('l') => {
+                keymap::explore::Action::LinkFromSelectedNote => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::Link(item.clone()),
@@ -278,7 +276,7 @@ impl Iteration {
                     }
                 }
 
-                Key::Alt('u') => {
+                keymap::explore::Action::UnlinkFromSelectedNote => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::Unlink(item.clone()),
@@ -289,7 +287,7 @@ impl Iteration {
                     }
                 }
 
-                Key::Alt('d') => {
+                keymap::explore::Action::RemoveNote => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::Remove(item.clone()),
@@ -300,7 +298,7 @@ impl Iteration {
                     }
                 }
 
-                Key::Alt('c') => {
+                keymap::explore::Action::CreateAutolinkedNote => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::CreateLinkedFrom(item.clone()),
@@ -311,7 +309,7 @@ impl Iteration {
                     }
                 }
 
-                Key::Ctrl('s') => {
+                keymap::explore::Action::SurfNoteSubtree => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::Surf(item.clone()),
@@ -322,7 +320,7 @@ impl Iteration {
                     }
                 }
 
-                Key::Alt('f') => {
+                keymap::explore::Action::ToggleLinksDirection => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::InvertLinks,
@@ -333,7 +331,7 @@ impl Iteration {
                     }
                 }
 
-                Key::Alt('s') => {
+                keymap::explore::Action::SpliceReachableChildrenOfNote => {
                     if let Some(item) = selected_items.first() {
                         let next = item
                             .reachable_notes(
@@ -353,14 +351,14 @@ impl Iteration {
                     }
                 }
 
-                Key::Alt('n') => {
+                keymap::explore::Action::NarrowSelection => {
                     return Ok(Out {
                         action: Action::Narrow,
                         next_items: selected_items,
                     });
                 }
 
-                Key::Alt('p') => {
+                keymap::explore::Action::IncreaseUnlistedThreshold => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::IncreaseUnlistedThreshold,
@@ -371,7 +369,7 @@ impl Iteration {
                     }
                 }
 
-                Key::Alt('o') => {
+                keymap::explore::Action::DccreaseUnlistedThreshold => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::DecreaseUnlistedThreshold,
@@ -382,7 +380,7 @@ impl Iteration {
                     }
                 }
 
-                Key::Alt('a') => {
+                keymap::explore::Action::PushNoteToStack => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::PushToStack(item.clone()),
@@ -392,7 +390,7 @@ impl Iteration {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
                 }
-                Key::Ctrl('a') => {
+                keymap::explore::Action::SwitchModeToStack => {
                     if let Some(_item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::SwitchToStack,
@@ -402,7 +400,7 @@ impl Iteration {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
                 }
-                Key::Ctrl('k') => {
+                keymap::explore::Action::CheckmarkNote => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::Checkmark(item.clone()),
@@ -412,10 +410,8 @@ impl Iteration {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
                 }
-                _ => {
-                    unreachable!();
-                }
-            };
+                
+            }
         } else {
             return Err(anyhow::anyhow!("skim internal errors"));
         }

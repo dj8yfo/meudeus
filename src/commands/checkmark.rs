@@ -2,7 +2,7 @@ use futures::future::join_all;
 use syntect::easy::HighlightLines;
 
 use crate::{
-    config::{color::ColorScheme, ExternalCommands, SurfParsing},
+    config::{color::ColorScheme, keymap, ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
     note::{Note, NoteTaskItemTerm, PreviewType},
@@ -21,6 +21,8 @@ pub(crate) async fn exec(
     external_commands: ExternalCommands,
     md_static: MarkdownStatic,
     color_scheme: ColorScheme,
+    bindings_map: keymap::checkmark::Bindings,
+    explore_bindings_map: keymap::explore::Bindings,
 ) -> Result<String, anyhow::Error> {
     let mut list = db.lock().await.list(md_static, color_scheme).await?;
 
@@ -37,6 +39,7 @@ pub(crate) async fn exec(
             color_scheme,
             true,
             nested_threshold,
+            explore_bindings_map.clone(),
         )
         .await?;
         preview_type = preview_type_after;
@@ -46,7 +49,7 @@ pub(crate) async fn exec(
             break opened;
         }
     };
-    let _note = checkmark_note(note, &external_commands, &surf, md_static).await?;
+    let _note = checkmark_note(note, &external_commands, &surf, md_static, bindings_map).await?;
     Ok("success".to_string())
 }
 
@@ -55,11 +58,12 @@ pub(crate) async fn checkmark_note(
     external_commands: &ExternalCommands,
     surf: &SurfParsing,
     md_static: MarkdownStatic,
+    bindings_map: keymap::checkmark::Bindings,
 ) -> Result<Note, anyhow::Error> {
     let mut next_tasks_window = None;
     let mut tasks = read_tasks_from_file(&note, &surf, md_static).await?;
     loop {
-        let action = CheckmarkIteration::new(tasks, note.clone()).run()?;
+        let action = CheckmarkIteration::new(tasks, note.clone(), bindings_map.clone()).run()?;
         next_tasks_window = match action {
             TaskAction::Toggle(selected_tasks) => {
                 for task in selected_tasks {

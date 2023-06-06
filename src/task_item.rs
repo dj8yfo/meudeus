@@ -87,7 +87,7 @@ impl TaskItem {
             let result = Self::parse_string(
                 file_path,
                 &file_content,
-                &surf.task_item_regex,
+                &surf.task_item_regex.0,
                 highlighter,
                 md_static,
             );

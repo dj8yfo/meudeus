@@ -1,8 +1,8 @@
 use kdl::KdlNode;
 
 use super::single_key::SingleKey;
+use crate::config::KdlNodeErrorType;
 use crate::{impl_from_self_into_action_hashmap, impl_try_from_kdl_node_uniqueness_check};
-use anyhow::anyhow;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone)]
@@ -21,7 +21,7 @@ pub enum Action {
 
 impl_try_from_kdl_node_uniqueness_check!(
     SurfKeymap,
-    "surf",
+    "world.keymap.surf",
     open_xdg,
     jump_to_link_or_snippet,
     return_to_explore

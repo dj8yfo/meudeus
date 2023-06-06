@@ -50,7 +50,6 @@ pub(crate) async fn exec(
             straight,
             nested_threshold,
             explore_bindings_map.clone(),
-
         )
         .await?;
         preview_type = preview_type_after;

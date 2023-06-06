@@ -3,7 +3,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 
 use crate::{
-    config::{color::ColorScheme, ExternalCommands, SurfParsing, keymap},
+    config::{color::ColorScheme, keymap, ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
     note::{Note, PreviewType},
@@ -21,10 +21,17 @@ pub(crate) async fn exec(
     color_scheme: ColorScheme,
     bindings_map: keymap::stack::Bindings,
 ) -> Result<String, anyhow::Error> {
-    let note = stack_select(db, external_commands, surf_parsing, md_static, color_scheme, bindings_map).await?;
+    let note = stack_select(
+        db,
+        external_commands,
+        surf_parsing,
+        md_static,
+        color_scheme,
+        bindings_map,
+    )
+    .await?;
     Ok(note.name())
 }
-
 
 pub(crate) async fn stack_select(
     db: SqliteAsyncHandle,

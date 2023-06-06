@@ -1,8 +1,8 @@
+use crate::config::KdlNodeErrorType;
 use kdl::KdlNode;
 use std::collections::{HashMap, HashSet};
-use anyhow::anyhow;
 
-use crate::{impl_try_from_kdl_node_uniqueness_check, impl_from_self_into_action_hashmap};
+use crate::{impl_from_self_into_action_hashmap, impl_try_from_kdl_node_uniqueness_check};
 
 use super::single_key::SingleKey;
 
@@ -10,7 +10,7 @@ use super::single_key::SingleKey;
 pub enum Action {
     OpenXDG,
     PopulateSearchWithBacklinks,
-    PopulateSearchWithForwardlinks,    
+    PopulateSearchWithForwardlinks,
     TogglePreviewType,
     WidenToAllNotes,
     SurfNoteSubtree,
@@ -33,7 +33,7 @@ pub enum Action {
 pub struct ExploreKeymap {
     pub open_xdg: SingleKey,
     pub populate_search_with_backlinks: SingleKey,
-    pub populate_search_with_forwardlinks: SingleKey,    
+    pub populate_search_with_forwardlinks: SingleKey,
     pub toggle_preview_type: SingleKey,
     pub widen_to_all_notes: SingleKey,
     pub surf_note_subtree: SingleKey,
@@ -54,10 +54,10 @@ pub struct ExploreKeymap {
 
 impl_try_from_kdl_node_uniqueness_check!(
     ExploreKeymap,
-    "explore",
+    "world.keymap.explore",
     open_xdg,
     populate_search_with_backlinks,
-    populate_search_with_forwardlinks,    
+    populate_search_with_forwardlinks,
     toggle_preview_type,
     widen_to_all_notes,
     surf_note_subtree,
@@ -79,7 +79,7 @@ impl_try_from_kdl_node_uniqueness_check!(
 impl_from_self_into_action_hashmap!(ExploreKeymap, Action,
     Action::OpenXDG => open_xdg,
     Action::PopulateSearchWithBacklinks => populate_search_with_backlinks,
-    Action::PopulateSearchWithForwardlinks => populate_search_with_forwardlinks,    
+    Action::PopulateSearchWithForwardlinks => populate_search_with_forwardlinks,
     Action::TogglePreviewType => toggle_preview_type,
     Action::WidenToAllNotes => widen_to_all_notes,
     Action::SurfNoteSubtree => surf_note_subtree,

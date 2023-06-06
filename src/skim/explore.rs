@@ -1,4 +1,4 @@
-use std::{sync::Arc, collections::HashMap};
+use std::{collections::HashMap, sync::Arc};
 
 use skim::{
     prelude::{unbounded, Key, SkimOptionsBuilder},
@@ -6,7 +6,7 @@ use skim::{
 };
 
 use crate::{
-    config::{color::ColorScheme, ExternalCommands, SurfParsing, keymap},
+    config::{color::ColorScheme, keymap, ExternalCommands, SurfParsing},
     database::SqliteAsyncHandle,
     highlight::MarkdownStatic,
     note::{DynResources, Note, PreviewType},
@@ -410,7 +410,6 @@ impl Iteration {
                         return Err(anyhow::anyhow!("no item selected"));
                     }
                 }
-                
             }
         } else {
             return Err(anyhow::anyhow!("skim internal errors"));

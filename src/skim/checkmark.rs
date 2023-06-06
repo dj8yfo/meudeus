@@ -1,4 +1,4 @@
-use std::{sync::Arc, collections::HashMap};
+use std::{collections::HashMap, sync::Arc};
 
 use skim::{
     prelude::{unbounded, Key, SkimOptionsBuilder},
@@ -123,7 +123,6 @@ impl Iteration {
                             let next_index = match task.next_index {
                                 Some(next_index) => next_index,
                                 None => task.self_index + 1,
-                                
                             };
                             (task.self_index, next_index)
                         }

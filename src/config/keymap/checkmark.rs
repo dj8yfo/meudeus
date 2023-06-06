@@ -1,7 +1,7 @@
+use crate::config::KdlNodeErrorType;
 use kdl::KdlNode;
 
 use crate::{impl_from_self_into_action_hashmap, impl_try_from_kdl_node_uniqueness_check};
-use anyhow::anyhow;
 use std::collections::{HashMap, HashSet};
 
 use super::single_key::SingleKey;
@@ -26,7 +26,7 @@ pub enum Action {
 
 impl_try_from_kdl_node_uniqueness_check!(
     CheckmarkKeymap,
-    "checkmark",
+    "world.keymap.checkmark",
     jump_to_task,
     copy_task_subtree_into_clipboard,
     widen_context_to_all_tasks,

@@ -58,3 +58,5 @@ opener = "0.6.1"
 
 lazy_static = "1.4.0"
 tuikit = "*"
+miette = { version = "5.9.0", features = ["fancy"] }
+thiserror = "1.0.40"

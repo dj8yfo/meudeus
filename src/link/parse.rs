@@ -69,6 +69,7 @@ impl Link {
     ) {
         for link in surf
             .markdown_reference_link_regex
+            .0
             .captures_iter(file_content)
         {
             result.push(
@@ -76,10 +77,10 @@ impl Link {
                     link,
                     file_path.clone(),
                     note.name(),
-                    &surf.url_regex,
+                    &surf.url_regex.0,
                     file_content,
                     color_scheme,
-                    &surf.has_line_regex,
+                    &surf.has_line_regex.0,
                 )
                     .into(),
             );

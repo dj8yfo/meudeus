@@ -4,7 +4,7 @@ extern crate sql_builder;
 use clap::ArgMatches;
 
 use colored::Colorize;
-use config::{Color, Open as OpenCfg};
+use config::{color::Color, Open as OpenCfg};
 use highlight::static_markdown_syntax;
 use std::{
     env, io,
@@ -42,7 +42,7 @@ trait Yank {
 }
 
 fn load_theme(color: Color) -> Option<&'static Theme> {
-    let theme = ThemeSet::get_theme(color.theme).ok();
+    let theme = ThemeSet::get_theme(color.theme.0).ok();
     match theme {
         Some(theme) => {
             let boxed_theme = Box::new(theme);
@@ -153,7 +153,13 @@ async fn main() {
 }
 
 async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
-    let config = config::Config::parse()?;
+    let config = match config::Config::parse() {
+        Ok(config) => config,
+        Err(err) => {
+            println!("{:?}", err);
+            return Err(anyhow::anyhow!("config error"));
+        }
+    };
     let loaded_theme = load_theme(config.color.clone());
 
     if let Err(err) = env::set_current_dir(&config.work_dir.0) {

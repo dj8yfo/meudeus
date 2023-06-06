@@ -96,12 +96,16 @@ impl Display for Note {
                     write!(
                         f,
                         "{}",
-                        name.truecolor(special_tag.r, special_tag.g, special_tag.b)
+                        name.truecolor(special_tag.0.r, special_tag.0.g, special_tag.0.b)
                             .to_string()
                     )
                 } else {
                     let tag = color_scheme.notes.tag;
-                    write!(f, "{}", name.truecolor(tag.r, tag.g, tag.b).to_string())
+                    write!(
+                        f,
+                        "{}",
+                        name.truecolor(tag.0.r, tag.0.g, tag.0.b).to_string()
+                    )
                 }
             }
         }

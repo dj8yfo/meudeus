@@ -43,7 +43,7 @@ impl Display for NoteTaskItemTerm {
                     write!(
                         f,
                         "{}",
-                        format!("{num} task items unlisted").truecolor(c.r, c.g, c.b)
+                        format!("{num} task items unlisted").truecolor(c.0.r, c.0.g, c.0.b)
                     )
                 } else {
                     let c = color.links.unlisted;
@@ -51,7 +51,7 @@ impl Display for NoteTaskItemTerm {
                     write!(
                         f,
                         "{}",
-                        format!("{num} task items ").truecolor(c.r, c.g, c.b)
+                        format!("{num} task items ").truecolor(c.0.r, c.0.g, c.0.b)
                     )
                 }
             }
@@ -60,7 +60,7 @@ impl Display for NoteTaskItemTerm {
             }
             Self::Cycle(cycle, color) => {
                 let c = color.links.cycle;
-                write!(f, "⟳ {}", cycle.truecolor(c.r, c.g, c.b).to_string())
+                write!(f, "⟳ {}", cycle.truecolor(c.0.r, c.0.g, c.0.b).to_string())
             }
         }
     }

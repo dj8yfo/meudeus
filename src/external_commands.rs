@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use colored::Colorize;
 use duct::cmd;
 
-use crate::config::cmd_template::CmdTemplate;
+use crate::config::CmdTemplate;
 
 pub fn fetch_content(mut file_cmd: CmdTemplate, file_path: Option<&PathBuf>) -> Option<String> {
     if let Some(file_path) = file_path {

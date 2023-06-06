@@ -1,11 +1,10 @@
+use crate::config::KdlNodeErrorType;
 use kdl::KdlNode;
-use anyhow::anyhow;
 use std::collections::{HashMap, HashSet};
 
-use crate::{impl_try_from_kdl_node_uniqueness_check, impl_from_self_into_action_hashmap};
+use crate::{impl_from_self_into_action_hashmap, impl_try_from_kdl_node_uniqueness_check};
 
 use super::single_key::SingleKey;
-
 
 #[derive(Debug, Clone)]
 pub struct StackKeymap {
@@ -21,10 +20,9 @@ pub enum Action {
     MoveNoteToStackTop,
 }
 
-
 impl_try_from_kdl_node_uniqueness_check!(
     StackKeymap,
-    "stack",
+    "world.keymap.stack",
     toggle_preview_type,
     pop_note_from_stack,
     move_note_to_top_of_stack

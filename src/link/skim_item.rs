@@ -24,7 +24,7 @@ impl super::Link {
         match &self.link {
             super::Destination::URL(url) => {
                 let c = color_scheme.links.url;
-                url.truecolor(c.r, c.g, c.b).to_string()
+                url.truecolor(c.0.r, c.0.g, c.0.b).to_string()
             }
             super::Destination::File { file } => {
                 fetch_content(preview_cmds.file_cmd.clone(), Some(file)).unwrap()
@@ -47,7 +47,7 @@ impl super::Link {
                     broken
                         .to_str()
                         .unwrap_or("not valid unicode")
-                        .truecolor(c.r, c.g, c.b)
+                        .truecolor(c.0.r, c.0.g, c.0.b)
                         .to_string(),
                     line,
                 )

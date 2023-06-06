@@ -1,7 +1,8 @@
-use anyhow::anyhow;
 use kdl::KdlNode;
 use lazy_static::lazy_static;
 use regex::Regex;
+
+use crate::config::KdlNodeErrorType;
 
 lazy_static! {
     static ref KEY_COMBO_REGEX: Regex = Regex::new("^(ctrl-.)$|^(alt-.)$").expect("wrong regex");
@@ -28,10 +29,10 @@ impl SingleKey {
 }
 
 impl TryFrom<String> for SingleKey {
-    type Error = anyhow::Error;
+    type Error = String;
     fn try_from(combo: String) -> Result<Self, Self::Error> {
         if !KEY_COMBO_REGEX.is_match(&combo) {
-            return Err(anyhow!(
+            return Err(format!(
                 "`{}` doesn't match regex {}",
                 combo,
                 KEY_COMBO_REGEX.as_str()
@@ -40,24 +41,39 @@ impl TryFrom<String> for SingleKey {
 
         let tui_combo = Self::from_string_repr(&combo);
         if tui_combo == tuikit::key::Key::Ctrl('c') {
-            return Err(anyhow!("`ctrl-c` binding is forbidden"));
+            return Err("`ctrl-c` binding is forbidden".to_string());
         }
         Ok(Self { combo, tui_combo })
     }
 }
 impl TryFrom<&KdlNode> for SingleKey {
-    type Error = anyhow::Error;
+    type Error = miette::Report;
 
     fn try_from(value: &KdlNode) -> Result<Self, Self::Error> {
         let combo = value
             .get(0)
-            .ok_or(anyhow!("arg not found"))?
+            .ok_or(KdlNodeErrorType {
+                err_span: value.span().clone(),
+                description: "node's first argument not found".to_string(),
+            })
+            .map_err(|err| Into::<miette::Report>::into(err))?
             .value()
             .as_string()
-            .ok_or(anyhow!("should be string"))?
+            .ok_or(KdlNodeErrorType {
+                err_span: value.span().clone(),
+                description: "argument's value is expected to be of string type".to_string(),
+            })
+            .map_err(|err| Into::<miette::Report>::into(err))?
             .to_string();
 
-        combo.try_into()
+        combo.try_into().map_err(|err| {
+            let err = KdlNodeErrorType {
+                err_span: value.span().clone(),
+                description: err,
+            };
+
+            Into::<miette::Report>::into(err)
+        })
     }
 }
 

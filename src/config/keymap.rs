@@ -8,10 +8,10 @@ use self::{
 };
 pub mod single_key;
 
-pub mod surf;
 pub mod checkmark;
-pub mod stack;
 pub mod explore;
+pub mod stack;
+pub mod surf;
 
 #[derive(Debug, Clone)]
 pub struct Keymap {

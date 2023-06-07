@@ -13,6 +13,7 @@ use crate::{
 };
 pub enum Action {
     Select(Note),
+    Return(Vec<Note>),
     TogglePreview,
     Pop(Note),
     MoveTopmost(Note),
@@ -20,6 +21,7 @@ pub enum Action {
 
 pub(crate) struct Iteration {
     db: SqliteAsyncHandle,
+    input_items_from_explore: Vec<Note>,
     items: Option<Vec<Note>>,
     multi: bool,
     preview_type: PreviewType,
@@ -37,6 +39,7 @@ pub(crate) struct Iteration {
 impl Iteration {
     pub(crate) fn new(
         hint: String,
+        input_items_from_explore: Vec<Note>,
         items: Vec<Note>,
         db: SqliteAsyncHandle,
         multi: bool,
@@ -52,6 +55,7 @@ impl Iteration {
         Self {
             items: Some(items),
             db,
+            input_items_from_explore,
             multi,
             preview_type,
             external_commands,
@@ -162,6 +166,13 @@ impl Iteration {
                 unreachable!("an unspecified keybinding isn't expected to pick None from Hashmap<Key, Action>");
             };
             match action {
+                keymap::stack::Action::ReturnToExplore => {
+                    if let Some(_item) = selected_items.first() {
+                        return Ok(Action::Return(self.input_items_from_explore));
+                    } else {
+                        return Err(anyhow::anyhow!("no item selected"));
+                    }
+                }
                 keymap::stack::Action::TogglePreviewType => {
                     if let Some(_item) = selected_items.first() {
                         return Ok(Action::TogglePreview);

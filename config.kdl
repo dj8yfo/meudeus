@@ -49,7 +49,7 @@ world {
 		    toggle_links_direction "alt-f"
 		    splice_reachable_children_of_note "alt-s"
 		    narrow_selection "alt-n"
-		    dccrease_unlisted_threshold "alt-o"
+		    decrease_unlisted_threshold "alt-o"
 		    increase_unlisted_threshold "alt-p"
 		    push_note_to_stack "alt-a"
 		    switch_mode_to_stack "ctrl-a"
@@ -67,9 +67,10 @@ world {
 			return_to_explore "ctrl-e"
 		}
 		stack {
-		    toggle_preview_type "ctrl-t"
-		    pop_note_from_stack "alt-p"
-		    move_note_to_top_of_stack "alt-t"
+			toggle_preview_type "ctrl-t"
+			pop_note_from_stack "alt-p"
+			move_note_to_top_of_stack "alt-t"
+			return_to_explore "ctrl-e"
 			
 		}
 	}

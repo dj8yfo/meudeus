@@ -300,6 +300,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                 "stack" => {
                     commands::stack::exec(
                         db,
+                        vec![],
                         config.external_commands,
                         config.surf_parsing,
                         md_static,

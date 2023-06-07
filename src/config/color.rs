@@ -1,7 +1,7 @@
+use super::KdlNodeErrorType;
 use crate::impl_try_from_kdl_node_tagged;
 use kdl::KdlNode;
 use std::collections::HashMap;
-use super::KdlNodeErrorType;
 
 use super::ConfigPath;
 

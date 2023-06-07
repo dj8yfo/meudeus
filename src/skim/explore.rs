@@ -369,7 +369,7 @@ impl Iteration {
                     }
                 }
 
-                keymap::explore::Action::DccreaseUnlistedThreshold => {
+                keymap::explore::Action::DecreaseUnlistedThreshold => {
                     if let Some(item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::DecreaseUnlistedThreshold,
@@ -394,7 +394,7 @@ impl Iteration {
                     if let Some(_item) = selected_items.first() {
                         return Ok(Out {
                             action: Action::SwitchToStack,
-                            next_items: vec![],
+                            next_items: items,
                         });
                     } else {
                         return Err(anyhow::anyhow!("no item selected"));

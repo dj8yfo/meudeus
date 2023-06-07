@@ -191,8 +191,9 @@ pub(crate) async fn exec(
                 sleep(Duration::new(1, 0)).await;
             }
             Some(Action::SwitchToStack) => {
-                let note = stack_select(
+                let next = stack_select(
                     db.clone(),
+                    list.clone(),
                     external_commands.clone(),
                     surf_parsing.clone(),
                     md_static,
@@ -200,7 +201,7 @@ pub(crate) async fn exec(
                     stack_bindings_map.clone(),
                 )
                 .await?;
-                list = vec![note];
+                list = next;
             }
             _ => {}
         }

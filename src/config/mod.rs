@@ -11,15 +11,15 @@ use crate::print::format_two_tokens;
 use self::color::Color;
 pub use self::external_commands::cmd_template::CmdTemplate;
 pub use self::external_commands::{ExternalCommands, Open, Preview};
-pub use self::surf_parsing::SurfParsing;
 use self::keymap::Keymap;
+pub use self::surf_parsing::SurfParsing;
 
 pub mod macros;
 
-pub mod surf_parsing;
-pub mod external_commands;
 pub mod color;
+pub mod external_commands;
 pub mod keymap;
+pub mod surf_parsing;
 
 static PROGRAM_NAME: &str = "mds";
 #[derive(Debug)]
@@ -107,5 +107,3 @@ impl_try_from_kdl_node_tagged!(Config, "world",
     "external-commands" => external_commands, 
     "color" => color, 
     "keymap" => keymap);
-
-

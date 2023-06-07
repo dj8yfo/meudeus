@@ -72,6 +72,7 @@ E.g., `"ctrl-a"` and `"alt-x"` are valid string values for keymap config, and `"
  | Ctrl-t  | yes          |  Toggle preview type of notes                                                                                                              |
  | Alt-p   | yes          |  Pop note from `GLOBAL` stack                                                                                                              |
  | Alt-t   | yes          |  Move note to top of `GLOBAL` stack                                                                                                        |
+ | Ctrl-e  | yes          |  Return to `explore` mode without changes, as if `stack` mode wasn't switched to (if called from withing `explore` command)                |
 
 - common more and less obvious keybindings from vanilla skim
 

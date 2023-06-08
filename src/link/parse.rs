@@ -58,6 +58,7 @@ impl
     }
 }
 
+#[allow(clippy::ptr_arg)]
 impl Link {
     fn reference_link_parse(
         note: &Note,
@@ -101,27 +102,24 @@ impl Link {
         let mut counter = 0;
         iter_nodes(root, &mut counter, &mut |node, counter| {
             let source_position = node.data.borrow().sourcepos;
-            match &node.data.borrow().value {
-                NodeValue::CodeBlock(ref block) => {
-                    let syntax_label = block.info.clone();
-                    let code_block = block.literal.clone();
-                    let description = if let Some(line) = code_block.lines().next() {
-                        line.to_string()
-                    } else {
-                        format!("snippet[{}]", counter)
-                    };
-                    result.push(Link::new_code_block(
-                        file_path.clone(),
-                        note.name(),
-                        description,
-                        code_block,
-                        syntax_label,
-                        source_position,
-                        color_scheme,
-                    ));
-                    *counter += 1;
-                }
-                _ => (),
+            if let NodeValue::CodeBlock(ref block) = &node.data.borrow().value {
+                let syntax_label = block.info.clone();
+                let code_block = block.literal.clone();
+                let description = if let Some(line) = code_block.lines().next() {
+                    line.to_string()
+                } else {
+                    format!("snippet[{}]", counter)
+                };
+                result.push(Link::new_code_block(
+                    file_path.clone(),
+                    note.name(),
+                    description,
+                    code_block,
+                    syntax_label,
+                    source_position,
+                    color_scheme,
+                ));
+                *counter += 1;
             }
         });
     }
@@ -146,7 +144,7 @@ impl Link {
 
             Ok(result)
         } else {
-            return Ok(vec![]);
+            Ok(vec![])
         }
     }
 }

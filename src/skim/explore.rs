@@ -54,6 +54,7 @@ pub struct Out {
 }
 
 impl Iteration {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         items: Vec<Note>,
         db: SqliteAsyncHandle,
@@ -183,12 +184,12 @@ impl Iteration {
             match action {
                 keymap::explore::Action::OpenXDG => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::OpenXDG(item.clone()),
                             next_items: vec![item.clone()],
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
@@ -205,12 +206,12 @@ impl Iteration {
                         if next.is_empty() {
                             next = items;
                         }
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::Back,
                             next_items: next,
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
@@ -227,107 +228,105 @@ impl Iteration {
                         if next.is_empty() {
                             next = vec![item.clone()];
                         }
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::Forward,
                             next_items: next,
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
                 keymap::explore::Action::TogglePreviewType => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::TogglePreview,
                             next_items: vec![item.clone()],
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
-                keymap::explore::Action::WidenToAllNotes => {
-                    return Ok(Out {
-                        action: Action::Widen,
-                        next_items: vec![],
-                    });
-                }
+                keymap::explore::Action::WidenToAllNotes => Ok(Out {
+                    action: Action::Widen,
+                    next_items: vec![],
+                }),
 
                 keymap::explore::Action::RenameNote => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::Rename(item.clone()),
                             next_items: vec![],
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
                 keymap::explore::Action::LinkFromSelectedNote => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::Link(item.clone()),
                             next_items: vec![],
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
                 keymap::explore::Action::UnlinkFromSelectedNote => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::Unlink(item.clone()),
                             next_items: vec![],
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
                 keymap::explore::Action::RemoveNote => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::Remove(item.clone()),
                             next_items: vec![],
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
                 keymap::explore::Action::CreateAutolinkedNote => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::CreateLinkedFrom(item.clone()),
                             next_items: vec![],
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
                 keymap::explore::Action::SurfNoteSubtree => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::Surf(item.clone()),
                             next_items: vec![item.clone()],
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
                 keymap::explore::Action::ToggleLinksDirection => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::InvertLinks,
                             next_items: vec![item.clone()],
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
@@ -342,77 +341,75 @@ impl Iteration {
                                 false,
                             )
                             .await?;
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::Splice,
                             next_items: next,
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
-                keymap::explore::Action::NarrowSelection => {
-                    return Ok(Out {
-                        action: Action::Narrow,
-                        next_items: selected_items,
-                    });
-                }
+                keymap::explore::Action::NarrowSelection => Ok(Out {
+                    action: Action::Narrow,
+                    next_items: selected_items,
+                }),
 
                 keymap::explore::Action::IncreaseUnlistedThreshold => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::IncreaseUnlistedThreshold,
                             next_items: vec![item.clone()],
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
                 keymap::explore::Action::DecreaseUnlistedThreshold => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::DecreaseUnlistedThreshold,
                             next_items: vec![item.clone()],
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
                 keymap::explore::Action::PushNoteToStack => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::PushToStack(item.clone()),
                             next_items: items,
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
                 keymap::explore::Action::SwitchModeToStack => {
                     if let Some(_item) = selected_items.first() {
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::SwitchToStack,
                             next_items: items,
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
                 keymap::explore::Action::CheckmarkNote => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Out {
+                        Ok(Out {
                             action: Action::Checkmark(item.clone()),
                             next_items: vec![item.clone()],
-                        });
+                        })
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
             }
         } else {
-            return Err(anyhow::anyhow!("skim internal errors"));
+            Err(anyhow::anyhow!("skim internal errors"))
         }
     }
 }

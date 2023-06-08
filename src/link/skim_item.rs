@@ -22,7 +22,7 @@ impl super::Link {
         color_scheme: ColorScheme,
     ) -> String {
         match &self.link {
-            super::Destination::URL(url) => {
+            super::Destination::Url(url) => {
                 let c = color_scheme.links.url;
                 url.truecolor(c.0.r, c.0.g, c.0.b).to_string()
             }
@@ -38,7 +38,7 @@ impl super::Link {
                 let line = if let Some(line) = line {
                     format!("<line:{}>", line)
                 } else {
-                    format!("")
+                    String::new()
                 };
                 let c = color_scheme.links.broken;
                 format!(
@@ -47,8 +47,7 @@ impl super::Link {
                     broken
                         .to_str()
                         .unwrap_or("not valid unicode")
-                        .truecolor(c.0.r, c.0.g, c.0.b)
-                        .to_string(),
+                        .truecolor(c.0.r, c.0.g, c.0.b),
                     line,
                 )
             }
@@ -86,7 +85,7 @@ impl SkimItem for super::Link {
 
     fn preview(&self, _context: PreviewContext) -> ItemPreview {
         if let Some(ref string) = self.preview_item {
-            return ItemPreview::AnsiText(string.clone());
+            ItemPreview::AnsiText(string.clone())
         } else {
             ItemPreview::AnsiText("<not precomputed!!!>".to_string())
         }

@@ -160,7 +160,7 @@ impl Sqlite {
         let query = query.sql().expect("bug in list query. please report");
 
         let res = sqlx::query(&query)
-            .map(|row| Self::query_stack_index(row))
+            .map(Self::query_stack_index)
             .fetch_one(&mut *tx)
             .await?;
         Ok(res)
@@ -225,7 +225,7 @@ impl Sqlite {
         )
         .bind(deleted_index)
         .bind(stack)
-        .map(|row| Self::query_stack_index(row))
+        .map(Self::query_stack_index)
         .fetch_all(&mut *tx)
         .await?;
 
@@ -255,7 +255,7 @@ impl Sqlite {
                 )
                 .bind(deleted_index)
                 .bind(stack)
-                .map(|row| Self::query_stack_index(row))
+                .map(Self::query_stack_index)
                 .fetch_all(&mut *tx)
                 .await?
             }
@@ -265,7 +265,7 @@ impl Sqlite {
                     where stack_tag = ?1 order by stack_index desc",
                 )
                 .bind(stack)
-                .map(|row| Self::query_stack_index(row))
+                .map(Self::query_stack_index)
                 .fetch_all(&mut *tx)
                 .await?
             }
@@ -293,7 +293,7 @@ impl Sqlite {
             where note = ?1",
         )
         .bind(note)
-        .map(|row| Self::query_stack_tag(row))
+        .map(Self::query_stack_tag)
         .fetch_all(&mut *tx)
         .await?;
 
@@ -491,18 +491,14 @@ impl Database for Sqlite {
 
     async fn insert_link(&mut self, mut from: &str, mut to: &str, straight: bool) -> Result<()> {
         if !straight {
-            let tmp = from;
-            from = to;
-            to = tmp;
+            std::mem::swap(&mut from, &mut to);
         }
         self.insert_link_inner(from, to).await
     }
 
     async fn remove_link(&mut self, mut from: &str, mut to: &str, straight: bool) -> Result<()> {
         if !straight {
-            let tmp = from;
-            from = to;
-            to = tmp;
+            std::mem::swap(&mut from, &mut to);
         }
         self.remove_link_inner(from, to).await
     }
@@ -526,7 +522,7 @@ impl Database for Sqlite {
         log::debug!("renaming note {:?} -> {}", note, new_name);
 
         let mut tx = self.pool.begin().await?;
-        Self::rename_note(&mut tx, note, &new_name).await?;
+        Self::rename_note(&mut tx, note, new_name).await?;
         tx.commit().await?;
 
         Ok(())

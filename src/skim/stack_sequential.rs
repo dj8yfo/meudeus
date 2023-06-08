@@ -37,6 +37,7 @@ pub(crate) struct Iteration {
 }
 
 impl Iteration {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         hint: String,
         input_items_from_explore: Vec<Note>,
@@ -168,35 +169,35 @@ impl Iteration {
             match action {
                 keymap::stack::Action::ReturnToExplore => {
                     if let Some(_item) = selected_items.first() {
-                        return Ok(Action::Return(self.input_items_from_explore));
+                        Ok(Action::Return(self.input_items_from_explore))
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
                 keymap::stack::Action::TogglePreviewType => {
                     if let Some(_item) = selected_items.first() {
-                        return Ok(Action::TogglePreview);
+                        Ok(Action::TogglePreview)
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
                 keymap::stack::Action::PopNoteFromStack => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Action::Pop(item.clone()));
+                        Ok(Action::Pop(item.clone()))
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
                 keymap::stack::Action::MoveNoteToStackTop => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Action::MoveTopmost(item.clone()));
+                        Ok(Action::MoveTopmost(item.clone()))
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
             }
         } else {
-            return Err(anyhow::anyhow!("skim internal errors"));
+            Err(anyhow::anyhow!("skim internal errors"))
         }
     }
 }

@@ -17,6 +17,7 @@ use super::Note;
 use duct::cmd;
 use sqlx::Result as SqlxResult;
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone)]
 pub enum NoteTaskItemTerm {
     Note(Note),
@@ -60,7 +61,7 @@ impl Display for NoteTaskItemTerm {
             }
             Self::Cycle(cycle, color) => {
                 let c = color.links.cycle;
-                write!(f, "⟳ {}", cycle.truecolor(c.0.r, c.0.g, c.0.b).to_string())
+                write!(f, "⟳ {}", cycle.truecolor(c.0.r, c.0.g, c.0.b))
             }
         }
     }
@@ -89,12 +90,10 @@ impl NoteTaskItemTerm {
         let mut subrange_end = 0;
         let mut index = 0;
         while index < input.len() {
-            if group_by_top_level {
-                if index < subrange_end {
-                    index = subrange_end;
-                    if index >= input.len() {
-                        break;
-                    }
+            if group_by_top_level && index < subrange_end {
+                index = subrange_end;
+                if index >= input.len() {
+                    break;
                 }
             }
             let mut tree;
@@ -172,6 +171,7 @@ impl Jump for NoteTaskItemTerm {
 }
 
 impl Note {
+    #[allow(clippy::too_many_arguments)]
     #[async_recursion]
     pub async fn construct_task_item_term_tree(
         &self,
@@ -193,7 +193,7 @@ impl Note {
         };
 
         let task_trees = NoteTaskItemTerm::parse(&tasks, true, false);
-        if task_trees.len() > 0 {
+        if !task_trees.is_empty() {
             let sum_len = task_trees
                 .iter()
                 .fold(0, |acc, element| acc + element.root.len_task_items());

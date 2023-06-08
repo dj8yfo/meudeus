@@ -68,6 +68,7 @@ pub(crate) async fn exec(
     Ok("success".to_string())
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) async fn surf_note(
     note: Note,
     db: SqliteAsyncHandle,
@@ -84,9 +85,9 @@ pub(crate) async fn surf_note(
             .await?;
         let links: std::io::Result<Vec<_>> = all_vec
             .into_iter()
-            .map(|v| Link::parse(&v, &surf, color_scheme))
+            .map(|v| Link::parse(&v, surf, color_scheme))
             .collect();
-        let links: Vec<_> = links?.into_iter().flat_map(|v| v).collect();
+        let links: Vec<_> = links?.into_iter().flatten().collect();
         let action = SurfIteration::new(
             links,
             false,

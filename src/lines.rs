@@ -5,12 +5,12 @@ pub struct EditorPosition {
 }
 
 pub fn find_position(initial_contents: &str, byte_offset: usize) -> EditorPosition {
-    let mut contents: &str = &initial_contents.clone();
+    let mut contents: &str = initial_contents;
     let mut vec_lines = vec![];
     // line index, first byte index
     vec_lines.push((0, 0));
     let contents_len = contents.len();
-    let mut newline_char_offset = contents.find("\n").unwrap_or(contents_len);
+    let mut newline_char_offset = contents.find('\n').unwrap_or(contents_len);
     let (line, line_start) = if newline_char_offset == contents_len {
         // we are on last line
         let last = vec_lines.last().unwrap();
@@ -24,7 +24,7 @@ pub fn find_position(initial_contents: &str, byte_offset: usize) -> EditorPositi
             }
             vec_lines.push((next_index, next_line_offset));
             contents = &initial_contents[next_line_offset..];
-            newline_char_offset = contents.find("\n").unwrap_or(contents.len());
+            newline_char_offset = contents.find('\n').unwrap_or(contents.len());
         }
         if byte_offset >= vec_lines.last().unwrap().1 {
             let last = vec_lines.last().unwrap();

@@ -21,6 +21,7 @@ use tokio::time::sleep;
 
 pub static GLOBAL_STACK: &str = "GLOBAL";
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) async fn exec(
     db: SqliteAsyncHandle,
     external_commands: ExternalCommands,
@@ -168,9 +169,7 @@ pub(crate) async fn exec(
             }
 
             Some(Action::DecreaseUnlistedThreshold) => {
-                if nested_threshold > 0 {
-                    nested_threshold -= 1;
-                }
+                nested_threshold = nested_threshold.saturating_sub(1);
             }
 
             Some(Action::PushToStack(note)) => {
@@ -208,6 +207,7 @@ pub(crate) async fn exec(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn iteration(
     db: SqliteAsyncHandle,
     list: Vec<Note>,

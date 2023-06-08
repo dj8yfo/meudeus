@@ -12,6 +12,7 @@ use crate::{
     note::Note,
 };
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug)]
 pub enum Action {
     Jump(Link),
@@ -23,10 +24,10 @@ pub enum Action {
 impl Display for Action {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Jump(link) => write!(f, "{} : {}", "jump", link),
-            Self::Open(link) => write!(f, "{} : {}", "open", link),
-            Self::OpenXDG(link) => write!(f, "{} : {}", "open xdg", link),
-            Self::Return(note) => write!(f, "{} : {}", "return to explore", note),
+            Self::Jump(link) => write!(f, "jump : {}", link),
+            Self::Open(link) => write!(f, "open : {}", link),
+            Self::OpenXDG(link) => write!(f, "open xdg : {}", link),
+            Self::Return(note) => write!(f, "return to explore : {}", note),
         }
     }
 }
@@ -146,24 +147,22 @@ impl Iteration {
             match action {
                 keymap::surf::Action::OpenXDG => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Action::OpenXDG(item.clone()));
+                        Ok(Action::OpenXDG(item.clone()))
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
                 keymap::surf::Action::JumpToLinkOrSnippet => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(Action::Jump(item.clone()));
+                        Ok(Action::Jump(item.clone()))
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
-                keymap::surf::Action::ReturnToExplore => {
-                    return Ok(Action::Return(self.return_note));
-                }
+                keymap::surf::Action::ReturnToExplore => Ok(Action::Return(self.return_note)),
             }
         } else {
-            return Err(anyhow::anyhow!("skim internal errors"));
+            Err(anyhow::anyhow!("skim internal errors"))
         }
     }
 }

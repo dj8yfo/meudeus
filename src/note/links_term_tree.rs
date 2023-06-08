@@ -15,6 +15,7 @@ use crate::{
 
 use super::Note;
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone)]
 pub enum NoteLinkTerm {
     Note(Note),
@@ -53,13 +54,14 @@ impl Display for NoteLinkTerm {
             }
             Self::Cycle(cycle, color) => {
                 let c = color.links.cycle;
-                write!(f, "⟳ {}", cycle.truecolor(c.0.r, c.0.g, c.0.b).to_string())
+                write!(f, "⟳ {}", cycle.truecolor(c.0.r, c.0.g, c.0.b))
             }
         }
     }
 }
 
 impl Note {
+    #[allow(clippy::too_many_arguments)]
     #[async_recursion]
     pub async fn construct_link_term_tree(
         &self,
@@ -78,7 +80,7 @@ impl Note {
 
         let links = Link::parse(self, &surf_parsing, color_scheme)?;
 
-        if links.len() > 0 {
+        if !links.is_empty() {
             if level >= nested_threshold {
                 tree.push(NoteLinkTerm::LinkHint(true, links.len(), color_scheme));
             } else {
@@ -121,6 +123,7 @@ impl Note {
         Ok((tree, all_reachable))
     }
 
+    #[allow(clippy::too_many_arguments)]
     #[async_recursion]
     pub async fn construct_link_term_tree_up(
         &self,
@@ -139,7 +142,7 @@ impl Note {
 
         let links = Link::parse(self, &surf_parsing, color_scheme)?;
 
-        if links.len() > 0 {
+        if !links.is_empty() {
             if level >= nested_threshold {
                 tree.push(NoteLinkTerm::LinkHint(true, links.len(), color_scheme));
             } else {

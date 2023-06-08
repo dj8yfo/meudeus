@@ -17,7 +17,7 @@ impl Note {
     ) -> String {
         let rs = self.resources().unwrap();
 
-        let result = if straight {
+        if straight {
             let result = self
                 .construct_link_term_tree(
                     0,
@@ -51,8 +51,7 @@ impl Note {
                 Ok((tree, _)) => format!("{}", tree),
                 Err(err) => format!("db err {:?}", err).truecolor(255, 0, 0).to_string(),
             }
-        };
-        result
+        }
     }
 
     pub async fn task_structure(

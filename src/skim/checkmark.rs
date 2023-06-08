@@ -11,6 +11,7 @@ use crate::{
     task_item::TaskTreeWrapper,
 };
 
+#[allow(clippy::large_enum_variant)]
 pub enum Action {
     Toggle(Vec<TaskTreeWrapper>),
     Open(TaskTreeWrapper),
@@ -104,15 +105,13 @@ impl Iteration {
             match action {
                 keymap::checkmark::Action::JumpToTask => {
                     let first = selected_items.first().expect("non empty");
-                    return Ok(Action::Open(first.clone()));
+                    Ok(Action::Open(first.clone()))
                 }
                 keymap::checkmark::Action::CopyTaskSubtree => {
                     let first = selected_items.first().expect("non empty");
-                    return Ok(Action::Yank(first.clone()));
+                    Ok(Action::Yank(first.clone()))
                 }
-                keymap::checkmark::Action::WidenContext => {
-                    return Ok(Action::Widen);
-                }
+                keymap::checkmark::Action::WidenContext => Ok(Action::Widen),
                 keymap::checkmark::Action::NarrowContext => {
                     let first = selected_items.first().expect("non empty");
                     let (start, end) = match first.data.0.root {
@@ -127,14 +126,12 @@ impl Iteration {
                             (task.self_index, next_index)
                         }
                     };
-                    return Ok(Action::Narrow(start, end));
+                    Ok(Action::Narrow(start, end))
                 }
-                keymap::checkmark::Action::ReturnToExplore => {
-                    return Ok(Action::Return(self.return_note));
-                }
-            };
+                keymap::checkmark::Action::ReturnToExplore => Ok(Action::Return(self.return_note)),
+            }
         } else {
-            return Err(anyhow::anyhow!("skim internal errors"));
+            Err(anyhow::anyhow!("skim internal errors"))
         }
     }
 }

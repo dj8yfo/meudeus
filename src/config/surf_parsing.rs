@@ -28,22 +28,22 @@ impl TryFrom<&KdlNode> for ConfigRegex {
         let string = value
             .get(0)
             .ok_or(KdlNodeErrorType {
-                err_span: value.span().clone(),
+                err_span: *value.span(),
                 description: "node's first argument not found".to_string(),
             })
-            .map_err(|err| Into::<miette::Report>::into(err))?
+            .map_err(Into::<miette::Report>::into)?
             .value()
             .as_string()
             .ok_or(KdlNodeErrorType {
-                err_span: value.span().clone(),
+                err_span: *value.span(),
                 description: "argument's value is expected to be of string type".to_string(),
             })
-            .map_err(|err| Into::<miette::Report>::into(err))?
+            .map_err(Into::<miette::Report>::into)?
             .to_string();
 
         let regex = Regex::new(&string).map_err(|err| {
             let err = KdlNodeErrorType {
-                err_span: value.span().clone(),
+                err_span: *value.span(),
                 description: format!("{}", err),
             };
 

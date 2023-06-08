@@ -44,6 +44,7 @@ pub fn fetch_content_range(
     }
 }
 
+#[allow(clippy::ptr_arg)]
 pub fn list_dir(mut dir_cmd: CmdTemplate, dir: &PathBuf) -> String {
     dir_cmd.replace_matching_element("$DIR", dir.to_str().unwrap_or("bad utf path"));
     match cmd(dir_cmd.command, dir_cmd.args).read() {

@@ -53,6 +53,7 @@ pub(crate) async fn exec(
     Ok("success".truecolor(0, 255, 255).to_string())
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) async fn link(
     from: Note,
     db: SqliteAsyncHandle,

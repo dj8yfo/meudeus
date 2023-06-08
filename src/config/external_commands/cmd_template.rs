@@ -15,35 +15,35 @@ impl TryFrom<&KdlNode> for CmdTemplate {
         let first = entries.first();
         let Some(first) = first else {
             return Err(KdlNodeErrorType {
-                err_span: value.span().clone(),
+                err_span: *value.span(),
                 description: "node expected to have at least 1 argument".to_string(),
-            }).map_err(|err| Into::<miette::Report>::into(err))?;
+            }).map_err(Into::<miette::Report>::into)?;
         };
 
         let command = first
             .value()
             .as_string()
             .ok_or(KdlNodeErrorType {
-                err_span: first.span().clone(),
+                err_span: *first.span(),
                 description: "all of arguments' values are expected to be of string type"
                     .to_string(),
             })
-            .map_err(|err| Into::<miette::Report>::into(err))?
+            .map_err(Into::<miette::Report>::into)?
             .to_string();
 
         let args = &entries[1..];
         let args: Result<Vec<String>, Self::Error> = args
-            .into_iter()
+            .iter()
             .map(|arg| {
                 Ok(arg
                     .value()
                     .as_string()
                     .ok_or(KdlNodeErrorType {
-                        err_span: arg.span().clone(),
+                        err_span: *arg.span(),
                         description: "all of arguments' values are expected to be of string type"
                             .to_string(),
                     })
-                    .map_err(|err| Into::<miette::Report>::into(err))?
+                    .map_err(Into::<miette::Report>::into)?
                     .to_string())
             })
             .collect();

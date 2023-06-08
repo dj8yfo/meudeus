@@ -21,8 +21,7 @@ pub(crate) async fn exec(
     let nested_threshold = 1;
     let note = {
         if let Some(name) = name {
-            let note = db.lock().await.get(&name, md_static, color_scheme).await?;
-            note
+            db.lock().await.get(&name, md_static, color_scheme).await?
         } else {
             let list = db.lock().await.list(md_static, color_scheme).await?;
             let multi = false;
@@ -59,9 +58,6 @@ pub(crate) async fn exec(
 
     println!("{}", tree);
 
-    eprintln!(
-        "{}",
-        format_two_tokens("printed", &format!("{}", note.name()))
-    );
+    eprintln!("{}", format_two_tokens("printed", &note.name()));
     Ok("success".truecolor(0, 255, 255).to_string())
 }

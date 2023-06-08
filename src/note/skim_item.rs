@@ -48,11 +48,8 @@ impl super::Note {
         let result = self
             .compute_preview(db, md_static, color_scheme, straight, nested_threshold)
             .await;
-        match self.resources_mut() {
-            Some(resources) => {
-                resources.preview_result = result;
-            }
-            None => {}
+        if let Some(resources) = self.resources_mut() {
+            resources.preview_result = result;
         }
     }
 }

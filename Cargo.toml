@@ -1,6 +1,6 @@
 [package]
 name = "mds"
-version = "0.18.0"
+version = "0.18.3"
 author = ["dj8yf0μl"]
 description = "A skim-based `*.md` explore and surf note-taking tool"
 repository = "https://github.com/dj8yfo/meudeus"
@@ -57,6 +57,6 @@ env-substitute = "0.1.0"
 opener = "0.6.1"
 
 lazy_static = "1.4.0"
-tuikit = "*"
+tuikit = "0.5.0"
 miette = { version = "5.9.0", features = ["fancy"] }
 thiserror = "1.0.40"

@@ -1485,7 +1485,7 @@ dependencies = [
 
 [[package]]
 name = "mds"
-version = "0.18.0"
+version = "0.18.3"
 dependencies = [
  "anyhow",
  "async-recursion",

@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [unreleased]
+
+### Miscellaneous Tasks
+
+- Add lint to ci
+- Fix or supress clippy lints
+
+## [0.18.3] - 2023-06-08
+
+### Miscellaneous Tasks
+
+- Add test and build to ci
+
+## [0.18.2] - 2023-06-07
+
+### Features
+
+- Keybinding <Ctrl-e> to quit to `explore` mode from `stack` without changes
+
+## [0.18.1] - 2023-06-06
+
+### Features
+
+- Implement miette Reports for config errors
+
+## [0.18.0] - 2023-05-28
+
+### Features
+
+- [**breaking**] Implement config of most of keys
+
+### Miscellaneous Tasks
+
+- Update changelog
+
 ## [0.17.2] - 2023-05-15
 
 ### Features

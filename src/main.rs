@@ -27,6 +27,7 @@ mod task_item;
 
 pub(crate) use database::Sqlite;
 
+
 trait Open {
     fn open(&self, cfg: OpenCfg) -> io::Result<Option<ExitStatus>>;
 

@@ -1,4 +1,11 @@
-![crates.io](https://img.shields.io/crates/v/mds.svg)
+<p align="center">
+  <a href="https://crates.io/crates/mds">
+    <img src="https://img.shields.io/crates/v/mds.svg" alt="Crates.io" />
+  </a>
+  <a href="https://github.com/dj8yfo/meudeus/actions?query=build">
+    <img src="https://github.com/dj8yfo/meudeus/actions/workflows/ci.yml/badge.svg" alt="Build & Test" />
+  </a>
+</p>
 
 # Sample screencast
 

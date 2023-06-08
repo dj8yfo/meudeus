@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "**-dev"]
+    paths: ["**/*.rs", "**/*.yml", "**/*.toml", "**/*.lock"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Lint:
+  #   uses: tobealive/wthrr-the-weathercrab/.github/workflows/lint.yml@main
+
+  Test:
+    # needs: Lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Run test
+        env:
+          RUST_BACKTRACE: full
+        run: |
+          cargo test
+
+
+  Build:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macOS-11, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Build
+        run: cargo build --verbose

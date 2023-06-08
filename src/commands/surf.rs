@@ -3,7 +3,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 
 use crate::{
-    config::{color::ColorScheme, ExternalCommands, SurfParsing},
+    config::{color::ColorScheme, keymap, ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
     link::Link,
@@ -23,6 +23,8 @@ pub(crate) async fn exec(
     external_commands: ExternalCommands,
     md_static: MarkdownStatic,
     color_scheme: ColorScheme,
+    bindings_map: keymap::surf::Bindings,
+    explore_bindings_map: keymap::explore::Bindings,
 ) -> Result<String, anyhow::Error> {
     let mut list = db.lock().await.list(md_static, color_scheme).await?;
 
@@ -40,6 +42,7 @@ pub(crate) async fn exec(
             color_scheme,
             straight,
             nested_threshold,
+            explore_bindings_map.clone(),
         )
         .await?;
         preview_type = preview_type_after;
@@ -58,6 +61,7 @@ pub(crate) async fn exec(
         md_static,
         color_scheme,
         straight,
+        bindings_map,
     )
     .await?;
 
@@ -72,6 +76,7 @@ pub(crate) async fn surf_note(
     md_static: MarkdownStatic,
     color_scheme: ColorScheme,
     straight: bool,
+    bindings_map: keymap::surf::Bindings,
 ) -> Result<Note, anyhow::Error> {
     loop {
         let all_vec = note
@@ -89,6 +94,7 @@ pub(crate) async fn surf_note(
             note.clone(),
             md_static,
             color_scheme,
+            bindings_map.clone(),
         )
         .run()
         .await?;

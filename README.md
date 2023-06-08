@@ -21,6 +21,8 @@ It links to external tools, such as `bat` via [config](./config.kdl).
 
 # [Usage](./USAGE.md)
 
+# [Keybindings](./KEYBINDINGS.md)
+
 
 
 # Colors 

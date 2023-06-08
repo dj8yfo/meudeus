@@ -40,16 +40,20 @@ impl Display for NoteLinkTerm {
                     write!(
                         f,
                         "{}",
-                        format!("{num} links unlisted ").truecolor(c.r, c.g, c.b)
+                        format!("{num} links unlisted ").truecolor(c.0.r, c.0.g, c.0.b)
                     )
                 } else {
                     let c = color.links.unlisted;
-                    write!(f, "{}", format!("{num} links ").truecolor(c.r, c.g, c.b))
+                    write!(
+                        f,
+                        "{}",
+                        format!("{num} links ").truecolor(c.0.r, c.0.g, c.0.b)
+                    )
                 }
             }
             Self::Cycle(cycle, color) => {
                 let c = color.links.cycle;
-                write!(f, "⟳ {}", cycle.truecolor(c.r, c.g, c.b).to_string())
+                write!(f, "⟳ {}", cycle.truecolor(c.0.r, c.0.g, c.0.b).to_string())
             }
         }
     }

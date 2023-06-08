@@ -32,6 +32,49 @@ world {
 		task-item-regex r#"(?P<whitespace>(  )*)- \[(?P<checkmark>[x ])\]\s+(?P<task_text>.+)"#
 	}
 	notes-work-dir "/home/user/notes"
+	keymap {
+		explore {
+		    open_xdg "ctrl-o"
+		    populate_search_with_backlinks "ctrl-h"
+		    populate_search_with_forwardlinks "ctrl-l"    
+		    toggle_preview_type "ctrl-t"
+		    widen_to_all_notes "ctrl-w"
+		    surf_note_subtree "ctrl-s"
+		    checkmark_note "ctrl-k"
+		    rename_note "alt-r"
+		    link_from_selected_note "alt-l"
+		    unlink_from_selected_note "alt-u"
+		    remove_note "alt-d"
+		    create_autolinked_note "alt-c"
+		    toggle_links_direction "alt-f"
+		    splice_reachable_children_of_note "alt-s"
+		    narrow_selection "alt-n"
+		    decrease_unlisted_threshold "alt-o"
+		    increase_unlisted_threshold "alt-p"
+		    push_note_to_stack "alt-a"
+		    switch_mode_to_stack "ctrl-a"
+		}
+		surf {
+			open_xdg "ctrl-o" 
+			jump_to_link_or_snippet "ctrl-j"
+			return_to_explore "ctrl-e"
+		}
+		checkmark {
+			jump_to_task "ctrl-j"
+			copy_task_subtree_into_clipboard "ctrl-y"
+			widen_context_to_all_tasks "ctrl-w"			
+			narrow_context_to_selected_task_subtree "ctrl-l"
+			return_to_explore "ctrl-e"
+		}
+		stack {
+			toggle_preview_type "ctrl-t"
+			pop_note_from_stack "alt-p"
+			move_note_to_top_of_stack "alt-t"
+			return_to_explore "ctrl-e"
+			
+		}
+	}
+
 	color {
 		// used for markdown of notes' names, task items' titles
 		// 
@@ -55,4 +98,5 @@ world {
 			}
 		}
 	}
+
 }

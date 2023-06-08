@@ -4,7 +4,7 @@ extern crate sql_builder;
 use clap::ArgMatches;
 
 use colored::Colorize;
-use config::{Color, Open as OpenCfg};
+use config::{color::Color, Open as OpenCfg};
 use highlight::static_markdown_syntax;
 use std::{
     env, io,
@@ -42,7 +42,7 @@ trait Yank {
 }
 
 fn load_theme(color: Color) -> Option<&'static Theme> {
-    let theme = ThemeSet::get_theme(color.theme).ok();
+    let theme = ThemeSet::get_theme(color.theme.0).ok();
     match theme {
         Some(theme) => {
             let boxed_theme = Box::new(theme);
@@ -57,8 +57,8 @@ fn load_theme(color: Color) -> Option<&'static Theme> {
 async fn main() {
     env_logger::init();
     let cmd = clap::Command::new("mds")
-        .version("v0.17.2")
-        .about("meudeus v0.17.2\na skim shredder for plain-text papers")
+        .version("v0.18.0")
+        .about("meudeus v0.18.0\na skim shredder for plain-text papers")
         .bin_name("mds")
         .arg(clap::arg!(-c --color  "whether color output should be forced"))
         .subcommand_required(true)
@@ -153,10 +153,16 @@ async fn main() {
 }
 
 async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
-    let config = config::Config::parse()?;
+    let config = match config::Config::parse() {
+        Ok(config) => config,
+        Err(err) => {
+            println!("{:?}", err);
+            return Err(anyhow::anyhow!("config error"));
+        }
+    };
     let loaded_theme = load_theme(config.color.clone());
 
-    if let Err(err) = env::set_current_dir(&config.work_dir) {
+    if let Err(err) = env::set_current_dir(&config.work_dir.0) {
         eprintln!(
             "{}",
             format!("couldn't change work dir to {:?}", &config.work_dir)
@@ -168,6 +174,10 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
 
     let db_dir = PathBuf::from("./.sqlite");
     let md_static = static_markdown_syntax(loaded_theme);
+    let surf_bindings = config.keymap.surf.clone().try_into()?;
+    let checkmark_bindings = config.keymap.checkmark.clone().try_into()?;
+    let stack_bindings = config.keymap.stack.clone().try_into()?;
+    let explore_bindings = config.keymap.explore.clone().try_into()?;
 
     let result = match matches.subcommand() {
         Some(("init", _matches)) => commands::init_db::exec(db_dir).await,
@@ -194,6 +204,10 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         config.surf_parsing,
                         md_static,
                         config.color.elements,
+                        surf_bindings,
+                        checkmark_bindings,
+                        stack_bindings,
+                        explore_bindings,
                     )
                     .await
                 }
@@ -214,6 +228,8 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         config.external_commands,
                         md_static,
                         config.color.elements,
+                        surf_bindings,
+                        explore_bindings,
                     )
                     .await
                 }
@@ -276,16 +292,20 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         config.external_commands,
                         md_static,
                         config.color.elements,
+                        checkmark_bindings,
+                        explore_bindings,
                     )
                     .await
                 }
                 "stack" => {
                     commands::stack::exec(
                         db,
+                        vec![],
                         config.external_commands,
                         config.surf_parsing,
                         md_static,
                         config.color.elements,
+                        stack_bindings,
                     )
                     .await
                 }

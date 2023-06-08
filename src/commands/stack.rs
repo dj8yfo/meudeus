@@ -3,7 +3,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 
 use crate::{
-    config::{color::ColorScheme, ExternalCommands, SurfParsing},
+    config::{color::ColorScheme, keymap, ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
     note::{Note, PreviewType},
@@ -15,22 +15,38 @@ use super::explore::GLOBAL_STACK;
 
 pub(crate) async fn exec(
     db: SqliteAsyncHandle,
+    input_items_from_explore: Vec<Note>,
     external_commands: ExternalCommands,
     surf_parsing: SurfParsing,
     md_static: MarkdownStatic,
     color_scheme: ColorScheme,
+    bindings_map: keymap::stack::Bindings,
 ) -> Result<String, anyhow::Error> {
-    let note = stack_select(db, external_commands, surf_parsing, md_static, color_scheme).await?;
-    Ok(note.name())
+    let notes = stack_select(
+        db,
+        input_items_from_explore,
+        external_commands,
+        surf_parsing,
+        md_static,
+        color_scheme,
+        bindings_map,
+    )
+    .await?;
+    Ok(notes
+        .first()
+        .map(|note| note.name())
+        .unwrap_or("".to_string()))
 }
 
 pub(crate) async fn stack_select(
     db: SqliteAsyncHandle,
+    input_items_from_explore: Vec<Note>,
     external_commands: ExternalCommands,
     surf_parsing: SurfParsing,
     md_static: MarkdownStatic,
     color_scheme: ColorScheme,
-) -> Result<Note, anyhow::Error> {
+    bindings_map: keymap::stack::Bindings,
+) -> Result<Vec<Note>, anyhow::Error> {
     let straight = true;
     let multi = false;
     let nested_threshold = 1;
@@ -43,6 +59,7 @@ pub(crate) async fn stack_select(
             .await?;
         let action = crate::skim::stack_sequential::Iteration::new(
             format!("stack; {GLOBAL_STACK}"),
+            input_items_from_explore.clone(),
             list,
             db.clone(),
             multi,
@@ -53,6 +70,7 @@ pub(crate) async fn stack_select(
             color_scheme,
             straight,
             nested_threshold,
+            bindings_map.clone(),
         )
         .run()
         .await?;
@@ -60,7 +78,14 @@ pub(crate) async fn stack_select(
         match action {
             Action::Select(note) => {
                 println!("{}", format_two_tokens("selected ", &note.name()));
-                return Ok(note);
+                return Ok(vec![note]);
+            }
+            Action::Return(notes) => {
+                println!(
+                    "{}",
+                    format_two_tokens("returning to previous", "selection in explore")
+                );
+                return Ok(notes);
             }
             Action::TogglePreview => {
                 preview_type = preview_type.toggle();

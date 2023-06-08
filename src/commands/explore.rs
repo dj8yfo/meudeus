@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::{
     commands::link::{link, link_noninteractive},
-    config::{color::ColorScheme, ExternalCommands, SurfParsing},
+    config::{color::ColorScheme, keymap, ExternalCommands, SurfParsing},
     database::{Database, SqliteAsyncHandle},
     highlight::MarkdownStatic,
     note::{Note, PreviewType},
@@ -27,6 +27,10 @@ pub(crate) async fn exec(
     surf_parsing: SurfParsing,
     md_static: MarkdownStatic,
     color_scheme: ColorScheme,
+    bindings_map: keymap::surf::Bindings,
+    chck_bindings_map: keymap::checkmark::Bindings,
+    stack_bindings_map: keymap::stack::Bindings,
+    explore_bindings_map: keymap::explore::Bindings,
 ) -> Result<String, anyhow::Error> {
     let mut list = db.lock().await.list(md_static, color_scheme).await?;
     let mut straight = true;
@@ -45,6 +49,7 @@ pub(crate) async fn exec(
             color_scheme,
             straight,
             nested_threshold,
+            explore_bindings_map.clone(),
         )
         .await?;
         preview_type = preview_type_after;
@@ -68,6 +73,7 @@ pub(crate) async fn exec(
                     md_static,
                     color_scheme,
                     straight,
+                    bindings_map.clone(),
                 )
                 .await
                 {
@@ -76,8 +82,14 @@ pub(crate) async fn exec(
             }
 
             Some(Action::Checkmark(surfed)) => {
-                if let Err(err) =
-                    checkmark_note(surfed, &external_commands, &surf_parsing, md_static).await
+                if let Err(err) = checkmark_note(
+                    surfed,
+                    &external_commands,
+                    &surf_parsing,
+                    md_static,
+                    chck_bindings_map.clone(),
+                )
+                .await
                 {
                     eprintln!("checkmark error: {:?}", err);
                 }
@@ -179,15 +191,17 @@ pub(crate) async fn exec(
                 sleep(Duration::new(1, 0)).await;
             }
             Some(Action::SwitchToStack) => {
-                let note = stack_select(
+                let next = stack_select(
                     db.clone(),
+                    list.clone(),
                     external_commands.clone(),
                     surf_parsing.clone(),
                     md_static,
                     color_scheme,
+                    stack_bindings_map.clone(),
                 )
                 .await?;
-                list = vec![note];
+                list = next;
             }
             _ => {}
         }
@@ -204,6 +218,7 @@ pub async fn iteration(
     color_scheme: ColorScheme,
     straight: bool,
     nested_threshold: usize,
+    bindings_map: keymap::explore::Bindings,
 ) -> Result<(Vec<Note>, Option<Action>, PreviewType), anyhow::Error> {
     let out = Iteration::new(
         list.clone(),
@@ -215,6 +230,7 @@ pub async fn iteration(
         color_scheme,
         straight,
         nested_threshold,
+        bindings_map,
     )
     .run()
     .await?;

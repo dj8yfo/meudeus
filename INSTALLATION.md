@@ -1,5 +1,7 @@
 # Install
 
+0. This app doesn't build on Windows, unfortunately. It's so due to [tuikit/skim not buildings on Windows](https://github.com/lotabout/tuikit/issues/13)
+
 1. Install the binary itself.
 
 ```

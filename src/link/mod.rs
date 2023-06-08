@@ -190,37 +190,37 @@ impl Link {
         let parent_rgb = self.color_scheme.links.parent_name;
         let parent_name = self
             .parent_name
-            .truecolor(parent_rgb.r, parent_rgb.g, parent_rgb.b)
+            .truecolor(parent_rgb.0.r, parent_rgb.0.g, parent_rgb.0.b)
             .to_string();
         let description = match self.link {
             Destination::URL(..) => {
                 let url_rgb = self.color_scheme.links.url;
                 self.description
-                    .truecolor(url_rgb.r, url_rgb.g, url_rgb.b)
+                    .truecolor(url_rgb.0.r, url_rgb.0.g, url_rgb.0.b)
                     .to_string()
             }
             Destination::File { .. } | Destination::FileLine { .. } => {
                 let file_rgb = self.color_scheme.links.file;
                 self.description
-                    .truecolor(file_rgb.r, file_rgb.g, file_rgb.b)
+                    .truecolor(file_rgb.0.r, file_rgb.0.g, file_rgb.0.b)
                     .to_string()
             }
             Destination::Dir { .. } => {
                 let dir_rgb = self.color_scheme.links.dir;
                 self.description
-                    .truecolor(dir_rgb.r, dir_rgb.g, dir_rgb.b)
+                    .truecolor(dir_rgb.0.r, dir_rgb.0.g, dir_rgb.0.b)
                     .to_string()
             }
             Destination::Broken(..) => {
                 let broken_rgb = self.color_scheme.links.broken;
                 self.description
-                    .truecolor(broken_rgb.r, broken_rgb.g, broken_rgb.b)
+                    .truecolor(broken_rgb.0.r, broken_rgb.0.g, broken_rgb.0.b)
                     .to_string()
             }
             Destination::CodeBlock { .. } => {
                 let code_block_rgb = self.color_scheme.links.code_block;
                 self.description
-                    .truecolor(code_block_rgb.r, code_block_rgb.g, code_block_rgb.b)
+                    .truecolor(code_block_rgb.0.r, code_block_rgb.0.g, code_block_rgb.0.b)
                     .to_string()
             }
         };

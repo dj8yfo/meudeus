@@ -65,9 +65,7 @@ impl SkimItem for TaskTreeWrapper {
             NoteTaskItemTerm::Cycle(..) => unreachable!("cycle"),
             NoteTaskItemTerm::TaskHint(..) => unreachable!("hint"),
             NoteTaskItemTerm::TaskMono(..) => unreachable!("task_mono"),
-            NoteTaskItemTerm::Task(ref task_item) => {
-                format!("{}", task_item.skim_display_mono(true))
-            }
+            NoteTaskItemTerm::Task(ref task_item) => task_item.skim_display_mono(true),
         };
 
         Cow::Owned(input)
@@ -86,7 +84,7 @@ impl SkimItem for TaskTreeWrapper {
     /// setting(i.e. the command set by `preview` option)
     fn preview(&self, _context: PreviewContext) -> ItemPreview {
         if let Some(ref string) = self.preview_item {
-            return ItemPreview::AnsiText(string.clone());
+            ItemPreview::AnsiText(string.clone())
         } else {
             ItemPreview::AnsiText("<not precomputed!!!>".to_string())
         }

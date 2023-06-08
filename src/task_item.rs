@@ -33,11 +33,7 @@ impl TaskItem {
     ) -> Self {
         let title = value.1.name("task_text").unwrap();
         let checkmark = value.1.name("checkmark").unwrap();
-        let completed = if checkmark.as_str() == "x" {
-            true
-        } else {
-            false
-        };
+        let completed = checkmark.as_str() == "x";
         let whitespace = value.1.name("whitespace").unwrap().as_str();
         let nested_level = whitespace.len() / 2;
         let checkmark_offsets_in_string = checkmark.start()..checkmark.end();
@@ -45,7 +41,7 @@ impl TaskItem {
         let title_markdown = format!(
             "{} {}",
             highlight(title.as_str(), highlighter, md_static),
-            " ".truecolor(0, 0, 0).to_string()
+            " ".truecolor(0, 0, 0)
         );
         Self {
             file_name: value.0,
@@ -58,6 +54,7 @@ impl TaskItem {
             title_markdown,
         }
     }
+    #[allow(clippy::ptr_arg)]
     fn parse_string(
         file_name: &PathBuf,
         input: &str,
@@ -94,7 +91,7 @@ impl TaskItem {
 
             Ok(result)
         } else {
-            return Ok(vec![]);
+            Ok(vec![])
         }
     }
 }
@@ -134,14 +131,14 @@ impl TaskItem {
         } else {
             " ".to_string()
         };
-        let input = format!("{}[{}] {} {}", indent, symbol, self.title, " ".to_string());
+        let input = format!("{}[{}] {} {}", indent, symbol, self.title, " ");
         input
     }
 
     pub fn toggle(mut self) -> std::io::Result<()> {
-        let prev = format!("{}", self.skim_display(false));
+        let prev = self.skim_display(false);
         self.completed = !self.completed;
-        let next = format!("{}", self.skim_display(false));
+        let next = self.skim_display(false);
         println!("{} -> {}", prev, next);
 
         let mut file_content = fs::read_to_string(&self.file_name)?;
@@ -196,7 +193,7 @@ mod tests {
         assert!(list[4].title_markdown.contains("\u{1b}[48;2;45;45;45m\u{1b}[38;2;211;208;200min development \u{1b}[48;2;45;45;45m\u{1b}[38;2;211;208;200m<\u{1b}[48;2;45;45;45m\u{1b}[38;2;211;208;200mTue Mar 21 08:20:37 PM EET 2023>"));
 
         assert_eq!(list[4].nested_level, 3);
-        assert_eq!(list[4].completed, true);
+        assert!(list[4].completed);
         assert_eq!(list[4].file_name, Into::<PathBuf>::into("./tmp.rs"));
         assert_eq!(list[4].checkmark_offsets_in_string, 362..363);
         assert_eq!(list[4].self_index, 4);

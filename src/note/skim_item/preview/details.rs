@@ -43,7 +43,7 @@ fn map_db_result(received: Result<Vec<Note>, Error>) -> String {
                 String::new()
             }
         }
-        Err(err) => return format!("db err {:?}", err).truecolor(255, 0, 0).to_string(),
+        Err(err) => format!("db err {:?}", err).truecolor(255, 0, 0).to_string(),
     }
 }
 
@@ -53,9 +53,9 @@ fn map_result(query_result: Result<Vec<Note>, Error>, tag: String) -> String {
     let mut string = String::new();
     if !links_to.is_empty() {
         string.push_str(&tag);
-        string.push_str(&"\n");
+        string.push('\n');
         string.push_str(&links_to);
-        string.push_str(&"\n");
+        string.push('\n');
     }
     string
 }
@@ -83,7 +83,7 @@ impl Note {
             format_two_tokens("it's a tag:", &self.name())
         };
         string.push_str(&title);
-        string.push_str(&"\n\n");
+        string.push_str("\n\n");
         string.push_str(&linked_by);
         string.push_str(&links_to);
         if let Some(resources) = self.resources() {

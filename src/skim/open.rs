@@ -28,6 +28,7 @@ pub(crate) struct Iteration {
 }
 
 impl Iteration {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         hint: String,
         items: Vec<Note>,
@@ -125,22 +126,20 @@ impl Iteration {
             match out.final_key {
                 Key::Enter => {
                     if let Some(item) = selected_items.first() {
-                        return Ok(item.clone());
+                        Ok(item.clone())
                     } else {
-                        return Err(anyhow::anyhow!("no item selected"));
+                        Err(anyhow::anyhow!("no item selected"))
                     }
                 }
-                Key::Ctrl('c') | Key::ESC => {
-                    return Err(anyhow::anyhow!(
-                        "user chose to abort current iteration of open cycle"
-                    ))
-                }
+                Key::Ctrl('c') | Key::ESC => Err(anyhow::anyhow!(
+                    "user chose to abort current iteration of open cycle"
+                )),
                 _ => {
                     unreachable!();
                 }
-            };
+            }
         } else {
-            return Err(anyhow::anyhow!("skim internal errors"));
+            Err(anyhow::anyhow!("skim internal errors"))
         }
     }
 }

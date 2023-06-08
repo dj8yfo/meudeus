@@ -17,7 +17,7 @@ mod skim_item;
 
 #[derive(Clone, Debug)]
 pub enum Destination {
-    URL(String),
+    Url(String),
     File {
         file: PathBuf,
     },
@@ -38,7 +38,7 @@ pub enum Destination {
 impl Open for Link {
     fn open(&self, mut cfg: OpenCfg) -> io::Result<Option<std::process::ExitStatus>> {
         match &self.link {
-            Destination::URL(url) => {
+            Destination::Url(url) => {
                 cfg.url_cmd.replace_matching_element("$URL", url);
                 Ok(Some(
                     cmd(cfg.url_cmd.command, cfg.url_cmd.args).run()?.status,
@@ -110,7 +110,7 @@ impl Open for Link {
 
     fn open_xdg(&self) -> Result<(), opener::OpenError> {
         match &self.link {
-            Destination::URL(url) => opener::open(url),
+            Destination::Url(url) => opener::open(url),
 
             Destination::File { file, .. } | Destination::FileLine { file, .. } => {
                 opener::open(file)
@@ -193,7 +193,7 @@ impl Link {
             .truecolor(parent_rgb.0.r, parent_rgb.0.g, parent_rgb.0.b)
             .to_string();
         let description = match self.link {
-            Destination::URL(..) => {
+            Destination::Url(..) => {
                 let url_rgb = self.color_scheme.links.url;
                 self.description
                     .truecolor(url_rgb.0.r, url_rgb.0.g, url_rgb.0.b)
@@ -332,6 +332,7 @@ impl Link {
             },
         }
     }
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         description: String,
         link: String,
@@ -346,7 +347,7 @@ impl Link {
             Self {
                 parent_name,
                 description,
-                link: Destination::URL(link),
+                link: Destination::Url(link),
                 preview_item: None,
                 display_item: None,
                 start,

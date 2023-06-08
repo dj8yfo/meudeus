@@ -97,15 +97,10 @@ impl Display for Note {
                         f,
                         "{}",
                         name.truecolor(special_tag.0.r, special_tag.0.g, special_tag.0.b)
-                            .to_string()
                     )
                 } else {
                     let tag = color_scheme.notes.tag;
-                    write!(
-                        f,
-                        "{}",
-                        name.truecolor(tag.0.r, tag.0.g, tag.0.b).to_string()
-                    )
+                    write!(f, "{}", name.truecolor(tag.0.r, tag.0.g, tag.0.b))
                 }
             }
         }
@@ -184,7 +179,7 @@ impl Note {
                 let markdown = format!(
                     "{} {}",
                     highlight(name, highlighter, md_static),
-                    " ".truecolor(0, 0, 0).to_string()
+                    " ".truecolor(0, 0, 0)
                 );
                 *name_markdown = Some(markdown);
             }

@@ -165,9 +165,7 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
     if let Err(err) = env::set_current_dir(&config.work_dir.0) {
         eprintln!(
             "{}",
-            format!("couldn't change work dir to {:?}", &config.work_dir)
-                .red()
-                .to_string()
+            format!("couldn't change work dir to {:?}", &config.work_dir).red()
         );
         return Err(err)?;
     }

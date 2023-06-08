@@ -53,17 +53,17 @@ impl TryFrom<&KdlNode> for ConfigPath {
         let string = value
             .get(0)
             .ok_or(KdlNodeErrorType {
-                err_span: value.span().clone(),
+                err_span: *value.span(),
                 description: "node's first argument not found".to_string(),
             })
-            .map_err(|err| Into::<miette::Report>::into(err))?
+            .map_err(Into::<miette::Report>::into)?
             .value()
             .as_string()
             .ok_or(KdlNodeErrorType {
-                err_span: value.span().clone(),
+                err_span: *value.span(),
                 description: "argument's value is expected to be of string type".to_string(),
             })
-            .map_err(|err| Into::<miette::Report>::into(err))?
+            .map_err(Into::<miette::Report>::into)?
             .to_string();
 
         Ok(Self(PathBuf::from(string)))
@@ -85,14 +85,14 @@ impl Config {
 
         let config_file = fs::read_to_string(config_path).into_diagnostic()?;
 
-        let doc: KdlDocument = config_file.parse().map_err(|error| Report::new(error))?;
+        let doc: KdlDocument = config_file.parse().map_err(Report::new)?;
         let world_node: miette::Result<&KdlNode> = doc
             .get("world")
             .ok_or(KdlNodeErrorType {
-                err_span: doc.span().clone(),
+                err_span: *doc.span(),
                 description: "couldn't find top-level `world` node in kdl document".to_string(),
             })
-            .map_err(|err| Into::<miette::Report>::into(err));
+            .map_err(Into::<miette::Report>::into);
         let world_node = world_node.map_err(|error| error.with_source_code(config_file.clone()))?;
 
         let result: miette::Result<Self> = world_node.try_into();

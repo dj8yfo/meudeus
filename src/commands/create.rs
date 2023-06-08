@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub(crate) async fn exec(
-    title: &String,
+    title: &str,
     db: SqliteAsyncHandle,
 
     is_tag: bool,
@@ -25,7 +25,7 @@ pub(crate) async fn exec(
 }
 
 pub(crate) async fn create(
-    title: &String,
+    title: &str,
     db: SqliteAsyncHandle,
 
     is_tag: bool,
@@ -36,7 +36,7 @@ pub(crate) async fn create(
 ) -> Result<Note, anyhow::Error> {
     let mut highlighter = HighlightLines::new(md_static.1, md_static.2);
     let note = Note::init(
-        title.clone(),
+        title.to_string(),
         is_tag,
         &mut highlighter,
         md_static,

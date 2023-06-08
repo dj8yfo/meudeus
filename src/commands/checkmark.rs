@@ -61,7 +61,7 @@ pub(crate) async fn checkmark_note(
     bindings_map: keymap::checkmark::Bindings,
 ) -> Result<Note, anyhow::Error> {
     let mut next_tasks_window = None;
-    let mut tasks = read_tasks_from_file(&note, &surf, md_static).await?;
+    let mut tasks = read_tasks_from_file(&note, surf, md_static).await?;
     loop {
         let action = CheckmarkIteration::new(tasks, note.clone(), bindings_map.clone()).run()?;
         next_tasks_window = match action {
@@ -89,9 +89,9 @@ pub(crate) async fn checkmark_note(
             }
         };
         tasks = match next_tasks_window {
-            None => read_tasks_from_file(&note, &surf, md_static).await?,
+            None => read_tasks_from_file(&note, surf, md_static).await?,
             Some((start, end)) => {
-                let all = read_tasks_from_file(&note, &surf, md_static).await?;
+                let all = read_tasks_from_file(&note, surf, md_static).await?;
                 all[start..end].to_vec()
             }
         };
@@ -104,7 +104,7 @@ async fn read_tasks_from_file(
     md_static: MarkdownStatic,
 ) -> Result<Vec<TaskTreeWrapper>, anyhow::Error> {
     let mut highlighter = HighlightLines::new(md_static.1, md_static.2);
-    let tasks = TaskItem::parse(&note, &surf, &mut highlighter, md_static)?;
+    let tasks = TaskItem::parse(note, surf, &mut highlighter, md_static)?;
 
     let tasks_stereo = NoteTaskItemTerm::parse(&tasks, false, false);
     let tasks_mono = NoteTaskItemTerm::parse(&tasks, false, true);

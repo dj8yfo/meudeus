@@ -44,4 +44,6 @@ pub trait Database: Send + Sync {
     ) -> Result<Vec<Note>>;
     async fn pop_note_from_stack(&mut self, stack: &str, note: &str) -> Result<()>;
     async fn move_to_topmost(&mut self, stack: &str, note: &str) -> Result<()>;
+    async fn swap_with_above(&mut self, stack: &str, note: &str) -> Result<()>;
+    async fn swap_with_below(&mut self, stack: &str, note: &str) -> Result<()>;
 }

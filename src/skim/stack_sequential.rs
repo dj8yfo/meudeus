@@ -1,8 +1,8 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, rc::Rc, sync::Arc};
 
 use skim::{
-    prelude::{unbounded, Key, SkimOptionsBuilder},
-    Skim, SkimItemReceiver, SkimItemSender,
+    prelude::{unbounded, DefaultSkimSelector, Key, SkimOptionsBuilder},
+    Selector, Skim, SkimItemReceiver, SkimItemSender,
 };
 
 use crate::{
@@ -17,6 +17,8 @@ pub enum Action {
     TogglePreview,
     Pop(Note),
     MoveTopmost(Note),
+    SwapWithAbove(Note),
+    SwapWithBelow(Note),
 }
 
 pub(crate) struct Iteration {
@@ -34,6 +36,7 @@ pub(crate) struct Iteration {
     straight: bool,
     nested_threshold: usize,
     bindings_map: keymap::stack::Bindings,
+    preselected_item: Option<String>,
 }
 
 impl Iteration {
@@ -52,6 +55,7 @@ impl Iteration {
         straight: bool,
         nested_threshold: usize,
         bindings_map: keymap::stack::Bindings,
+        selected_item: Option<String>,
     ) -> Self {
         Self {
             items: Some(items),
@@ -67,6 +71,7 @@ impl Iteration {
             straight,
             nested_threshold,
             bindings_map,
+            preselected_item: selected_item,
         }
     }
 
@@ -115,6 +120,12 @@ impl Iteration {
                     .map(|element| &*(Box::<str>::leak(element.into_boxed_str()))),
             );
             let hint = format!("({hint}) > ");
+            let selector = self.preselected_item.map(|item| {
+                let preset_items = vec![item];
+                let selector = DefaultSkimSelector::default().preset(preset_items);
+                let selector: Rc<dyn Selector> = Rc::new(selector);
+                selector
+            });
             let options = SkimOptionsBuilder::default()
                 .height(Some("100%"))
                 .preview(Some(""))
@@ -122,6 +133,7 @@ impl Iteration {
                 .preview_window(Some("up:60%"))
                 .multi(self.multi)
                 .bind(bindings)
+                .selector(selector)
                 .build()
                 .unwrap();
 
@@ -191,6 +203,20 @@ impl Iteration {
                 keymap::stack::Action::MoveNoteToStackTop => {
                     if let Some(item) = selected_items.first() {
                         Ok(Action::MoveTopmost(item.clone()))
+                    } else {
+                        Err(anyhow::anyhow!("no item selected"))
+                    }
+                }
+                keymap::stack::Action::SwapWithAbove => {
+                    if let Some(item) = selected_items.first() {
+                        Ok(Action::SwapWithAbove(item.clone()))
+                    } else {
+                        Err(anyhow::anyhow!("no item selected"))
+                    }
+                }
+                keymap::stack::Action::SwapWithBelow => {
+                    if let Some(item) = selected_items.first() {
+                        Ok(Action::SwapWithBelow(item.clone()))
                     } else {
                         Err(anyhow::anyhow!("no item selected"))
                     }

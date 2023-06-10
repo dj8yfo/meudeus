@@ -71,6 +71,8 @@ world {
 			pop_note_from_stack "alt-p"
 			move_note_to_top_of_stack "alt-t"
 			return_to_explore "ctrl-e"
+			swap_with_above "alt-u"
+			swap_with_below "alt-d"
 			
 		}
 	}

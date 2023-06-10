@@ -146,6 +146,20 @@ impl Sqlite {
         Ok(())
     }
 
+    async fn get_max_index_in_stack(
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+        stack: &str,
+    ) -> Result<i64> {
+        let res = sqlx::query(
+            "select MAX(stack_index) as stack_index from stacked_notes where stack_tag = ?1",
+        )
+        .bind(stack)
+        .map(Self::query_stack_index)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        Ok(res)
+    }
     async fn get_index_in_stack(
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         stack: &str,
@@ -175,6 +189,74 @@ impl Sqlite {
         Ok(())
     }
 
+    async fn swap_with_above(
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+        stack: &str,
+        note: &str,
+    ) -> Result<()> {
+        let max_index = Self::get_max_index_in_stack(&mut *tx, stack).await?;
+        let current_index = Self::get_index_in_stack(&mut *tx, stack, note).await?;
+        if current_index == max_index {
+            // noop
+            return Ok(());
+        }
+
+        for (from, to) in [
+            (current_index, -1),
+            (current_index + 1, current_index),
+            (-1, current_index + 1),
+        ] {
+            sqlx::query(
+                "update stacked_notes
+                    set stack_index = ?1
+                    where stack_index = ?2 and stack_tag = ?3",
+            )
+            .bind(to)
+            .bind(from)
+            .bind(stack)
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        // currrent -> -1
+        // current +1 -> current
+        // -1 -> current+ 1
+        Ok(())
+    }
+
+    async fn swap_with_below(
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+        stack: &str,
+        note: &str,
+    ) -> Result<()> {
+        let current_index = Self::get_index_in_stack(&mut *tx, stack, note).await?;
+        if current_index == 0 {
+            // noop
+            return Ok(());
+        }
+
+        // current -> -1
+        // current - 1 -> current
+        // -1 -> current - 1
+        for (from, to) in [
+            (current_index, -1),
+            (current_index - 1, current_index),
+            (-1, current_index - 1),
+        ] {
+            sqlx::query(
+                "update stacked_notes
+                    set stack_index = ?1
+                    where stack_index = ?2 and stack_tag = ?3",
+            )
+            .bind(to)
+            .bind(from)
+            .bind(stack)
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        Ok(())
+    }
     async fn move_to_topmost(
         tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         stack: &str,
@@ -547,6 +629,22 @@ impl Database for Sqlite {
 
         Self::move_to_topmost(&mut tx, stack, note).await?;
         tx.commit().await?;
+        Ok(())
+    }
+    async fn swap_with_above(&mut self, stack: &str, note: &str) -> Result<()> {
+        let mut tx = self.pool.begin().await?;
+
+        Self::swap_with_above(&mut tx, stack, note).await?;
+        tx.commit().await?;
+
+        Ok(())
+    }
+    async fn swap_with_below(&mut self, stack: &str, note: &str) -> Result<()> {
+        let mut tx = self.pool.begin().await?;
+
+        Self::swap_with_below(&mut tx, stack, note).await?;
+        tx.commit().await?;
+
         Ok(())
     }
 

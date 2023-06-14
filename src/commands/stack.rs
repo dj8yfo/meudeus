@@ -78,9 +78,19 @@ pub(crate) async fn stack_select(
         .await?;
 
         match action {
-            Action::Select(note) => {
-                println!("{}", format_two_tokens("selected ", &note.name()));
-                return Ok(vec![note]);
+            Action::Select(notes) => {
+                println!(
+                    "{}",
+                    format_two_tokens(
+                        "selected ",
+                        &notes
+                            .iter()
+                            .map(|note| note.name())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )
+                );
+                return Ok(notes);
             }
             Action::Return(notes) => {
                 println!(

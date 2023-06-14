@@ -12,7 +12,7 @@ use crate::{
     note::{DynResources, Note, PreviewType},
 };
 pub enum Action {
-    Select(Note),
+    Select(Vec<Note>),
     Return(Vec<Note>),
     TogglePreview,
     Pop(Note),
@@ -164,11 +164,7 @@ impl Iteration {
                     ))
                 }
                 Key::Enter => {
-                    if let Some(item) = selected_items.first() {
-                        return Ok(Action::Select(item.clone()));
-                    } else {
-                        return Err(anyhow::anyhow!("no item selected"));
-                    }
+                    return Ok(Action::Select(selected_items));
                 }
                 key @ Key::Ctrl(..) | key @ Key::Alt(..) => bindings_map.get(&key).cloned(),
                 _ => {

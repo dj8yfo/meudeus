@@ -186,7 +186,7 @@ impl Iteration {
                     if let Some(item) = selected_items.first() {
                         Ok(Out {
                             action: Action::OpenXDG(item.clone()),
-                            next_items: vec![item.clone()],
+                            next_items: items,
                         })
                     } else {
                         Err(anyhow::anyhow!("no item selected"))
@@ -237,16 +237,10 @@ impl Iteration {
                     }
                 }
 
-                keymap::explore::Action::TogglePreviewType => {
-                    if let Some(item) = selected_items.first() {
-                        Ok(Out {
-                            action: Action::TogglePreview,
-                            next_items: vec![item.clone()],
-                        })
-                    } else {
-                        Err(anyhow::anyhow!("no item selected"))
-                    }
-                }
+                keymap::explore::Action::TogglePreviewType => Ok(Out {
+                    action: Action::TogglePreview,
+                    next_items: items,
+                }),
 
                 keymap::explore::Action::WidenToAllNotes => Ok(Out {
                     action: Action::Widen,
@@ -268,7 +262,7 @@ impl Iteration {
                     if let Some(item) = selected_items.first() {
                         Ok(Out {
                             action: Action::Link(item.clone()),
-                            next_items: vec![],
+                            next_items: items,
                         })
                     } else {
                         Err(anyhow::anyhow!("no item selected"))
@@ -279,7 +273,7 @@ impl Iteration {
                     if let Some(item) = selected_items.first() {
                         Ok(Out {
                             action: Action::Unlink(item.clone()),
-                            next_items: vec![],
+                            next_items: items,
                         })
                     } else {
                         Err(anyhow::anyhow!("no item selected"))
@@ -301,7 +295,7 @@ impl Iteration {
                     if let Some(item) = selected_items.first() {
                         Ok(Out {
                             action: Action::CreateLinkedFrom(item.clone()),
-                            next_items: vec![],
+                            next_items: items,
                         })
                     } else {
                         Err(anyhow::anyhow!("no item selected"))
@@ -312,23 +306,17 @@ impl Iteration {
                     if let Some(item) = selected_items.first() {
                         Ok(Out {
                             action: Action::Surf(item.clone()),
-                            next_items: vec![item.clone()],
+                            next_items: items,
                         })
                     } else {
                         Err(anyhow::anyhow!("no item selected"))
                     }
                 }
 
-                keymap::explore::Action::ToggleLinksDirection => {
-                    if let Some(item) = selected_items.first() {
-                        Ok(Out {
-                            action: Action::InvertLinks,
-                            next_items: vec![item.clone()],
-                        })
-                    } else {
-                        Err(anyhow::anyhow!("no item selected"))
-                    }
-                }
+                keymap::explore::Action::ToggleLinksDirection => Ok(Out {
+                    action: Action::InvertLinks,
+                    next_items: items,
+                }),
 
                 keymap::explore::Action::SpliceReachableChildrenOfNote => {
                     if let Some(item) = selected_items.first() {
@@ -355,27 +343,15 @@ impl Iteration {
                     next_items: selected_items,
                 }),
 
-                keymap::explore::Action::IncreaseUnlistedThreshold => {
-                    if let Some(item) = selected_items.first() {
-                        Ok(Out {
-                            action: Action::IncreaseUnlistedThreshold,
-                            next_items: vec![item.clone()],
-                        })
-                    } else {
-                        Err(anyhow::anyhow!("no item selected"))
-                    }
-                }
+                keymap::explore::Action::IncreaseUnlistedThreshold => Ok(Out {
+                    action: Action::IncreaseUnlistedThreshold,
+                    next_items: items,
+                }),
 
-                keymap::explore::Action::DecreaseUnlistedThreshold => {
-                    if let Some(item) = selected_items.first() {
-                        Ok(Out {
-                            action: Action::DecreaseUnlistedThreshold,
-                            next_items: vec![item.clone()],
-                        })
-                    } else {
-                        Err(anyhow::anyhow!("no item selected"))
-                    }
-                }
+                keymap::explore::Action::DecreaseUnlistedThreshold => Ok(Out {
+                    action: Action::DecreaseUnlistedThreshold,
+                    next_items: items,
+                }),
 
                 keymap::explore::Action::PushNoteToStack => {
                     if let Some(item) = selected_items.first() {
@@ -401,7 +377,7 @@ impl Iteration {
                     if let Some(item) = selected_items.first() {
                         Ok(Out {
                             action: Action::Checkmark(item.clone()),
-                            next_items: vec![item.clone()],
+                            next_items: items,
                         })
                     } else {
                         Err(anyhow::anyhow!("no item selected"))

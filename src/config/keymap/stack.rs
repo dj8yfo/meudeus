@@ -38,7 +38,6 @@ impl_try_from_kdl_node_uniqueness_check!(
     swap_with_above,
     swap_with_below,
     deselect_all
-
 );
 
 impl_from_self_into_action_hashmap!(StackKeymap, Action,

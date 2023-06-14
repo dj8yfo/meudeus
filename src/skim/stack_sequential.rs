@@ -223,7 +223,6 @@ impl Iteration {
                 }
                 keymap::stack::Action::DeselectAll => {
                     unreachable!("deselect_all must be unreachable");
-                    
                 }
             }
         } else {

@@ -1,8 +1,6 @@
 bacon:
 	bacon check
 
-cargo-test:
-	cargo test -- --nocapture
 
 fmt: 
 	cargo fmt --all
@@ -18,3 +16,17 @@ shell:
 
 ridge:
     skridge
+
+cargo-check:
+	cargo check --all
+
+cargo-test:
+	cargo test --all -- --nocapture
+
+cargo-fmt-check:
+	cargo fmt --all --check
+
+cargo-clippy-check:
+	cargo clippy --all
+
+pre-push-check: cargo-check cargo-fmt-check cargo-clippy-check cargo-test

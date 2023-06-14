@@ -35,9 +35,9 @@ impl_try_from_kdl_node_uniqueness_check!(
 );
 
 impl_from_self_into_action_hashmap!(CheckmarkKeymap, Action,
-    Action::JumpToTask => jump_to_task,
-    Action::CopyTaskSubtree => copy_task_subtree_into_clipboard,
-    Action::WidenContext => widen_context_to_all_tasks,
-    Action::NarrowContext => narrow_context_to_selected_task_subtree,
-    Action::ReturnToExplore => return_to_explore
+    Action::JumpToTask => jump_to_task | "accept".to_string(),
+    Action::CopyTaskSubtree => copy_task_subtree_into_clipboard | "accept".to_string(),
+    Action::WidenContext => widen_context_to_all_tasks | "accept".to_string(),
+    Action::NarrowContext => narrow_context_to_selected_task_subtree | "accept".to_string(),
+    Action::ReturnToExplore => return_to_explore | "accept".to_string()
 );

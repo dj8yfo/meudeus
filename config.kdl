@@ -73,6 +73,7 @@ world {
 			return_to_explore "ctrl-e"
 			swap_with_above "alt-u"
 			swap_with_below "alt-d"
+			deselect_all "ctrl-q"
 			
 		}
 	}

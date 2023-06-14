@@ -221,6 +221,10 @@ impl Iteration {
                         Err(anyhow::anyhow!("no item selected"))
                     }
                 }
+                keymap::stack::Action::DeselectAll => {
+                    unreachable!("deselect_all must be unreachable");
+                    
+                }
             }
         } else {
             Err(anyhow::anyhow!("skim internal errors"))

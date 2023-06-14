@@ -142,16 +142,16 @@ pub mod keymap {
 
     #[macro_export]
     macro_rules! impl_from_self_into_action_hashmap {
-        ($type: ident, $action_type: ident, $($variant: expr => $field: ident),+ ) => (
+        ($type: ident, $action_type: ident, $($variant: expr => $field: ident | $skim_action: expr),+ ) => (
 
             #[derive(Debug, Clone)]
-            pub struct Bindings(HashMap<SingleKey, $action_type>);
+            pub struct Bindings(HashMap<(SingleKey, String), $action_type>);
 
 
             impl From<$type> for Bindings {
                 fn from(value: $type) -> Self {
                     let mut result = HashMap::new();
-                    $(result.insert(value.$field, $variant));+
+                    $(result.insert((value.$field, $skim_action), $variant));+
                     ;
 
                     Bindings(result)
@@ -163,7 +163,7 @@ pub mod keymap {
                     self
                         .0
                         .keys()
-                        .map(|key| format!("{}:accept", key.combo))
+                        .map(|(key, skim_action)| format!("{}:{}", key.combo, skim_action))
                         .collect::<Vec<_>>()
 
                 }
@@ -172,7 +172,7 @@ pub mod keymap {
             impl From<&Bindings> for HashMap<tuikit::key::Key, Action> {
                 fn from(value: &Bindings) -> Self {
                     value.0.iter().map(|(k,v)| {
-                        (k.tui_combo.clone(), v.clone())
+                        (k.0.tui_combo.clone(), v.clone())
                     }).collect::<HashMap<_, _>>()
 
                 }

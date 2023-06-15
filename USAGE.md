@@ -68,6 +68,7 @@
   - If it matches, it's considered a url link. 
   - Otherwise, it's considered local filesystem link, either absolute or relative (no `file://` protocol prefix required).   
   - If `filesystem_link:37` matches `world.surf-parsing.file-dest-has-line-regex` regex in [config](./config.kdl) it's considered a `$FILE:$LINE` link. 
+  - Local filesystem link has any env variables replaced with their values, e.g. `$HOME/path/to/file` gets expanded to `/home/user/path/to/file`.
 3. `'''code_block'''` description is parsed as the first line of `'''code_block'''`, comments `# bash comment` or `// C comment` may be used for informative descriptions.
 4. Syntax in `'''code_block'''`can be hinted for highlight in preview by specifying tag \`\`\`syntax_tag, e.g. \`\`\`bash or \`\`\`javascript.
 

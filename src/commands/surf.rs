@@ -118,7 +118,7 @@ pub(crate) async fn surf_note(
                 return Ok(note);
             }
         }
-        sleep(Duration::new(1, 500_000_000)).await;
+        sleep(Duration::new(0, 500_000_000)).await;
         eprintln!("{}", format_two_tokens("surfed", &note.name()));
     }
 }

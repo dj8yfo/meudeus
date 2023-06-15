@@ -2,12 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [0.18.4] - 2023-06-14
+
+### Documentation
+
+- Update `stack` mode with `deselect_all` keybinding
+
+### Features
+
+- [**breaking**] Add move_up_by_one and move_down_by_one actions
+- [**breaking**] Add deselect_all binding to stack mode to clean selection of items
+- Return multiple selection from stack, remove unnecessary narrowing of skim selection after some of secondary actions in explore mode
 
 ### Miscellaneous Tasks
 
 - Add lint to ci
 - Fix or supress clippy lints
+- Add prepush check to justfile
 
 ## [0.18.3] - 2023-06-08
 

@@ -115,7 +115,7 @@ pub(crate) async fn exec(
                 {
                     eprintln!("link error: {:?}", err);
                 }
-                list = vec![linked_from];
+                // list = vec![linked_from];
             }
 
             Some(Action::Unlink(unlinked_from)) => {
@@ -132,7 +132,7 @@ pub(crate) async fn exec(
                 {
                     eprintln!("unlink error: {:?}", err);
                 }
-                list = vec![unlinked_from];
+                // list = vec![unlinked_from];
             }
 
             Some(Action::Remove(removed)) => {
@@ -157,7 +157,7 @@ pub(crate) async fn exec(
                     create::create(&new_name, db.clone(), is_tag, md_static, color_scheme).await?;
 
                 link_noninteractive(linked_from.clone(), to, db.clone(), straight).await?;
-                list = vec![linked_from];
+                // list = vec![linked_from];
             }
 
             Some(Action::InvertLinks) => {

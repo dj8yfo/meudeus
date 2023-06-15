@@ -48,9 +48,10 @@ pub(crate) async fn stack_select(
     bindings_map: keymap::stack::Bindings,
 ) -> Result<Vec<Note>, anyhow::Error> {
     let straight = true;
-    let multi = false;
+    let multi = true;
     let nested_threshold = 1;
     let mut preview_type = PreviewType::TaskStructure;
+    let mut preselected_item = None;
     loop {
         let list = db
             .lock()
@@ -71,14 +72,25 @@ pub(crate) async fn stack_select(
             straight,
             nested_threshold,
             bindings_map.clone(),
+            preselected_item.clone(),
         )
         .run()
         .await?;
 
         match action {
-            Action::Select(note) => {
-                println!("{}", format_two_tokens("selected ", &note.name()));
-                return Ok(vec![note]);
+            Action::Select(notes) => {
+                println!(
+                    "{}",
+                    format_two_tokens(
+                        "selected ",
+                        &notes
+                            .iter()
+                            .map(|note| note.name())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )
+                );
+                return Ok(notes);
             }
             Action::Return(notes) => {
                 println!(
@@ -88,9 +100,11 @@ pub(crate) async fn stack_select(
                 return Ok(notes);
             }
             Action::TogglePreview => {
+                preselected_item = None;
                 preview_type = preview_type.toggle();
             }
             Action::Pop(note) => {
+                preselected_item = None;
                 let name = note.name();
                 db.lock()
                     .await
@@ -100,16 +114,35 @@ pub(crate) async fn stack_select(
                     "{}",
                     format_two_tokens("popped ", &format!("{name} from {GLOBAL_STACK}"))
                 );
-                sleep(Duration::new(1, 0)).await;
+                sleep(Duration::new(0, 500_000_000)).await;
             }
             Action::MoveTopmost(note) => {
+                preselected_item = None;
                 let name = note.name();
                 db.lock().await.move_to_topmost(GLOBAL_STACK, &name).await?;
                 println!(
                     "{}",
                     format_two_tokens("moved to topmost ", &format!("{name} in {GLOBAL_STACK}"))
                 );
-                sleep(Duration::new(1, 0)).await;
+                sleep(Duration::new(0, 500_000_000)).await;
+            }
+            Action::SwapWithAbove(note) => {
+                let name = note.name();
+                db.lock().await.swap_with_above(GLOBAL_STACK, &name).await?;
+                preselected_item = Some(note.name());
+                println!(
+                    "{}",
+                    format_two_tokens("swapped with above ", &format!("{name} in {GLOBAL_STACK}"))
+                );
+            }
+            Action::SwapWithBelow(note) => {
+                let name = note.name();
+                db.lock().await.swap_with_below(GLOBAL_STACK, &name).await?;
+                preselected_item = Some(note.name());
+                println!(
+                    "{}",
+                    format_two_tokens("swapped with below ", &format!("{name} in {GLOBAL_STACK}"))
+                );
             }
         }
     }

@@ -73,6 +73,9 @@ E.g., `"ctrl-a"` and `"alt-x"` are valid string values for keymap config, and `"
  | Alt-p   | yes          |  Pop note from `GLOBAL` stack                                                                                                              |
  | Alt-t   | yes          |  Move note to top of `GLOBAL` stack                                                                                                        |
  | Ctrl-e  | yes          |  Return to `explore` mode without changes, as if `stack` mode wasn't switched to (if called from withing `explore` command)                |
+ | Alt-u   | yes          |  Move note one up; it will stay selected on next select iteration; it must be deselected explicitly                                        |
+ | Alt-d   | yes          |  Move note one down; it will stay selected on next select iteration; it must be deselected explicitly                                      |
+ | Ctrl-q  | yes          |  Deselect all notes; may be used after selecting multiple notes with `TAB` or after moving one note up & down                              |
 
 - common more and less obvious keybindings from vanilla skim
 

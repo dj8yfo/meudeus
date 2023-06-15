@@ -28,7 +28,7 @@ impl_try_from_kdl_node_uniqueness_check!(
 );
 
 impl_from_self_into_action_hashmap!(SurfKeymap, Action,
-    Action::OpenXDG => open_xdg,
-    Action::JumpToLinkOrSnippet => jump_to_link_or_snippet,
-    Action::ReturnToExplore => return_to_explore
+    Action::OpenXDG => open_xdg | "accept".to_string(),
+    Action::JumpToLinkOrSnippet => jump_to_link_or_snippet | "accept".to_string(),
+    Action::ReturnToExplore => return_to_explore | "accept".to_string()
 );

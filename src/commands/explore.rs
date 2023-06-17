@@ -24,6 +24,7 @@ pub static GLOBAL_STACK: &str = "GLOBAL";
 #[allow(clippy::too_many_arguments)]
 pub(crate) async fn exec(
     db: SqliteAsyncHandle,
+    selected_note: Option<Vec<String>>,
     external_commands: ExternalCommands,
     surf_parsing: SurfParsing,
     md_static: MarkdownStatic,
@@ -33,7 +34,17 @@ pub(crate) async fn exec(
     stack_bindings_map: keymap::stack::Bindings,
     explore_bindings_map: keymap::explore::Bindings,
 ) -> Result<String, anyhow::Error> {
-    let mut list = db.lock().await.list(md_static, color_scheme).await?;
+    let mut list = match selected_note {
+        Some(notes) => {
+            let mut result = vec![];
+            for note in notes {
+                let note = db.lock().await.get(&note, md_static, color_scheme).await?;
+                result.push(note);
+            }
+            result
+        }
+        None => db.lock().await.list(md_static, color_scheme).await?,
+    };
     let mut straight = true;
 
     let mut preview_type = PreviewType::default();

@@ -7,7 +7,7 @@
   ```
 
   ```
-  meudeus v0.18.4
+  meudeus v0.18.5
   a skim shredder for plain-text papers
 
   Usage: mds [OPTIONS] <COMMAND>

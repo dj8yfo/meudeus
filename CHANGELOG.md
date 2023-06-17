@@ -2,7 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.18.4] - 2023-06-14
+## [0.18.5] - 2023-06-17
+
+### Documentation
+
+- Add note about env-substitute crate usage
+
+### Features
+
+- Added `select` flag to `explore` command as in `mds explore --select 'snippet | rust' --select syntaxes --select lib`
+
+## [0.18.4] - 2023-06-15
 
 ### Documentation
 

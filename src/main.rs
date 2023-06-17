@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate sql_builder;
 
-use clap::ArgMatches;
+use clap::{Arg, ArgAction, ArgMatches};
 
 use colored::Colorize;
 use config::{color::Color, Open as OpenCfg};
@@ -57,8 +57,8 @@ fn load_theme(color: Color) -> Option<&'static Theme> {
 async fn main() {
     env_logger::init();
     let cmd = clap::Command::new("mds")
-        .version("v0.18.4")
-        .about("meudeus v0.18.4\na skim shredder for plain-text papers")
+        .version("v0.18.5")
+        .about("meudeus v0.18.5\na skim shredder for plain-text papers")
         .bin_name("mds")
         .arg(clap::arg!(-c --color  "whether color output should be forced"))
         .subcommand_required(true)
@@ -120,6 +120,16 @@ async fn main() {
         )
         .subcommand(
             clap::command!("explore")
+                .arg(
+                    Arg::new("select")
+                        .short('s')
+                        .long("select")
+                        .action(ArgAction::Append)
+                        .value_name("NOTE_NAME_FULL")
+                        .help(
+                            "full name of note to start explore with (may be used multiple times)",
+                        ),
+                )
                 .visible_alias("ex")
                 .about("explore notes by <c-h> (backlinks) , <c-l> (links forward)"),
         )
@@ -196,8 +206,13 @@ async fn body(matches: &ArgMatches) -> anyhow::Result<String> {
                         .await
                 }
                 "explore" => {
+                    let mut matches = matches.clone();
+                    let selected_note = matches
+                        .remove_many::<String>("select")
+                        .map(|elems| elems.collect::<Vec<_>>());
                     commands::explore::exec(
                         db,
+                        selected_note,
                         config.external_commands,
                         config.surf_parsing,
                         md_static,

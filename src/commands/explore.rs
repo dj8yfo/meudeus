@@ -147,13 +147,22 @@ pub(crate) async fn exec(
             }
 
             Some(Action::Remove(removed)) => {
-                let next = match remove(db.clone(), removed.clone(), true).await {
-                    Ok(true) => vec![],
-                    Ok(false) => vec![removed],
-                    Err(err) => {
-                        eprintln!("remove error: {:?}", err);
-                        vec![removed]
+                let mut success = true;
+                for note in removed.clone() {
+                    match remove(db.clone(), note.clone(), true).await {
+                        Ok(true) => {},
+                        Ok(false) => { success = false;},
+                        Err(err) => {
+                            eprintln!("remove error: {:?}", err);
+                            success = false;
+                        }
                     }
+                    
+                }
+
+                let next = match success {
+                    true => vec![],
+                    false => removed,
                 };
                 list = next;
             }

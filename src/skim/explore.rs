@@ -34,7 +34,7 @@ pub enum Action {
     Forward,
     Widen,
     Rename(Note),
-    Remove(Note),
+    Remove(Vec<Note>),
     CreateLinkedFrom(Note),
     Surf(Note),
     Checkmark(Note),
@@ -281,14 +281,10 @@ impl Iteration {
                 }
 
                 keymap::explore::Action::RemoveNote => {
-                    if let Some(item) = selected_items.first() {
-                        Ok(Out {
-                            action: Action::Remove(item.clone()),
-                            next_items: vec![],
-                        })
-                    } else {
-                        Err(anyhow::anyhow!("no item selected"))
-                    }
+                    Ok(Out {
+                        action: Action::Remove(selected_items),
+                        next_items: vec![],
+                    })
                 }
 
                 keymap::explore::Action::CreateAutolinkedNote => {

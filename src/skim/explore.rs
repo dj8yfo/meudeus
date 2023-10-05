@@ -280,12 +280,10 @@ impl Iteration {
                     }
                 }
 
-                keymap::explore::Action::RemoveNote => {
-                    Ok(Out {
-                        action: Action::Remove(selected_items),
-                        next_items: vec![],
-                    })
-                }
+                keymap::explore::Action::RemoveNote => Ok(Out {
+                    action: Action::Remove(selected_items),
+                    next_items: vec![],
+                }),
 
                 keymap::explore::Action::CreateAutolinkedNote => {
                     if let Some(item) = selected_items.first() {

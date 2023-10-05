@@ -150,14 +150,15 @@ pub(crate) async fn exec(
                 let mut success = true;
                 for note in removed.clone() {
                     match remove(db.clone(), note.clone(), true).await {
-                        Ok(true) => {},
-                        Ok(false) => { success = false;},
+                        Ok(true) => {}
+                        Ok(false) => {
+                            success = false;
+                        }
                         Err(err) => {
                             eprintln!("remove error: {:?}", err);
                             success = false;
                         }
                     }
-                    
                 }
 
                 let next = match success {

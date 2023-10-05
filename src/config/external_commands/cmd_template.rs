@@ -17,7 +17,8 @@ impl TryFrom<&KdlNode> for CmdTemplate {
             return Err(KdlNodeErrorType {
                 err_span: *value.span(),
                 description: "node expected to have at least 1 argument".to_string(),
-            }).map_err(Into::<miette::Report>::into)?;
+            })
+            .map_err(Into::<miette::Report>::into)?;
         };
 
         let command = first

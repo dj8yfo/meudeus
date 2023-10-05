@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.18.6] - 2023-10-05
+
+### Features
+
+- Multiple select delete
+
+### Miscellaneous Tasks
+
+- Fmt + vers update
+
 ## [0.18.5] - 2023-06-17
 
 ### Documentation

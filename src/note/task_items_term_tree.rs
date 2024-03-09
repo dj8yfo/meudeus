@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fmt::Display, fs};
+use std::{collections::HashSet, fmt::Display, fs, path::PathBuf};
 
 use crate::{
     config::{color::ColorScheme, SurfParsing},
@@ -151,6 +151,9 @@ impl Jump for NoteTaskItemTerm {
         let offset = task.checkmark_offsets_in_string.start;
         let position = find_position(initial_contents, offset);
 
+        let file_cmd = PathBuf::from(&cfg.file_jump_cmd.command);
+        let file_cmd = env_substitute::substitute(file_cmd);
+
         cfg.file_jump_cmd.replace_in_matching_element(
             "$FILE",
             task.file_name.to_str().unwrap_or("bad utf path"),
@@ -163,7 +166,7 @@ impl Jump for NoteTaskItemTerm {
             .replace_in_matching_element("$COLUMN", &format!("{}", position.column));
 
         Ok(Some(
-            cmd(cfg.file_jump_cmd.command, cfg.file_jump_cmd.args)
+            cmd(file_cmd.to_str().unwrap().to_owned(), cfg.file_jump_cmd.args)
                 .run()?
                 .status,
         ))

@@ -110,11 +110,12 @@ impl Display for Note {
 impl Open for Note {
     fn open(&self, mut cfg: OpenCfg) -> io::Result<Option<std::process::ExitStatus>> {
         if let Some(file_path) = self.file_path() {
+            let file_cmd = PathBuf::from(&cfg.file_cmd.command);
+            let file_cmd = env_substitute::substitute(file_cmd);
+            println!("{:?}", file_cmd);
             cfg.file_cmd
                 .replace_matching_element("$FILE", file_path.to_str().unwrap_or("bad utf path"));
-            Ok(Some(
-                cmd(cfg.file_cmd.command, cfg.file_cmd.args).run()?.status,
-            ))
+            Ok(Some(cmd(file_cmd.to_str().unwrap().to_owned(), cfg.file_cmd.args).run()?.status))
         } else {
             Ok(None)
         }

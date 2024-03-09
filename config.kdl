@@ -6,8 +6,8 @@ world {
 			file-line "bat" "--color=always" "--line-range" "$FIRST:$LAST" "-H" "$LINE" "$FILE"
 		}
 		open {
-			file "hx" "$FILE"
-			file-jump "hx" "$FILE:$LINE:$COLUMN"
+			file "$EDITOR" "$FILE"
+			file-jump "$EDITOR" "$FILE:$LINE:$COLUMN"
 			// file-jump  "nvim" "$FILE" "+call cursor($LINE, $COLUMN)"
 			dir "zellij" "action" "new-pane" "--cwd" "$DIR" "--" "broot"
 			url "firefox" "$URL"

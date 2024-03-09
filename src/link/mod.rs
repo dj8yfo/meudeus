@@ -46,14 +46,18 @@ impl Open for Link {
             }
 
             Destination::File { file, .. } => {
+                let file_cmd = PathBuf::from(&cfg.file_cmd.command);
+                let file_cmd = env_substitute::substitute(file_cmd);
                 cfg.file_cmd
                     .replace_matching_element("$FILE", file.to_str().unwrap_or("bad utf path"));
                 Ok(Some(
-                    cmd(cfg.file_cmd.command, cfg.file_cmd.args).run()?.status,
+                    cmd(file_cmd.to_str().unwrap().to_owned(), cfg.file_cmd.args).run()?.status,
                 ))
             }
 
             Destination::FileLine { file, line_number } => {
+                let file_cmd = PathBuf::from(&cfg.file_jump_cmd.command);
+                let file_cmd = env_substitute::substitute(file_cmd);
                 let prev_dir = std::env::current_dir()?;
 
                 let next_dir = file.parent();
@@ -69,7 +73,7 @@ impl Open for Link {
 
                 cfg.file_jump_cmd
                     .replace_in_matching_element("$COLUMN", &format!("{}", 1));
-                let status = cmd(cfg.file_jump_cmd.command, cfg.file_jump_cmd.args)
+                let status = cmd(file_cmd.to_str().unwrap().to_owned(), cfg.file_jump_cmd.args)
                     .run()?
                     .status;
                 std::env::set_current_dir(prev_dir)?;
@@ -148,6 +152,9 @@ impl Jump for Link {
     ) -> std::io::Result<Option<std::process::ExitStatus>> {
         let position = self.start;
 
+        let file_cmd = PathBuf::from(&cfg.file_jump_cmd.command);
+        let file_cmd = env_substitute::substitute(file_cmd);
+
         cfg.file_jump_cmd.replace_in_matching_element(
             "$FILE",
             self.containing_file_name.to_str().unwrap_or("bad utf path"),
@@ -160,7 +167,7 @@ impl Jump for Link {
             .replace_in_matching_element("$COLUMN", &format!("{}", position.column));
 
         Ok(Some(
-            cmd(cfg.file_jump_cmd.command, cfg.file_jump_cmd.args)
+            cmd(file_cmd.to_str().unwrap().to_owned(), cfg.file_jump_cmd.args)
                 .run()?
                 .status,
         ))

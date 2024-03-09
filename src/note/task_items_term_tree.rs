@@ -166,9 +166,12 @@ impl Jump for NoteTaskItemTerm {
             .replace_in_matching_element("$COLUMN", &format!("{}", position.column));
 
         Ok(Some(
-            cmd(file_cmd.to_str().unwrap().to_owned(), cfg.file_jump_cmd.args)
-                .run()?
-                .status,
+            cmd(
+                file_cmd.to_str().unwrap().to_owned(),
+                cfg.file_jump_cmd.args,
+            )
+            .run()?
+            .status,
         ))
     }
 }

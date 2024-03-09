@@ -51,7 +51,9 @@ impl Open for Link {
                 cfg.file_cmd
                     .replace_matching_element("$FILE", file.to_str().unwrap_or("bad utf path"));
                 Ok(Some(
-                    cmd(file_cmd.to_str().unwrap().to_owned(), cfg.file_cmd.args).run()?.status,
+                    cmd(file_cmd.to_str().unwrap().to_owned(), cfg.file_cmd.args)
+                        .run()?
+                        .status,
                 ))
             }
 
@@ -73,9 +75,12 @@ impl Open for Link {
 
                 cfg.file_jump_cmd
                     .replace_in_matching_element("$COLUMN", &format!("{}", 1));
-                let status = cmd(file_cmd.to_str().unwrap().to_owned(), cfg.file_jump_cmd.args)
-                    .run()?
-                    .status;
+                let status = cmd(
+                    file_cmd.to_str().unwrap().to_owned(),
+                    cfg.file_jump_cmd.args,
+                )
+                .run()?
+                .status;
                 std::env::set_current_dir(prev_dir)?;
 
                 Ok(Some(status))
@@ -167,9 +172,12 @@ impl Jump for Link {
             .replace_in_matching_element("$COLUMN", &format!("{}", position.column));
 
         Ok(Some(
-            cmd(file_cmd.to_str().unwrap().to_owned(), cfg.file_jump_cmd.args)
-                .run()?
-                .status,
+            cmd(
+                file_cmd.to_str().unwrap().to_owned(),
+                cfg.file_jump_cmd.args,
+            )
+            .run()?
+            .status,
         ))
     }
 }

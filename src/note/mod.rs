@@ -115,7 +115,11 @@ impl Open for Note {
             println!("{:?}", file_cmd);
             cfg.file_cmd
                 .replace_matching_element("$FILE", file_path.to_str().unwrap_or("bad utf path"));
-            Ok(Some(cmd(file_cmd.to_str().unwrap().to_owned(), cfg.file_cmd.args).run()?.status))
+            Ok(Some(
+                cmd(file_cmd.to_str().unwrap().to_owned(), cfg.file_cmd.args)
+                    .run()?
+                    .status,
+            ))
         } else {
             Ok(None)
         }

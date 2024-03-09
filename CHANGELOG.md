@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [unreleased]
+
+### Miscellaneous Tasks
+
+- Fmt
+
+## [0.19.0] - 2024-03-09
+
+### Features
+
+- Replace `hx` with `$EDITOR` in config
+
+### Miscellaneous Tasks
+
+- Changelog update
+- .
+
 ## [0.18.6] - 2023-10-05
 
 ### Features

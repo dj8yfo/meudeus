@@ -1,9 +1,9 @@
 [package]
 name = "mds"
-version = "0.19.1"
+version = "0.19.2"
 author = ["dj8yf0μl"]
 description = "A skim-based `*.md` explore and surf note-taking tool"
-repository = "https://youtu.be/z4DFN72QVSw"
+repository = "https://github.com/dj8yfo/meudeus"
 homepage = "https://youtu.be/z4DFN72QVSw"
 keywords = ["note-taking", "PKM", "cli", "skim", "markdown"]
 readme = "README.md"
